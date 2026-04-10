@@ -1,4 +1,4 @@
-Scryptian v0.1
+Scryptian v0.1. (Proof of Concept)
 
 Local AI-powered command bar for Windows & Linux. Like Raycast, but absolutely free because local llm.
 
