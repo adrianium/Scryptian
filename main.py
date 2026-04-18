@@ -1,5 +1,5 @@
 # main.py — Scryptian Core
-# Plugin scanner | Hotkey | UI bar
+# Skill scanner | Hotkey | UI bar
 
 import os
 import sys
@@ -10,6 +10,7 @@ import tkinter as tk
 import pyperclip
 import keyboard
 import bridge
+import telemetry
 
 IS_WINDOWS = sys.platform == "win32"
 
@@ -28,37 +29,37 @@ if IS_WINDOWS:
             pass
 
 # ── Settings ──
-HOTKEY = "ctrl+alt"
-SCRIPTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts")
+from config import HOTKEY
+SKILLS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "skills")
 
 
-# ── Plugin scanner ──
-def scan_scripts():
+# ── Skill scanner ──
+def scan_skills():
     """
-    Scans the scripts/ folder, reads metadata (@title, @description)
+    Scans the skills/ folder, reads metadata (@title, @description)
     and loads modules. Returns a list of dicts.
     """
-    plugins = []
-    if not os.path.isdir(SCRIPTS_DIR):
-        return plugins
+    skills = []
+    if not os.path.isdir(SKILLS_DIR):
+        return skills
 
-    for filename in sorted(os.listdir(SCRIPTS_DIR)):
+    for filename in sorted(os.listdir(SKILLS_DIR)):
         if not filename.endswith(".py") or filename.startswith("_"):
             continue
 
-        filepath = os.path.join(SCRIPTS_DIR, filename)
+        filepath = os.path.join(SKILLS_DIR, filename)
         meta = _parse_metadata(filepath)
         module = _load_module(filename, filepath)
 
         if module and hasattr(module, "run"):
-            plugins.append({
+            skills.append({
                 "title": meta.get("title", filename.replace(".py", "")),
                 "description": meta.get("description", ""),
                 "author": meta.get("author", ""),
                 "module": module,
                 "filename": filename,
             })
-    return plugins
+    return skills
 
 
 def _parse_metadata(filepath):
@@ -95,10 +96,10 @@ def _load_module(name, filepath):
 
 # ── UI ──
 class ScryptianBar:
-    def __init__(self, root, plugins):
+    def __init__(self, root, skills):
         self.root = root
-        self.plugins = plugins
-        self.filtered = list(plugins)
+        self.skills = skills
+        self.filtered = list(skills)
         self.selected_index = 0
         self.window = None
         self.visible = False
@@ -106,6 +107,7 @@ class ScryptianBar:
         self.last_result = ""
         self.processing = False
         self.pending_result = None
+        self._has_add_item = False
 
     def toggle(self):
         """Show/hide the bar (called from any thread)."""
@@ -157,6 +159,17 @@ class ScryptianBar:
             borderwidth=0,
         )
         self.entry.pack(fill="x", padx=12, pady=8)
+
+        self.placeholder = tk.Label(
+            self.container,
+            text="Works with text from clipboard",
+            font=("Segoe UI", 13),
+            bg="#1e1e2e",
+            fg="#585b70",
+        )
+        self.placeholder.place(x=14, y=8)
+        self.placeholder.bind("<Button-1>", lambda e: self.entry.focus_set())
+
         self.entry.bind("<KeyRelease>", self._on_key)
         self.entry.bind("<Escape>", lambda e: self._hide())
         self.entry.bind("<Down>", self._select_next)
@@ -191,6 +204,14 @@ class ScryptianBar:
             highlightthickness=0,
             wrap="word",
             state="disabled",
+        )
+        self.skill_hint = tk.Label(
+            self.container,
+            text="Enter — run skill",
+            font=("Segoe UI", 9),
+            bg="#1e1e2e",
+            fg="#585b70",
+            anchor="e",
         )
         self.hint_label = tk.Label(
             self.container,
@@ -270,18 +291,22 @@ class ScryptianBar:
         if event.keysym in ("Return", "Escape", "Up", "Down"):
             return
         query = self.entry.get()
+        if query:
+            self.placeholder.place_forget()
+        else:
+            self.placeholder.place(x=14, y=8)
         self._update_filter(query)
 
     def _update_filter(self, query):
-        """Filters plugins by input."""
+        """Filters skills by input."""
         q = query.lower().strip()
         if q:
             self.filtered = [
-                p for p in self.plugins
-                if q in p["title"].lower() or q in p["description"].lower()
+                s for s in self.skills
+                if q in s["title"].lower() or q in s["description"].lower()
             ]
         else:
-            self.filtered = list(self.plugins)
+            self.filtered = list(self.skills)
 
         self._render_list()
 
@@ -291,21 +316,30 @@ class ScryptianBar:
 
         if not self.filtered:
             self.listbox.pack_forget()
+            self.skill_hint.pack_forget()
             self._resize(42)
             return
 
         for p in self.filtered:
             self.listbox.insert(tk.END, f"  {p['title']}  —  {p['description']}")
 
-        num_items = len(self.filtered)
+        # "Add skill" shortcut — only when no filter is active
+        self._has_add_item = False
+        if not self.entry.get().strip():
+            self.listbox.insert(tk.END, "  + Add your own skill...")
+            self._has_add_item = True
+
+        num_items = self.listbox.size()
         self.listbox.config(height=num_items)
-        self.listbox.pack(fill="x", padx=6, pady=(0, 6))
+        self.listbox.pack(fill="x", padx=6, pady=(0, 2))
+        self.skill_hint.pack(fill="x", padx=12, pady=(0, 6))
 
         self.window.update_idletasks()
         needed = self.container.winfo_reqheight()
         self._resize(needed + 4)
 
-        self.selected_index = max(0, min(self.selected_index, len(self.filtered) - 1))
+        max_idx = len(self.filtered) - 1 + (1 if self._has_add_item else 0)
+        self.selected_index = max(0, min(self.selected_index, max_idx))
         self.listbox.selection_clear(0, tk.END)
         self.listbox.selection_set(self.selected_index)
         self.listbox.see(self.selected_index)
@@ -321,7 +355,8 @@ class ScryptianBar:
 
     def _select_next(self, event):
         if self.filtered:
-            self.selected_index = min(self.selected_index + 1, len(self.filtered) - 1)
+            max_idx = len(self.filtered) - 1 + (1 if self._has_add_item else 0)
+            self.selected_index = min(self.selected_index + 1, max_idx)
             self._render_list()
 
     def _select_prev(self, event):
@@ -330,7 +365,7 @@ class ScryptianBar:
             self._render_list()
 
     def _on_enter(self, event):
-        """Runs the selected plugin or copies the result."""
+        """Runs the selected skill or copies the result."""
         if self.has_result:
             if self.last_result:
                 pyperclip.copy(self.last_result)
@@ -341,7 +376,13 @@ class ScryptianBar:
         if not self.filtered:
             return
 
-        plugin = self.filtered[self.selected_index]
+        # "Add skill" item selected
+        if self._has_add_item and self.selected_index >= len(self.filtered):
+            self._open_skills_folder()
+            self._hide()
+            return
+
+        skill = self.filtered[self.selected_index]
 
         # Get text from clipboard
         try:
@@ -355,15 +396,16 @@ class ScryptianBar:
 
         # Hide list, show status
         self.listbox.pack_forget()
+        self.skill_hint.pack_forget()
         self.entry.config(state="disabled")
-        self._show_result(f"⚙ {plugin['title']}  —  processing...")
+        self._show_result(f"⚙ {skill['title']}  —  processing...")
 
         self.processing = True
-        print(f"[Scryptian] Running: {plugin['title']}...")
+        print(f"[Scryptian] Running: {skill['title']}...")
 
         def execute():
             try:
-                mod = plugin["module"]
+                mod = skill["module"]
                 if hasattr(mod, "prompt"):
                     # Streaming mode
                     p = mod.prompt(input_text)
@@ -381,11 +423,12 @@ class ScryptianBar:
                             self.root.after(0, lambda: self._finish_stream())
                         else:
                             self.pending_result = stripped
+                        telemetry.send("skill_run", {"name": skill["title"]})
                         print(f"[Scryptian] Done!")
                     elif stripped.startswith("[Scryptian Error]"):
                         self.root.after(0, lambda t=stripped: self._show_result(t))
                     else:
-                        self.root.after(0, lambda: self._show_result("Plugin returned an empty result."))
+                        self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
                 else:
                     # Fallback: non-streaming
                     result = mod.run(input_text)
@@ -397,11 +440,12 @@ class ScryptianBar:
                             self.root.after(0, lambda: self._show_result(result))
                         else:
                             self.pending_result = result
+                        telemetry.send("skill_run", {"name": skill["title"]})
                         print(f"[Scryptian] Done!")
                     elif result and result.startswith("[Scryptian Error]"):
                         self.root.after(0, lambda: self._show_result(result))
                     else:
-                        self.root.after(0, lambda: self._show_result("Plugin returned an empty result."))
+                        self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
             except Exception as e:
                 self.root.after(0, lambda: self._show_result(f"Error: {e}"))
 
@@ -487,19 +531,30 @@ class ScryptianBar:
         self._resize(needed + 4)
 
 
+    def _open_skills_folder(self):
+        """Open skills folder in file manager (cross-platform)."""
+        import subprocess
+        if IS_WINDOWS:
+            os.startfile(SKILLS_DIR)
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", SKILLS_DIR])
+        else:
+            subprocess.Popen(["xdg-open", SKILLS_DIR])
+
+
 # ── Entry point ──
 def main():
-    print("[Scryptian] Scanning plugins...")
-    plugins = scan_scripts()
+    print("[Scryptian] Scanning skills...")
+    skills = scan_skills()
 
-    if not plugins:
-        print("[Scryptian] No plugins found in scripts/ folder")
+    if not skills:
+        print("[Scryptian] No skills found in skills/ folder")
         return
 
-    for p in plugins:
-        print(f"  → {p['title']}: {p['description']}")
+    for s in skills:
+        print(f"  → {s['title']}: {s['description']}")
 
-    print(f"\n[Scryptian] Plugins loaded: {len(plugins)}")
+    print(f"\n[Scryptian] Skills loaded: {len(skills)}")
 
     # Check Ollama connection
     try:
@@ -507,16 +562,18 @@ def main():
         _req.get(f"http://localhost:11434/api/tags", timeout=3)
         print(f"[Scryptian] Ollama: connected (model: {bridge.MODEL})")
     except Exception:
-        print("[Scryptian] WARNING: Ollama is not running. Start it before using plugins.")
+        print("[Scryptian] WARNING: Ollama is not running. Start it before using skills.")
 
     print(f"[Scryptian] Hotkey: {HOTKEY}")
     print("[Scryptian] Waiting...")
+
+    telemetry.send("app_started", {"skills": len(skills)})
 
     # Hidden root tkinter window — keeps mainloop on the main thread
     root = tk.Tk()
     root.withdraw()
 
-    bar = ScryptianBar(root, plugins)
+    bar = ScryptianBar(root, skills)
 
     keyboard.add_hotkey(HOTKEY, bar.toggle)
 

@@ -8,15 +8,15 @@ Local AI-powered command bar for Windows & Linux. Like Raycast, but absolutely f
 How it works?
 
 1. Press `Ctrl+Alt` - command bar appears
-2. Pick a plugin from the list (or type to filter)
-3. Press `Enter` - plugin processes text from your clipboard via local LLM
+2. Pick a skill from the list (or type to filter)
+3. Press `Enter` - skill processes text from your clipboard via local LLM
 4. Result appears below - press `Enter` again to copy and close
 
 Stack
 
 Python + tkinter (zero external UI deps)
 Ollama (local LLM backend, default model: `qwen2.5:3b`)
-Modular plugin system — one file = one command
+Modular skill system — one file = one command
 
 Setup
 
@@ -38,11 +38,13 @@ Project structure
 
 ```
 scryptian/
-├── main.py            # Core: plugin scanner, hotkey listener, UI
+├── main.py            # Core: skill scanner, hotkey listener, UI
 ├── bridge.py          # Connector to Ollama (settings, generate())
+├── config.py          # Central configuration
+├── telemetry.py       # Lightweight anonymous analytics
 ├── requirements.txt
 ├── LICENSE
-└── scripts/
+└── skills/
     ├── fix_code.py        # Fix syntax & logic errors in code
     ├── improve_text.py    # Rewrite text cleaner & more professional
     ├── json_format.py     # Fix & pretty-print broken JSON
@@ -52,9 +54,9 @@ scryptian/
 ```
 
 
-Plugin standard (Scryptian v0.1)
+Skill standard (Scryptian v0.1)
 
-Every plugin is a single `.py` file in `scripts/` with:
+Every skill is a single `.py` file in `skills/` with:
 
 ```python
 # @title: My Command
@@ -72,12 +74,12 @@ Rules
 
 One file = one command
 Must have `run(text)` function — takes string, returns string
-No UI access — plugins are black boxes
+No UI access — skills are black boxes
 Metadata (`@title`, `@description`, `@author`) shown in the command bar
 
 Hotkey
 
-Default: `Ctrl+Alt`. Change in `main.py`:
+Default: `Ctrl+Alt`. Change in `config.py`:
 
 ```python
 HOTKEY = "ctrl+alt"

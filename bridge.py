@@ -3,16 +3,9 @@
 
 import requests
 import json
+from config import OLLAMA_HOST, OLLAMA_PORT, MODEL, TEMPERATURE, KEEP_ALIVE
 
-# ── Connection settings ──
-OLLAMA_HOST = "http://localhost"
-OLLAMA_PORT = 11434
 OLLAMA_URL = f"{OLLAMA_HOST}:{OLLAMA_PORT}/api/generate"
-
-# ── Model settings ──
-MODEL = "qwen2.5:3b"
-TEMPERATURE = 0
-KEEP_ALIVE = "30m"
 
 
 def generate(prompt: str) -> str:
