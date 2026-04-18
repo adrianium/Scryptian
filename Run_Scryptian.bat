@@ -54,7 +54,10 @@ REM -- Start Ollama --
 echo  [..] Starting Ollama...
 powershell -Command "Start-Process ollama -ArgumentList 'serve' -WindowStyle Hidden" >nul 2>&1
 timeout /t 3 /nobreak >nul
-echo  [OK] Ollama is running.
+echo  [OK] Ollama server started.
+echo  [..] Loading model (first time may take a moment)...
+ollama pull qwen2.5:3b >nul 2>&1
+echo  [OK] Model ready.
 
 REM -- Kill old instances --
 taskkill /f /im pythonw.exe >nul 2>&1
