@@ -5,9 +5,10 @@ import sys
 
 # ── Base directory (works for both .py and .exe) ──
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.dirname(sys.executable)
+    BASE_DIR = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'Scryptian')
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+os.makedirs(BASE_DIR, exist_ok=True)
 
 # ── Hotkey ──
 HOTKEY = "ctrl+alt"

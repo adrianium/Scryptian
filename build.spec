@@ -22,6 +22,7 @@ a = Analysis(
     hiddenimports=[
         'pystray._win32',
         'llama_cpp',
+        'certifi',
     ],
     hookspath=[],
     hooksconfig={},

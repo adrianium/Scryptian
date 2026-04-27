@@ -20,7 +20,11 @@ def _download_model(on_progress=None):
         on_progress("Downloading Qwen2.5-3B for AI skills (~2GB, one time only)...")
 
     try:
-        ctx = ssl.create_default_context()
+        try:
+            import certifi
+            ctx = ssl.create_default_context(cafile=certifi.where())
+        except ImportError:
+            ctx = ssl.create_default_context()
         with request.urlopen(MODEL_URL, timeout=600, context=ctx) as resp:
             total = int(resp.headers.get("Content-Length", 0))
             downloaded = 0

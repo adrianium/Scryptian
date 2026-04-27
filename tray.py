@@ -4,9 +4,14 @@ import os
 import threading
 import pystray
 from PIL import Image
-from config import BASE_DIR
+import sys
 
-ICON_PATH = os.path.join(BASE_DIR, "icon.ico")
+def _icon_dir():
+    if getattr(sys, 'frozen', False):
+        return sys._MEIPASS
+    return os.path.dirname(os.path.abspath(__file__))
+
+ICON_PATH = os.path.join(_icon_dir(), "icon.ico")
 
 
 def _load_icon():

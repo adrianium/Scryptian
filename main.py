@@ -215,14 +215,21 @@ class ScryptianBar:
             wrap="word",
             state="disabled",
         )
-        self.skill_hint = tk.Label(
-            self.container,
+        self.skill_hint = tk.Frame(self.container, bg="#1e1e2e")
+        tk.Label(
+            self.skill_hint,
+            text="Ctrl+Alt — hide",
+            font=("Segoe UI", 9),
+            bg="#1e1e2e",
+            fg="#585b70",
+        ).pack(side="left")
+        tk.Label(
+            self.skill_hint,
             text="Enter — run skill",
             font=("Segoe UI", 9),
             bg="#1e1e2e",
             fg="#585b70",
-            anchor="e",
-        )
+        ).pack(side="right")
         self.hint_label = tk.Label(
             self.container,
             text="Enter — copy to clipboard and close",
@@ -482,12 +489,12 @@ class ScryptianBar:
         self.result_box.config(state="disabled")
         self.result_box.see(tk.END)
 
-        chars_per_line = 60
+        chars_per_line = 45
         visual_lines = 0
         for line in text.split("\n"):
             visual_lines += max(1, (len(line) // chars_per_line) + 1)
 
-        max_lines = 20
+        max_lines = 25
         clamped = min(visual_lines, max_lines)
         clamped = max(clamped, 2)
 
@@ -524,13 +531,13 @@ class ScryptianBar:
         self.result_box.insert("1.0", text)
         self.result_box.config(state="disabled")
 
-        # Height estimate: ~60 chars per line at width 560
-        chars_per_line = 60
+        # Height estimate: ~45 chars per line at width 560
+        chars_per_line = 45
         visual_lines = 0
         for line in text.split("\n"):
             visual_lines += max(1, (len(line) // chars_per_line) + 1)
 
-        max_lines = 20
+        max_lines = 25
         clamped = min(visual_lines, max_lines)
         clamped = max(clamped, 2)
 
