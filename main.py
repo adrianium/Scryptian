@@ -11,6 +11,8 @@ import pyperclip
 import keyboard
 import bridge
 import telemetry
+import tray
+import autostart
 
 IS_WINDOWS = sys.platform == "win32"
 
@@ -29,8 +31,10 @@ if IS_WINDOWS:
             pass
 
 # ── Settings ──
-from config import HOTKEY
-SKILLS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "skills")
+from config import HOTKEY, BASE_DIR
+import bootstrap
+bootstrap.setup()
+SKILLS_DIR = os.path.join(BASE_DIR, "skills")
 
 
 # ── Skill scanner ──
@@ -124,6 +128,10 @@ class ScryptianBar:
         if self.window and self.visible:
             return
 
+        # Hot-reload skills on every open
+        self.skills = scan_skills()
+        self.filtered = list(self.skills)
+
         self.window = tk.Toplevel(self.root)
         self.window.title("Scryptian")
         self.window.overrideredirect(True)
@@ -154,6 +162,8 @@ class ScryptianBar:
             font=("Segoe UI", 13),
             bg="#1e1e2e",
             fg="#cdd6f4",
+            disabledbackground="#1e1e2e",
+            disabledforeground="#585b70",
             insertbackground="#cdd6f4",
             relief="flat",
             borderwidth=0,
@@ -303,7 +313,7 @@ class ScryptianBar:
         if q:
             self.filtered = [
                 s for s in self.skills
-                if q in s["title"].lower() or q in s["description"].lower()
+                if q in s["title"].lower()
             ]
         else:
             self.filtered = list(self.skills)
@@ -405,6 +415,12 @@ class ScryptianBar:
 
         def execute():
             try:
+                # Ensure model is ready (download/load if needed)
+                if not bridge.is_model_ready():
+                    def on_progress(msg):
+                        self.root.after(0, lambda m=msg: self._show_result(m))
+                    bridge._get_llm(on_progress=on_progress)
+
                 mod = skill["module"]
                 if hasattr(mod, "prompt"):
                     # Streaming mode
@@ -556,13 +572,12 @@ def main():
 
     print(f"\n[Scryptian] Skills loaded: {len(skills)}")
 
-    # Check Ollama connection
-    try:
-        import requests as _req
-        _req.get(f"http://localhost:11434/api/tags", timeout=3)
-        print(f"[Scryptian] Ollama: connected (model: {bridge.MODEL})")
-    except Exception:
-        print("[Scryptian] WARNING: Ollama is not running. Start it before using skills.")
+    # Check model file
+    from config import MODEL_PATH, MODEL_FILE
+    if os.path.exists(MODEL_PATH):
+        print(f"[Scryptian] Model: {MODEL_FILE}")
+    else:
+        print(f"[Scryptian] WARNING: Model not found. Run Run_Scryptian.bat to download it.")
 
     print(f"[Scryptian] Hotkey: {HOTKEY}")
     print("[Scryptian] Waiting...")
@@ -576,6 +591,15 @@ def main():
     bar = ScryptianBar(root, skills)
 
     keyboard.add_hotkey(HOTKEY, bar.toggle)
+
+    if not autostart.is_enabled():
+        autostart.enable()
+        print("[Scryptian] Added to startup.")
+
+    tray.start(on_quit=root.quit)
+
+    # Show bar on first launch so user knows it's working
+    root.after(500, bar.toggle)
 
     import signal
     signal.signal(signal.SIGINT, lambda *_: root.quit())

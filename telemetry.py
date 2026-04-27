@@ -8,8 +8,8 @@ import platform
 import threading
 from urllib import request
 
-from config import POSTHOG_KEY, POSTHOG_HOST
-ID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".id")
+from config import POSTHOG_KEY, POSTHOG_HOST, BASE_DIR
+ID_FILE = os.path.join(BASE_DIR, ".id")
 
 
 def _get_id():

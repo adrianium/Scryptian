@@ -14,3 +14,7 @@ venv/
 *.swo
 *~
 .id
+*.gguf
+models/
+*.exe
+*.spec.warn

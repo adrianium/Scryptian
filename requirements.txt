@@ -1,3 +1,5 @@
-requests
+llama-cpp-python
 pyperclip
 keyboard
+pystray
+Pillow
