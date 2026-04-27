@@ -8,7 +8,7 @@ base_dir = os.path.dirname(os.path.abspath(SPEC))
 a = Analysis(
     ['main.py'],
     pathex=[base_dir],
-    binaries=[],
+    binaries=[(os.path.join(os.path.dirname(__import__('llama_cpp').__file__), 'lib', '*.dll'), 'llama_cpp/lib')],
     datas=[
         ('icon.ico', '.'),
         ('config.py', '.'),
