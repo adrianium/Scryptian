@@ -465,7 +465,8 @@ class ScryptianBar:
                         full_text += chunk
                         text_snapshot = full_text
                         self.root.after(0, lambda t=text_snapshot: self._update_stream(t))
-                    stripped = full_text.strip()
+                    import re
+                    stripped = re.sub(r"<think>[\s\S]*?</think>", "", full_text).strip()
                     self.processing = False
                     if stripped and not stripped.startswith("[Scryptian Error]"):
                         if self.window and self.visible:

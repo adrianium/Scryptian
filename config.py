@@ -15,10 +15,10 @@ HOTKEY = "ctrl+alt"
 
 # ── Model (GGUF) ──
 MODELS_DIR = os.path.join(BASE_DIR, "models")
-MODEL_FILE = "Qwen3-4B-Q4_K_M.gguf"
+MODEL_FILE = "qwen2.5-3b-instruct-q4_k_m.gguf"
 MODEL_PATH = os.path.join(MODELS_DIR, MODEL_FILE)
-MODEL_URL = "https://huggingface.co/unsloth/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf"
-CONTEXT_SIZE = 4096
+MODEL_URL = "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf"
+CONTEXT_SIZE = 2048
 TEMPERATURE = 0
 
 # ── Telemetry (PostHog) ──
