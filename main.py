@@ -235,6 +235,12 @@ class ScryptianBar:
         self.window.update_idletasks()
         self.window.lift()
 
+        # Drop topmost after focus so other windows can be clicked
+        self.window.after(300, lambda: self.window and self.window.attributes("-topmost", False))
+
+        # Hide when clicking outside
+        self.window.bind("<FocusOut>", self._on_focus_out)
+
         self.visible = True
         self.selected_index = 0
 
@@ -280,14 +286,20 @@ class ScryptianBar:
             self.window.after(80, lambda: self._force_focus(attempt + 1))
 
     def _on_focus_out(self, event):
-        """Close only if focus left the window."""
+        """Close only if focus truly left the window (delayed check)."""
+        if not self.window or self.processing:
+            return
+        self.window.after(150, self._check_focus)
+
+    def _check_focus(self):
+        """Verify focus is still lost before hiding."""
         if not self.window:
             return
         try:
             focused = self.window.focus_get()
             if focused is None:
                 self._hide()
-        except KeyError:
+        except (KeyError, tk.TclError):
             self._hide()
 
     def _hide(self):

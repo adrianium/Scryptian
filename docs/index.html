@@ -60,10 +60,11 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .hero-video video {
+    .hero-video video,
+    .hero-video img {
       display: block;
       width: 100%;
-      height: 100%;
+      height: auto;
       background: #000;
     }
 
@@ -333,6 +334,11 @@
       <div class="hero-video">
         <div class="hero-video__label">Demo</div>
         <video src="assets/scryptian-demo.mp4" autoplay muted playsinline loop></video>
+      </div>
+
+      <div class="hero-video">
+        <div class="hero-video__label">Screenshot - UI</div>
+        <img src="assets/screen1.png" alt="Scryptian screenshot" />
       </div>
     </header>
 
