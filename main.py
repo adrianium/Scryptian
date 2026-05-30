@@ -33,7 +33,6 @@ if IS_WINDOWS:
 # ── Settings ──
 from config import HOTKEY, BASE_DIR
 import bootstrap
-bootstrap.setup()
 SKILLS_DIR = os.path.join(BASE_DIR, "skills")
 
 
@@ -606,8 +605,104 @@ class ScryptianBar:
             subprocess.Popen(["xdg-open", SKILLS_DIR])
 
 
+def _kill_other_instances():
+    """Kill other Scryptian.exe processes, keeping only current instance."""
+    import ctypes
+    import ctypes.wintypes
+
+    TH32CS_SNAPPROCESS = 0x00000002
+    PROCESS_TERMINATE = 0x0001
+
+    class PROCESSENTRY32(ctypes.Structure):
+        _fields_ = [
+            ("dwSize", ctypes.wintypes.DWORD),
+            ("cntUsage", ctypes.wintypes.DWORD),
+            ("th32ProcessID", ctypes.wintypes.DWORD),
+            ("th32DefaultHeapID", ctypes.POINTER(ctypes.c_ulong)),
+            ("th32ModuleID", ctypes.wintypes.DWORD),
+            ("cntThreads", ctypes.wintypes.DWORD),
+            ("th32ParentProcessID", ctypes.wintypes.DWORD),
+            ("pcPriClassBase", ctypes.c_long),
+            ("dwFlags", ctypes.wintypes.DWORD),
+            ("szExeFile", ctypes.c_char * 260),
+        ]
+
+    my_pid = os.getpid()
+    my_ppid = None
+
+    # Find my parent PID
+    snap = ctypes.windll.kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+    pe = PROCESSENTRY32()
+    pe.dwSize = ctypes.sizeof(PROCESSENTRY32)
+
+    keep_pids = {my_pid}
+
+    if ctypes.windll.kernel32.Process32First(snap, ctypes.byref(pe)):
+        while True:
+            if pe.th32ProcessID == my_pid:
+                my_ppid = pe.th32ParentProcessID
+                keep_pids.add(my_ppid)
+                break
+            if not ctypes.windll.kernel32.Process32Next(snap, ctypes.byref(pe)):
+                break
+
+    # Kill all other Scryptian.exe
+    pe2 = PROCESSENTRY32()
+    pe2.dwSize = ctypes.sizeof(PROCESSENTRY32)
+    snap2 = ctypes.windll.kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+    if ctypes.windll.kernel32.Process32First(snap2, ctypes.byref(pe2)):
+        while True:
+            name = pe2.szExeFile.decode("utf-8", errors="ignore").lower()
+            if "scryptian" in name and pe2.th32ProcessID not in keep_pids:
+                handle = ctypes.windll.kernel32.OpenProcess(PROCESS_TERMINATE, False, pe2.th32ProcessID)
+                if handle:
+                    ctypes.windll.kernel32.TerminateProcess(handle, 0)
+                    ctypes.windll.kernel32.CloseHandle(handle)
+            if not ctypes.windll.kernel32.Process32Next(snap2, ctypes.byref(pe2)):
+                break
+
+    ctypes.windll.kernel32.CloseHandle(snap)
+    ctypes.windll.kernel32.CloseHandle(snap2)
+
+
+def _ensure_installed():
+    """If running from outside install dir, copy self there and relaunch."""
+    if not getattr(sys, 'frozen', False):
+        return True  # dev mode, skip
+
+    import shutil
+    import subprocess
+
+    install_dir = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'Scryptian')
+    install_path = os.path.join(install_dir, "Scryptian.exe")
+    current_path = sys.executable
+
+    # Already in the right place
+    if os.path.normcase(os.path.abspath(current_path)) == os.path.normcase(os.path.abspath(install_path)):
+        return True
+
+    # Copy self to install location
+    os.makedirs(install_dir, exist_ok=True)
+    try:
+        shutil.copy2(current_path, install_path)
+    except Exception:
+        return True  # fallback: just run from current location
+
+    # Launch the installed copy and exit
+    si = subprocess.STARTUPINFO()
+    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    si.wShowWindow = 0
+    subprocess.Popen([install_path], startupinfo=si)
+    sys.exit(0)
+
+
 # ── Entry point ──
 def main():
+    _kill_other_instances()
+    if not _ensure_installed():
+        return
+    bootstrap.setup()
+
     print("[Scryptian] Scanning skills...")
     skills = scan_skills()
 
@@ -651,9 +746,8 @@ def main():
 
     root.after(300000, _rehook)
 
-    if not autostart.is_enabled():
-        autostart.enable()
-        print("[Scryptian] Autostart updated.")
+    autostart.enable()
+    print("[Scryptian] Autostart updated.")
 
     tray.start(on_quit=root.quit)
 

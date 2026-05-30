@@ -1,69 +1,35 @@
-Scryptian v0.3
+Scryptian
 
-https://adrianium.github.io/Scryptian/ (website)
+Writing tools for Windows. Inline AI text editing — offline, private, free.
 
-Local AI Skills command bar for Windows & Linux. Like Raycast and Spotlight, but absolutely free because local llm.
-(works with text from clipboard)
-![Scryptian Demo](https://github.com/user-attachments/assets/0b781294-9683-4f87-8f69-f98d76d7fa1b)
+https://adrianium.github.io/Scryptian/
 
+https://github.com/adrianium/Scryptian/raw/main/assets/scryptian-demo.mp4
 
-How it works?
+How it works
 
-1. Press `Ctrl+Alt` - command bar appears
-2. Pick a skill from the list (or type to filter)
-3. Press `Enter` - skill processes text from your clipboard via local LLM
-4. Result appears below - press `Enter` again to copy and close
+1. Press `Ctrl+Alt` — command bar appears
+2. Pick a skill (or type to filter)
+3. Press `Enter` — text from clipboard is processed by a local AI model
+4. Result appears — press `Enter` again to copy and close
 
-Stack
+Skills
 
-Python + tkinter (zero external UI deps)
-Ollama (local LLM backend, default model: `qwen2.5:3b`)
-Modular skill system — one file = one command
+- Translate to my language
+- Translate to English
+- Summarize
+- Improve writing
+- Fix spelling and grammar
+- Change tone to friendly
+- Change tone to professional
+- Explain this in simple terms
+- Humanize
 
-Setup
-
-```bash
-# 1. Install Ollama and pull the model
-ollama pull qwen2.5:3b
-
-#if already installed
-ollama run qwen2.5:3b
-
-# 2. Install Python dependencies
-pip install -r requirements.txt
-
-# 3. Run
-python main.py
-```
-
-Project structure
-
-```
-scryptian/
-├── main.py            # Core: skill scanner, hotkey listener, UI
-├── bridge.py          # Connector to Ollama (settings, generate())
-├── config.py          # Central configuration
-├── telemetry.py       # Lightweight anonymous analytics
-├── requirements.txt
-├── LICENSE
-└── skills/
-    ├── fix_code.py        # Fix syntax & logic errors in code
-    ├── improve_text.py    # Rewrite text cleaner & more professional
-    ├── json_format.py     # Fix & pretty-print broken JSON
-    ├── camel.py           # text → camelCase
-    ├── snake.py           # text → snake_case
-    ├── slug.py            # text → url-slug
-    └── translate.py       # Translate to your system language
-```
-
-
-Skill standard (Scryptian v0.1)
-
-Every skill is a single `.py` file in `skills/` with:
+Add your own: one `.py` file in `skills/` = one skill.
 
 ```python
-# @title: My Command
-# @description: What it does.
+# @title: My Skill
+# @description: What it does
 # @author: YourName
 
 import bridge
@@ -73,12 +39,9 @@ def run(text):
     return bridge.generate(prompt)
 ```
 
-Rules
+Setup
 
-One file = one command
-Must have `run(text)` function — takes string, returns string
-No UI access — skills are black boxes
-Metadata (`@title`, `@description`, `@author`) shown in the command bar
+Download `Scryptian.exe` from [Releases](https://github.com/adrianium/Scryptian/releases) and run. Model downloads automatically on first use (~2 GB, one time).
 
 Hotkey
 

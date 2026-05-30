@@ -1,4 +1,4 @@
-# bootstrap.py — First-run setup: extract bundled skills to external folder
+# bootstrap.py — Clean install: wipe old data (except model) and set up fresh
 
 import os
 import sys
@@ -6,6 +6,7 @@ import shutil
 from config import BASE_DIR
 
 SKILLS_DIR = os.path.join(BASE_DIR, "skills")
+MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 
 def _bundled_skills_dir():
@@ -16,29 +17,30 @@ def _bundled_skills_dir():
 
 
 def setup():
-    """Sync bundled skills to external folder: add new, update existing, remove obsolete."""
-    bundled = _bundled_skills_dir()
-
-    if not bundled or not os.path.isdir(bundled):
+    """Clean install: remove everything except models, then extract fresh skills."""
+    if not getattr(sys, 'frozen', False):
         os.makedirs(SKILLS_DIR, exist_ok=True)
         return
 
+    # Preserve models folder
+    if os.path.isdir(BASE_DIR):
+        for item in os.listdir(BASE_DIR):
+            path = os.path.join(BASE_DIR, item)
+            if item in ("models", ".id"):
+                continue
+            try:
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    os.remove(path)
+            except Exception:
+                pass
+
     os.makedirs(SKILLS_DIR, exist_ok=True)
 
-    bundled_files = set(f for f in os.listdir(bundled) if f.endswith(".py"))
-
-    # Copy/update bundled skills
-    for fname in bundled_files:
-        src = os.path.join(bundled, fname)
-        dst = os.path.join(SKILLS_DIR, fname)
-        shutil.copy2(src, dst)
-
-    # Remove skills that are no longer bundled (skip user-created ones with custom marker)
-    for fname in os.listdir(SKILLS_DIR):
-        if fname.endswith(".py") and fname not in bundled_files:
-            filepath = os.path.join(SKILLS_DIR, fname)
-            # Keep files with @author other than Scryptian (user-created)
-            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
-                header = f.read(512)
-            if "@author: Scryptian" in header:
-                os.remove(filepath)
+    # Extract fresh skills from bundle
+    bundled = _bundled_skills_dir()
+    if bundled and os.path.isdir(bundled):
+        for fname in os.listdir(bundled):
+            if fname.endswith(".py"):
+                shutil.copy2(os.path.join(bundled, fname), os.path.join(SKILLS_DIR, fname))
