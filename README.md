@@ -4,7 +4,7 @@ Writing tools for Windows. Inline AI text editing — offline, private, free.
 
 https://adrianium.github.io/Scryptian/
 
-https://github.com/adrianium/Scryptian/raw/main/assets/scryptian-demo.mp4
+![Scryptian Demo](https://github.com/user-attachments/assets/0c794465-b705-4983-9c2b-291fdc372977)
 
 How it works
 
