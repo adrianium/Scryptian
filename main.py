@@ -510,7 +510,8 @@ class ScryptianBar:
                     else:
                         self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
             except Exception as e:
-                self.root.after(0, lambda: self._show_result(f"Error: {e}"))
+                err_msg = f"Error: {e}"
+                self.root.after(0, lambda msg=err_msg: self._show_result(msg))
 
         threading.Thread(target=execute, daemon=True).start()
 

@@ -105,10 +105,13 @@ def generate(prompt: str) -> str:
 
         result = llm.create_chat_completion(
             messages=_messages(prompt),
-            max_tokens=512,
+            max_tokens=1024,
             temperature=TEMPERATURE,
         )
-        return result["choices"][0]["message"]["content"].strip()
+        import re
+        raw = result["choices"][0]["message"]["content"].strip()
+        raw = re.sub(r"<think>[\s\S]*?</think>", "", raw).strip()
+        return raw
     except Exception as e:
         return f"[Scryptian Error] {e}"
 
@@ -123,15 +126,34 @@ def generate_stream(prompt: str):
             yield "[Scryptian Error] Model download failed. Check your internet connection and try again."
             return
 
+        buf = ""
+        in_think = False
+        think_done = False
         for chunk in llm.create_chat_completion(
             messages=_messages(prompt),
-            max_tokens=512,
+            max_tokens=1024,
             temperature=TEMPERATURE,
             stream=True,
         ):
             delta = chunk["choices"][0].get("delta", {})
             token = delta.get("content", "")
-            if token:
-                yield token
+            if not token:
+                continue
+            buf += token
+
+            if not think_done:
+                if "<think>" in buf and not in_think:
+                    in_think = True
+                if "</think>" in buf and in_think:
+                    in_think = False
+                    think_done = True
+                    import re
+                    after = re.sub(r"<think>[\s\S]*?</think>", "", buf).strip()
+                    buf = after
+                    if after:
+                        yield after
+                continue
+
+            yield token
     except Exception as e:
         yield f"[Scryptian Error] {e}"
