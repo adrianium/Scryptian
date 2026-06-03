@@ -2,9 +2,12 @@
 
 import os
 import threading
+import webbrowser
 import pystray
 from PIL import Image
 import sys
+
+FEEDBACK_URL = "https://github.com/adrianium/Scryptian/discussions"
 
 def _icon_dir():
     if getattr(sys, 'frozen', False):
@@ -19,7 +22,7 @@ def _load_icon():
     return Image.open(ICON_PATH)
 
 
-def start(on_quit):
+def start(on_quit, on_open=None):
     """Start tray icon in background thread. on_quit() called when user clicks Quit."""
     def _run():
         icon = pystray.Icon(
@@ -29,6 +32,8 @@ def start(on_quit):
             menu=pystray.Menu(
                 pystray.MenuItem("Scryptian", None, enabled=False),
                 pystray.Menu.SEPARATOR,
+                pystray.MenuItem("Open", lambda: on_open() if on_open else None),
+                pystray.MenuItem("Feedback", lambda: webbrowser.open(FEEDBACK_URL)),
                 pystray.MenuItem("Quit", lambda: _quit(icon)),
             ),
         )

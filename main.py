@@ -750,7 +750,7 @@ def main():
     autostart.enable()
     print("[Scryptian] Autostart updated.")
 
-    tray.start(on_quit=root.quit)
+    tray.start(on_quit=root.quit, on_open=bar.toggle)
 
     # Show bar on first launch so user knows it's working
     root.after(500, bar.toggle)
