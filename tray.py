@@ -30,9 +30,8 @@ def start(on_quit, on_open=None):
             icon=_load_icon(),
             title="Scryptian - Ctrl+Alt",
             menu=pystray.Menu(
-                pystray.MenuItem("Scryptian", None, enabled=False),
+                pystray.MenuItem("Open", lambda: on_open() if on_open else None, default=True),
                 pystray.Menu.SEPARATOR,
-                pystray.MenuItem("Open", lambda: on_open() if on_open else None),
                 pystray.MenuItem("Feedback", lambda: webbrowser.open(FEEDBACK_URL)),
                 pystray.MenuItem("Quit", lambda: _quit(icon)),
             ),

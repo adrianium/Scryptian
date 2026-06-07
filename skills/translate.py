@@ -1,38 +1,31 @@
 # @title: Translate to my language
-# @description: Translate text to your system language
+# @description: Translate text to your system language (Google Translate)
 # @author: Scryptian
 
 import locale
-import bridge
-
-_LANG_MAP = {
-    "en": "English", "ru": "Russian", "de": "German", "fr": "French",
-    "es": "Spanish", "pt": "Portuguese", "it": "Italian", "tr": "Turkish",
-    "zh": "Chinese", "ja": "Japanese", "ko": "Korean", "ar": "Arabic",
-    "pl": "Polish", "nl": "Dutch", "uk": "Ukrainian", "cs": "Czech",
-}
+from urllib import request, parse
+import json
 
 
-def _get_language():
+def _get_lang_code():
+    """Get system language code (e.g. 'ru', 'de', 'en')."""
     try:
         code = locale.getdefaultlocale()[0]
-        short = code.split("_")[0] if code else "en"
-        return _LANG_MAP.get(short, short)
+        return code.split("_")[0] if code else "en"
     except Exception:
-        return "English"
-
-
-def prompt(text):
-    lang = _get_language()
-    return (
-        f"Translate the following text to {lang}. "
-        "Output ONLY the translation, nothing else:\n\n"
-        f"{text}"
-    )
+        return "en"
 
 
 def run(text):
     """
-    text: text from clipboard to translate
+    text: text from clipboard to translate to system language
     """
-    return bridge.generate(prompt(text))
+    try:
+        tl = _get_lang_code()
+        url = "https://translate.googleapis.com/translate_a/single"
+        params = parse.urlencode({"client": "gtx", "sl": "auto", "tl": tl, "dt": "t", "q": text})
+        resp = request.urlopen(f"{url}?{params}", timeout=10)
+        data = json.loads(resp.read())
+        return "".join(part[0] for part in data[0] if part[0])
+    except Exception as e:
+        return f"[Scryptian Error] Translation failed: {e}"

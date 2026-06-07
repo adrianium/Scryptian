@@ -179,6 +179,7 @@ class ScryptianBar:
             fg="#585b70",
         )
         self.placeholder.place(x=14, y=8)
+
         self.placeholder.bind("<Button-1>", lambda e: self.entry.focus_set())
 
         self.entry.bind("<KeyRelease>", self._on_key)
@@ -209,26 +210,38 @@ class ScryptianBar:
         self.skill_hint = tk.Frame(self.container, bg="#1e1e2e")
         tk.Label(
             self.skill_hint,
-            text="Ctrl+Alt — hide",
+            text="Ctrl+Alt - hide",
             font=("Segoe UI", 10),
             bg="#1e1e2e",
             fg="#585b70",
         ).pack(side="left")
         tk.Label(
             self.skill_hint,
-            text="Enter — run skill",
+            text="Enter - run skill",
             font=("Segoe UI", 10),
             bg="#1e1e2e",
             fg="#585b70",
         ).pack(side="right")
-        self.hint_label = tk.Label(
-            self.container,
-            text="Enter — copy to clipboard and close",
+        self.hint_label = tk.Frame(self.container, bg="#1e1e2e")
+        tk.Label(
+            self.hint_label,
+            text="Enter - copy to clipboard and close",
             font=("Segoe UI", 10),
             bg="#1e1e2e",
             fg="#585b70",
-            anchor="e",
+        ).pack(side="left")
+        report_btn = tk.Label(
+            self.hint_label,
+            text="[ Report ]",
+            font=("Segoe UI", 10),
+            bg="#1e1e2e",
+            fg="#6c7086",
+            cursor="hand2",
         )
+        report_btn.pack(side="right")
+        report_btn.bind("<Button-1>", lambda e: self._send_report())
+        report_btn.bind("<Enter>", lambda e: report_btn.config(fg="#cdd6f4"))
+        report_btn.bind("<Leave>", lambda e: report_btn.config(fg="#6c7086"))
 
         self.window.attributes("-topmost", True)
         self.window.update_idletasks()
@@ -595,6 +608,16 @@ class ScryptianBar:
         self._resize(needed + 4)
 
 
+    def _send_report(self):
+        """Send anonymous bug report with last result/error to PostHog."""
+        import platform
+        telemetry.send("bug_report", {
+            "last_result": self.last_result[:500] if self.last_result else "",
+            "platform": platform.platform(),
+            "skills_count": len(self.skills),
+        })
+        self._show_result("Report sent. Thanks!")
+
     def _open_skills_folder(self):
         """Open skills folder in file manager (cross-platform)."""
         import subprocess
@@ -667,12 +690,13 @@ def _kill_other_instances():
 
 
 def _ensure_installed():
-    """If running from outside install dir, copy self there and relaunch."""
+    """If running from outside install dir, kill old, copy self there and relaunch."""
     if not getattr(sys, 'frozen', False):
         return True  # dev mode, skip
 
     import shutil
     import subprocess
+    import time
 
     install_dir = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'Scryptian')
     install_path = os.path.join(install_dir, "Scryptian.exe")
@@ -682,12 +706,21 @@ def _ensure_installed():
     if os.path.normcase(os.path.abspath(current_path)) == os.path.normcase(os.path.abspath(install_path)):
         return True
 
-    # Copy self to install location
+    # Kill any running Scryptian from install dir before overwriting
+    _kill_other_instances()
+    time.sleep(1)  # Wait for file lock to release
+
+    # Copy self to install location (retry if locked)
     os.makedirs(install_dir, exist_ok=True)
-    try:
-        shutil.copy2(current_path, install_path)
-    except Exception:
-        return True  # fallback: just run from current location
+    for attempt in range(3):
+        try:
+            shutil.copy2(current_path, install_path)
+            break
+        except Exception:
+            if attempt < 2:
+                time.sleep(1)
+            else:
+                return True  # fallback: just run from current location
 
     # Launch the installed copy and exit
     si = subprocess.STARTUPINFO()
@@ -699,9 +732,9 @@ def _ensure_installed():
 
 # ── Entry point ──
 def main():
-    _kill_other_instances()
     if not _ensure_installed():
         return
+    _kill_other_instances()
     bootstrap.setup()
 
     print("[Scryptian] Scanning skills...")
