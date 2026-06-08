@@ -690,51 +690,15 @@ def _kill_other_instances():
 
 
 def _ensure_installed():
-    """If running from outside install dir, kill old, copy self there and relaunch."""
-    if not getattr(sys, 'frozen', False):
-        return True  # dev mode, skip
-
-    import shutil
-    import subprocess
-    import time
-
-    install_dir = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'Scryptian')
-    install_path = os.path.join(install_dir, "Scryptian.exe")
-    current_path = sys.executable
-
-    # Already in the right place
-    if os.path.normcase(os.path.abspath(current_path)) == os.path.normcase(os.path.abspath(install_path)):
-        return True
-
-    # Kill any running Scryptian from install dir before overwriting
+    """Kill duplicate instances. Installer handles placement."""
     _kill_other_instances()
-    time.sleep(1)  # Wait for file lock to release
-
-    # Copy self to install location (retry if locked)
-    os.makedirs(install_dir, exist_ok=True)
-    for attempt in range(3):
-        try:
-            shutil.copy2(current_path, install_path)
-            break
-        except Exception:
-            if attempt < 2:
-                time.sleep(1)
-            else:
-                return True  # fallback: just run from current location
-
-    # Launch the installed copy and exit
-    si = subprocess.STARTUPINFO()
-    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    si.wShowWindow = 0
-    subprocess.Popen([install_path], startupinfo=si)
-    sys.exit(0)
+    return True
 
 
 # ── Entry point ──
 def main():
     if not _ensure_installed():
         return
-    _kill_other_instances()
     bootstrap.setup()
 
     print("[Scryptian] Scanning skills...")

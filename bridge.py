@@ -151,16 +151,20 @@ def generate_stream(prompt: str):
             if not think_done:
                 if "<think>" in buf and not in_think:
                     in_think = True
-                if "</think>" in buf and in_think:
-                    in_think = False
+                if in_think:
+                    if "</think>" in buf:
+                        in_think = False
+                        think_done = True
+                        import re
+                        after = re.sub(r"<think>[\s\S]*?</think>", "", buf).strip()
+                        buf = after
+                        if after:
+                            yield after
+                    continue
+                else:
                     think_done = True
-                    import re
-                    after = re.sub(r"<think>[\s\S]*?</think>", "", buf).strip()
-                    buf = after
-                    if after:
-                        yield after
-                continue
 
-            yield token
+            if think_done and not in_think:
+                yield token
     except Exception as e:
         yield f"[Scryptian Error] {e}"
