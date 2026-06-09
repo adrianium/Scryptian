@@ -88,6 +88,8 @@ def _get_llm(on_progress=None):
     except Exception as e:
         import telemetry
         telemetry.send("model_load_failed", {"error": str(e)})
+        if on_progress:
+            on_progress(f"[Scryptian Error] Model load failed: {e}")
         return None
     return _llm
 
@@ -108,7 +110,7 @@ def generate(prompt: str) -> str:
     try:
         llm = _get_llm()
         if llm is None:
-            return "[Scryptian Error] Model download failed. Check your internet connection and try again."
+            return "[Scryptian Error] Model failed to load. Check logs for details."
 
         result = llm.create_chat_completion(
             messages=_messages(prompt),
@@ -130,7 +132,7 @@ def generate_stream(prompt: str):
     try:
         llm = _get_llm()
         if llm is None:
-            yield "[Scryptian Error] Model download failed. Check your internet connection and try again."
+            yield "[Scryptian Error] Model failed to load. Check logs for details."
             return
 
         buf = ""
