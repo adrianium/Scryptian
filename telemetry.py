@@ -4,6 +4,7 @@
 import os
 import uuid
 import json
+import hashlib
 import platform
 import threading
 from urllib import request
@@ -23,8 +24,16 @@ def _get_id():
     return uid
 
 
+APP_VERSION = "0.3.6"
+
+
 def _os_info():
     return f"{platform.system()} {platform.release()}"
+
+
+def _machine_id():
+    """Stable fingerprint based on machine name — survives reinstall."""
+    return hashlib.md5(platform.node().encode()).hexdigest()[:16]
 
 
 def send(event: str, properties: dict = None):
@@ -37,6 +46,8 @@ def send(event: str, properties: dict = None):
             "distinct_id": _get_id(),
             "properties": {
                 "os": _os_info(),
+                "app_version": APP_VERSION,
+                "machine_id": _machine_id(),
                 **(properties or {}),
             },
         }).encode()

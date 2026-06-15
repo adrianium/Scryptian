@@ -22,12 +22,16 @@ def setup():
         os.makedirs(SKILLS_DIR, exist_ok=True)
         return
 
-    # Preserve models folder
+    # Preserve models folder, pins, and custom skills
+    _KEEP_FILES = ("models", ".id", "pinned.json")
+
     if os.path.isdir(BASE_DIR):
         for item in os.listdir(BASE_DIR):
             path = os.path.join(BASE_DIR, item)
-            if item in ("models", ".id"):
+            if item in _KEEP_FILES:
                 continue
+            if item == "skills":
+                continue  # handled below
             try:
                 if os.path.isdir(path):
                     shutil.rmtree(path)
@@ -38,7 +42,7 @@ def setup():
 
     os.makedirs(SKILLS_DIR, exist_ok=True)
 
-    # Extract fresh skills from bundle
+    # Extract fresh built-in skills, but keep custom_*.py files
     bundled = _bundled_skills_dir()
     if bundled and os.path.isdir(bundled):
         for fname in os.listdir(bundled):

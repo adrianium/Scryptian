@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>What's New - Scryptian</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1117;
+      --text-primary: #f5f5f5;
+      --text-secondary: #9a9a9a;
+      --border: #1f242d;
+      --accent: #89b4fa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: clamp(3rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem);
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      letter-spacing: -0.01em;
+    }
+
+    main {
+      width: min(720px, 100%);
+      margin: 0 auto;
+    }
+
+    nav {
+      margin-bottom: 3rem;
+      font-size: 0.9rem;
+    }
+
+    nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    nav a:hover { color: var(--text-primary); }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin: 0 0 3.5rem;
+    }
+
+    .hero-video {
+      margin-top: 3rem;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      display: grid;
+      gap: 0;
+    }
+
+    .hero-video__label {
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-video video,
+    .hero-video img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #000;
+    }
+
+    /* Video box */
+    .demo-box {
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      margin-bottom: 3.5rem;
+    }
+
+    .demo-box__label {
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo-box__video {
+      position: relative;
+      background: #000;
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .demo-box__video a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      transition: color 0.15s;
+    }
+
+    .demo-box__video a:hover { color: var(--text-primary); }
+
+    .play-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s;
+    }
+
+    .demo-box__video a:hover .play-icon {
+      border-color: var(--accent);
+    }
+
+    .play-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: var(--text-secondary);
+      margin-left: 3px;
+      transition: fill 0.15s;
+    }
+
+    .demo-box__video a:hover .play-icon svg {
+      fill: var(--accent);
+    }
+
+    /* Changelog entries */
+    .entry {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 0 2rem;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .entry:last-child { border-bottom: 1px solid var(--border); }
+
+    .entry__meta {
+      padding-top: 0.2rem;
+    }
+
+    .entry__version {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.3rem;
+    }
+
+    .entry__date {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .entry__title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 0 0.75rem;
+      letter-spacing: -0.01em;
+    }
+
+    .entry__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .entry__list li {
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+      padding-left: 1.1rem;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .entry__list li::before {
+      content: "–";
+      position: absolute;
+      left: 0;
+      margin-top: 0.1rem;
+      color: var(--border);
+    }
+
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 2rem 0 0;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .cta a {
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 0.95rem 1.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: transform 0.15s ease;
+    }
+
+    .cta a.primary {
+      background: #f5f5f5;
+      color: #050505;
+    }
+
+    .cta a.primary:hover {
+      transform: translateY(-2px);
+    }
+
+    .cta a.secondary {
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      padding: 0.9rem 1.7rem;
+    }
+
+    .cta a.secondary:hover {
+      transform: translateY(-2px);
+    }
+
+    .entry__list li strong {
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-left: 0.2rem;
+    }
+
+    @media (max-width: 560px) {
+      .entry {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        margin-top: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <nav><a href="index.html">← Scryptian</a></nav>
+
+    <h1>What's New</h1>
+    <p class="subtitle">Every release, every improvement.</p>
+
+    <!-- Demo video box -->
+    <div class="hero-video">
+        <div class="hero-video__label">Demo</div>
+        <video src="assets/scryptian-miniBar-demo.mp4" autoplay muted playsinline loop></video>
+      </div>
+
+      <div class="cta">
+        <a class="primary" href="https://github.com/adrianium/Scryptian/releases/download/v0.3.5-alpha/Scryptian_Setup.exe">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="2" y="3" width="9" height="9" fill="#0d1117" />
+            <rect x="13" y="3" width="9" height="9" fill="#0d1117" />
+            <rect x="2" y="14" width="9" height="9" fill="#0d1117" />
+            <rect x="13" y="14" width="9" height="9" fill="#0d1117" />
+          </svg>
+          <span>Download latest version for Windows</span>
+        </a>
+      </div>
+
+    <!-- v0.3.5 -->
+    <div class="entry">
+      <div class="entry__meta">
+        <div class="entry__version">v0.3.6</div>
+        <div class="entry__date">Jun 2025</div>
+      </div>
+      <div class="entry__body">
+        <p class="entry__title">Custom skills, instant mini toolbar & update notifications</p>
+        <ul class="entry__list">
+          <li><strong>Create your own skills</strong> - add a skill in seconds from the UI, no IDE needed</li>
+          <li><strong>Edit & delete</strong> custom skills directly from the skill list</li>
+          <li><strong>Mini toolbar</strong> - for instant text replacement</li>
+          <li><strong>Update checker</strong> - get notified in the tray when a new version is available</li>
+          <li><strong>Some UI bugs fixed</strong></li>
+        </ul>
+      </div>
+    </div>
+
+
+  </main>
+</body>
+</html>

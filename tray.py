@@ -22,9 +22,45 @@ def _load_icon():
     return Image.open(ICON_PATH)
 
 
+_icon_ref = None
+RELEASES_URL = "https://github.com/adrianium/Scryptian/releases/latest"
+_update_version = None
+
+
+def notify(title, message):
+    """Show tray notification."""
+    if _icon_ref:
+        try:
+            _icon_ref.notify(message, title)
+        except Exception:
+            pass
+
+
+def set_update_available(version):
+    """Called when a new version is detected — adds menu item."""
+    global _update_version
+    _update_version = version
+    if _icon_ref:
+        try:
+            _icon_ref.update_menu()
+        except Exception:
+            pass
+
+
 def start(on_quit, on_open=None):
-    """Start tray icon in background thread. on_quit() called when user clicks Quit."""
+    """Start tray icon in background thread."""
     def _run():
+        global _icon_ref
+
+        def _update_visible(item):
+            return _update_version is not None
+
+        def _open_update():
+            webbrowser.open(RELEASES_URL)
+
+        def _update_label(item):
+            return f"Update available: v{_update_version} →" if _update_version else "Up to date"
+
         icon = pystray.Icon(
             name="Scryptian",
             icon=_load_icon(),
@@ -32,10 +68,13 @@ def start(on_quit, on_open=None):
             menu=pystray.Menu(
                 pystray.MenuItem("Open", lambda: on_open() if on_open else None, default=True),
                 pystray.Menu.SEPARATOR,
+                pystray.MenuItem(_update_label, _open_update, visible=_update_visible),
+                pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Feedback", lambda: webbrowser.open(FEEDBACK_URL)),
                 pystray.MenuItem("Quit", lambda: _quit(icon)),
             ),
         )
+        _icon_ref = icon
 
         def _quit(icon):
             icon.stop()

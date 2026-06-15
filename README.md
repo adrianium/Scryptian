@@ -51,6 +51,15 @@ Default: `Ctrl+Alt`. Change in `config.py`:
 HOTKEY = "ctrl+alt"
 ```
 
+Privacy
+
+Scryptian sends anonymous crash reports and usage stats (which skills are run, whether the model loaded) to help fix bugs and improve the app.
+
+**Your selected text is never transmitted.** All AI processing happens locally on your machine. No account required, no cloud API.
+
+What is sent anonymously: app version, skill names (not content), error messages, model load status.  
+What is never sent: your text, clipboard contents, files, or any personal data.
+
 License
 
 MIT

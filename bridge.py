@@ -97,7 +97,7 @@ def _get_llm(on_progress=None):
 def _messages(prompt: str):
     """Format prompt as chat messages for the model."""
     return [
-        {"role": "system", "content": "You are a helpful assistant. Follow instructions precisely. Output only what is asked, nothing extra. Never ask questions back. This is not a chat."},
+        {"role": "system", "content": "/no_think\nYou are a helpful assistant. Follow instructions precisely. Output only what is asked, nothing extra. Never ask questions back. This is not a chat."},
         {"role": "user", "content": prompt},
     ]
 

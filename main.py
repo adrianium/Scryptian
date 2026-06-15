@@ -9,10 +9,15 @@ import threading
 import tkinter as tk
 import pyperclip
 import keyboard
+import time
 import bridge
 import telemetry
 import tray
 import autostart
+import queue
+import selection_watcher
+import pins as pins_module
+import skill_editor
 
 IS_WINDOWS = sys.platform == "win32"
 
@@ -111,9 +116,15 @@ class ScryptianBar:
         self.processing = False
         self.pending_result = None
         self._has_add_item = False
+        self._source_hwnd = None
 
     def toggle(self):
         """Show/hide the bar (called from any thread)."""
+        if IS_WINDOWS and not self.visible:
+            try:
+                self._source_hwnd = ctypes.windll.user32.GetForegroundWindow()
+            except Exception:
+                self._source_hwnd = None
         telemetry.send("hotkey_pressed")
         self.root.after(0, self._do_toggle)
 
@@ -135,6 +146,7 @@ class ScryptianBar:
         self.window = tk.Toplevel(self.root)
         self.window.title("Scryptian")
         self.window.overrideredirect(True)
+        self.window.attributes("-toolwindow", True)
         self.window.configure(bg="#313244")
 
         # ── Size and center position ──
@@ -147,6 +159,7 @@ class ScryptianBar:
         self._bar_width = bar_width
 
         self.window.geometry(f"{bar_width}x{bar_height}+{x}+{y}")
+        self.window.attributes("-alpha", 0.0)
         self.window.update_idletasks()
 
         # ── Border ──
@@ -239,7 +252,7 @@ class ScryptianBar:
             cursor="hand2",
         )
         report_btn.pack(side="right")
-        report_btn.bind("<Button-1>", lambda e: self._send_report())
+        report_btn.bind("<Button-1>", lambda e: self._open_report_dialog())
         report_btn.bind("<Enter>", lambda e: report_btn.config(fg="#cdd6f4"))
         report_btn.bind("<Leave>", lambda e: report_btn.config(fg="#6c7086"))
 
@@ -255,6 +268,7 @@ class ScryptianBar:
 
         self.visible = True
         self.selected_index = 0
+        self._bar_fade_in(0.0)
 
         # If there's a pending result from a background task, show it
         if self.pending_result is not None:
@@ -314,11 +328,37 @@ class ScryptianBar:
         except (KeyError, tk.TclError):
             self._hide()
 
+    def _bar_fade_in(self, alpha):
+        if not self.window or not self.visible:
+            return
+        alpha = min(alpha + 0.1, 1.0)
+        try:
+            self.window.attributes("-alpha", alpha)
+        except Exception:
+            return
+        if alpha < 1.0:
+            self.root.after(16, lambda: self._bar_fade_in(alpha))
+
     def _hide(self):
         if self.window:
             self.visible = False
-            self.window.destroy()
+            win = self.window
             self.window = None
+            self._bar_fade_out(win, 1.0)
+
+    def _bar_fade_out(self, win, alpha):
+        alpha = max(alpha - 0.12, 0.0)
+        try:
+            win.attributes("-alpha", alpha)
+        except Exception:
+            return
+        if alpha > 0.0:
+            self.root.after(16, lambda: self._bar_fade_out(win, alpha))
+        else:
+            try:
+                win.destroy()
+            except Exception:
+                pass
 
     def _on_key(self, event):
         if event.keysym in ("Return", "Escape", "Up", "Down"):
@@ -345,6 +385,8 @@ class ScryptianBar:
 
     def _render_list(self):
         """Renders the dropdown list."""
+        if not self.window:
+            return
         # Clear old rows
         for row in self._skill_rows:
             row.destroy()
@@ -357,7 +399,7 @@ class ScryptianBar:
             return
 
         for i, p in enumerate(self.filtered):
-            row = self._make_row(p["title"], p["description"], i)
+            row = self._make_row(p["title"], p["description"], i, pinnable=True)
             self._skill_rows.append(row)
 
         # "Add skill" shortcut — only when no filter is active
@@ -378,7 +420,7 @@ class ScryptianBar:
         self.selected_index = max(0, min(self.selected_index, max_idx))
         self._highlight_row()
 
-    def _make_row(self, title, desc, idx):
+    def _make_row(self, title, desc, idx, pinnable=False):
         """Creates a single skill row with title (bright) and description (dim)."""
         row = tk.Frame(self.list_frame, bg="#1e1e2e", cursor="hand2")
         row.pack(fill="x", padx=4, pady=1)
@@ -387,13 +429,57 @@ class ScryptianBar:
             row, text=f"  {title}", font=("Segoe UI", 13),
             bg="#1e1e2e", fg="#cdd6f4", anchor="w",
         )
-        title_lbl.pack(side="left")
+        title_lbl.pack(side="left", fill="x", expand=True)
+
+        if pinnable:
+            skill_obj = self.filtered[idx] if idx < len(self.filtered) else None
+
+            # Star always rightmost
+            pinned = pins_module.is_pinned(title)
+            star_lbl = tk.Label(
+                row,
+                text="\ue735" if pinned else "\ue734",
+                font=("Segoe MDL2 Assets", 13),
+                bg="#1e1e2e",
+                fg="#f9e2af" if pinned else "#6c7086",
+                cursor="hand2",
+                padx=6,
+            )
+            star_lbl.pack(side="right")
+            star_lbl.bind("<Button-1>", lambda e, t=title: self._toggle_pin(t))
+
+            # Edit button for custom skills (left of star)
+            if skill_obj and skill_obj.get("filename", "").startswith("custom_"):
+                edit_lbl = tk.Label(
+                    row, text="\ue70f",
+                    font=("Segoe MDL2 Assets", 11),
+                    bg="#1e1e2e", fg="#89b4fa",
+                    cursor="hand2", padx=4,
+                )
+                edit_lbl.pack(side="right")
+                edit_lbl.bind("<Button-1>", lambda e, s=skill_obj: self._open_edit_skill_editor(s))
 
         # Click handler
         row.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
         title_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
         return row
+
+    def _open_new_skill_editor(self):
+        def on_saved():
+            self.skills = scan_skills()
+            self._update_filter(self.entry.get())
+        skill_editor.open_editor(self.root, SKILLS_DIR, on_saved=on_saved)
+
+    def _open_edit_skill_editor(self, skill):
+        def on_saved():
+            self.skills = scan_skills()
+            self._update_filter(self.entry.get())
+        skill_editor.open_editor(self.root, SKILLS_DIR, on_saved=on_saved, skill=skill)
+
+    def _toggle_pin(self, title):
+        pins_module.toggle(title)
+        self._render_list()
 
     def _click_row(self, idx):
         """Handle click on a skill row."""
@@ -433,11 +519,28 @@ class ScryptianBar:
             self.selected_index = max(self.selected_index - 1, 0)
             self._highlight_row()
 
+    def _auto_paste(self):
+        """Restore focus to source window and paste result."""
+        hwnd = self._source_hwnd
+        self._source_hwnd = None
+        if not hwnd:
+            return
+        def _do():
+            time.sleep(0.12)
+            try:
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+                time.sleep(0.06)
+                keyboard.send("ctrl+v")
+            except Exception:
+                pass
+        threading.Thread(target=_do, daemon=True).start()
+
     def _on_enter(self, event):
         """Runs the selected skill or copies the result."""
         if self.has_result:
             if self.last_result:
                 pyperclip.copy(self.last_result)
+                self._auto_paste()
                 print("[Scryptian] Copied to clipboard.")
             self._hide()
             return
@@ -447,8 +550,7 @@ class ScryptianBar:
 
         # "Add skill" item selected
         if self._has_add_item and self.selected_index >= len(self.filtered):
-            self._open_skills_folder()
-            self._hide()
+            self._open_new_skill_editor()
             return
 
         skill = self.filtered[self.selected_index]
@@ -525,6 +627,57 @@ class ScryptianBar:
             except Exception as e:
                 err_msg = f"Error: {e}"
                 self.root.after(0, lambda msg=err_msg: self._show_result(msg))
+
+        threading.Thread(target=execute, daemon=True).start()
+
+    def run_externally(self, skill, input_text, source_hwnd=None):
+        """Open the bar and run a skill with given text (called from SelectionToolbar)."""
+        self._source_hwnd = source_hwnd
+        pyperclip.copy(input_text)
+        self.root.after(0, lambda: self._run_external(skill, input_text))
+
+    def _run_external(self, skill, input_text):
+        if not self.visible:
+            self._show()
+        self.list_frame.pack_forget()
+        self.skill_hint.pack_forget()
+        self.entry.config(state="disabled")
+        self._show_result(f"⚙ {skill['title']}  —  processing...")
+        self.processing = True
+
+        def execute():
+            try:
+                if not bridge.is_model_ready():
+                    def on_progress(msg):
+                        self.root.after(0, lambda m=msg: self._show_result(m))
+                    bridge._get_llm(on_progress=on_progress)
+                mod = skill["module"]
+                if hasattr(mod, "prompt"):
+                    full_text = ""
+                    for chunk in bridge.generate_stream(mod.prompt(input_text)):
+                        full_text += chunk
+                        self.root.after(0, lambda t=full_text: self._update_stream(t))
+                    stripped = re.sub(r"<think>[\s\S]*?</think>", "", full_text).strip()
+                    self.processing = False
+                    if stripped and not stripped.startswith("[Scryptian Error]"):
+                        self.last_result = stripped
+                        self.has_result = True
+                        self.root.after(0, self._finish_stream)
+                        telemetry.send("skill_run", {"name": skill["title"], "via": "selection"})
+                    else:
+                        self.root.after(0, lambda t=stripped: self._show_result(t or "Skill returned an empty result."))
+                else:
+                    result = mod.run(input_text)
+                    self.processing = False
+                    if result and not result.startswith("[Scryptian Error]"):
+                        self.last_result = result
+                        self.has_result = True
+                        self.root.after(0, lambda: self._show_result(result))
+                        telemetry.send("skill_run", {"name": skill["title"], "via": "selection"})
+                    else:
+                        self.root.after(0, lambda t=result: self._show_result(t or "Skill returned an empty result."))
+            except Exception as e:
+                self.root.after(0, lambda msg=str(e): self._show_result(f"Error: {msg}"))
 
         threading.Thread(target=execute, daemon=True).start()
 
@@ -608,15 +761,94 @@ class ScryptianBar:
         self._resize(needed + 4)
 
 
-    def _send_report(self):
-        """Send anonymous bug report with last result/error to PostHog."""
+    def _open_report_dialog(self):
+        """Compact styled feedback/bug report dialog."""
         import platform
-        telemetry.send("bug_report", {
-            "last_result": self.last_result[:500] if self.last_result else "",
-            "platform": platform.platform(),
-            "skills_count": len(self.skills),
-        })
-        self._show_result("Report sent. Thanks!")
+        last_result_snapshot = self.last_result
+
+        dlg = tk.Toplevel(self.root)
+        dlg.overrideredirect(True)
+        dlg.attributes("-topmost", True)
+        dlg.attributes("-toolwindow", True)
+        dlg.configure(bg="#1e1e2e")
+
+        outer = tk.Frame(dlg, bg="#45475a", padx=1, pady=1)
+        outer.pack(fill="both", expand=True)
+        inner = tk.Frame(outer, bg="#1e1e2e", padx=16, pady=14)
+        inner.pack(fill="both", expand=True)
+
+        tk.Label(inner, text="Send feedback", font=("Segoe UI", 11, "bold"),
+                 bg="#1e1e2e", fg="#cdd6f4", anchor="w").pack(fill="x", pady=(0, 10))
+
+        # Contact field
+        tk.Label(inner, text="Contact  (optional)", font=("Segoe UI", 8),
+                 bg="#1e1e2e", fg="#585b70", anchor="w").pack(fill="x")
+        contact_var = tk.StringVar()
+        contact_entry = tk.Entry(inner, textvariable=contact_var,
+                                 font=("Segoe UI", 10), bg="#313244", fg="#cdd6f4",
+                                 insertbackground="#cdd6f4", relief="flat", bd=0)
+        contact_entry.pack(fill="x", pady=(2, 10), ipady=5)
+
+        # Message field
+        tk.Label(inner, text="Message", font=("Segoe UI", 8),
+                 bg="#1e1e2e", fg="#585b70", anchor="w").pack(fill="x")
+        msg_text = tk.Text(inner, font=("Segoe UI", 10), bg="#313244", fg="#cdd6f4",
+                           insertbackground="#cdd6f4", relief="flat", bd=0,
+                           height=4, wrap="word")
+        msg_text.pack(fill="x", pady=(2, 12))
+
+        btn_row = tk.Frame(inner, bg="#1e1e2e")
+        btn_row.pack(fill="x")
+
+        cancel_btn = tk.Label(btn_row, text="Cancel", font=("Segoe UI", 9),
+                              bg="#1e1e2e", fg="#585b70", cursor="hand2")
+        cancel_btn.pack(side="right", padx=(8, 0))
+        cancel_btn.bind("<Button-1>", lambda e: dlg.destroy())
+        cancel_btn.bind("<Enter>", lambda e: cancel_btn.config(fg="#cdd6f4"))
+        cancel_btn.bind("<Leave>", lambda e: cancel_btn.config(fg="#585b70"))
+
+        def _submit():
+            msg = msg_text.get("1.0", "end").strip()
+            contact = contact_var.get().strip()
+            telemetry.send("feedback", {
+                "contact": contact,
+                "message": msg[:1000],
+                "last_result": last_result_snapshot[:500] if last_result_snapshot else "",
+                "platform": platform.platform(),
+                "skills_count": len(self.skills),
+            })
+            dlg.destroy()
+            self._show_result("Thanks for the feedback!")
+
+        send_btn = tk.Label(btn_row, text="Send", font=("Segoe UI", 9, "bold"),
+                            bg="#cba6f7", fg="#1e1e2e", cursor="hand2",
+                            padx=14, pady=3)
+        send_btn.pack(side="right")
+        send_btn.bind("<Button-1>", lambda e: _submit())
+        send_btn.bind("<Enter>", lambda e: send_btn.config(bg="#d4b6f8"))
+        send_btn.bind("<Leave>", lambda e: send_btn.config(bg="#cba6f7"))
+
+        dlg.update_idletasks()
+        w, h = dlg.winfo_reqwidth(), dlg.winfo_reqheight()
+        if self.window:
+            bx = self.window.winfo_x() + (self.window.winfo_width() - w) // 2
+            by = self.window.winfo_y() + self.window.winfo_height() + 6
+        else:
+            sw, sh = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
+            bx, by = (sw - w) // 2, (sh - h) // 2
+        dlg.geometry(f"{w}x{h}+{bx}+{by}")
+        dlg.attributes("-alpha", 0.0)
+        self._fade_dialog(dlg, 0.0)
+        contact_entry.focus_set()
+
+    def _fade_dialog(self, dlg, alpha):
+        alpha = min(alpha + 0.1, 1.0)
+        try:
+            dlg.attributes("-alpha", alpha)
+        except Exception:
+            return
+        if alpha < 1.0:
+            self.root.after(16, lambda: self._fade_dialog(dlg, alpha))
 
     def _open_skills_folder(self):
         """Open skills folder in file manager (cross-platform)."""
@@ -627,6 +859,242 @@ class ScryptianBar:
             subprocess.Popen(["open", SKILLS_DIR])
         else:
             subprocess.Popen(["xdg-open", SKILLS_DIR])
+
+
+class SelectionToolbar:
+    """Small floating toolbar that appears near cursor after text selection."""
+
+    def __init__(self, root, skills, bar=None):
+        self.root = root
+        self.skills = skills
+        self.bar = bar
+        self.window = None
+        self._overlay = None
+        self._source_hwnd = None
+        self._input_text = None
+        self._dismiss_job = None
+        self._watch_active = False
+        self._watch_rect = (0, 0, 0, 0)
+
+    def show(self, text, x, y, source_hwnd):
+        self._input_text = text
+        self._source_hwnd = source_hwnd
+        self.skills = scan_skills()  # Hot-reload
+        self._show_window(x, y)
+
+    def _show_window(self, x, y):
+        self._cancel_dismiss()
+        self._destroy_window()
+
+        win = tk.Toplevel(self.root)
+        win.overrideredirect(True)
+        win.configure(bg="#1e1e2e")
+        win.attributes("-topmost", True)
+
+        outer = tk.Frame(win, bg="#313244", padx=1, pady=1)
+        outer.pack(fill="both", expand=True)
+        inner = tk.Frame(outer, bg="#1e1e2e", padx=0, pady=2)
+        inner.pack(fill="both", expand=True)
+
+        pinned = pins_module.get_pinned_skills(self.skills)
+        visible = pinned if pinned else self.skills[:3]
+        for skill in visible:
+            row = tk.Frame(inner, bg="#1e1e2e", cursor="hand2")
+            row.pack(fill="x", padx=0, pady=0)
+            lbl = tk.Label(
+                row,
+                text=f"  {skill['title']}",
+                bg="#1e1e2e", fg="#cdd6f4",
+                font=("Segoe UI", 9), anchor="w",
+                cursor="hand2", padx=4, pady=4,
+            )
+            lbl.pack(fill="x")
+            cmd = lambda s=skill, r=row, l=lbl: self._run_skill(s)
+            row.bind("<Button-1>", lambda e, s=skill: self._run_skill(s))
+            lbl.bind("<Button-1>", lambda e, s=skill: self._run_skill(s))
+            row.bind("<Enter>", lambda e, r=row, l=lbl: (r.config(bg="#313244"), l.config(bg="#313244")))
+            row.bind("<Leave>", lambda e, r=row, l=lbl: (r.config(bg="#1e1e2e"), l.config(bg="#1e1e2e")))
+
+        tk.Frame(inner, bg="#313244", height=1).pack(fill="x", padx=4)
+
+        close = tk.Label(
+            inner, text="  dismiss",
+            bg="#1e1e2e", fg="#45475a",
+            font=("Segoe UI", 8), anchor="w",
+            cursor="hand2", padx=4, pady=3,
+        )
+        close.pack(fill="x")
+        close.bind("<Button-1>", lambda e: self._dismiss())
+
+        win.update_idletasks()
+        w = win.winfo_reqwidth()
+        h = win.winfo_reqheight()
+        screen_w = self.root.winfo_screenwidth()
+
+        px = min(x + 10, screen_w - w - 10)
+        py = y - h - 12
+        if py < 0:
+            py = y + 20
+
+        win.geometry(f"+{px}+{py}")
+        win.attributes("-topmost", True)
+        win.attributes("-alpha", 0.0)
+        self.window = win
+        self._fade_in(win, 0.0)
+        self.root.after(400, self._start_click_watcher)
+
+    def _run_skill(self, skill):
+        text = self._input_text
+        source_hwnd = self._source_hwnd
+        self._dismiss()
+
+        # Check caret synchronously (fast WinAPI call) before deciding flow
+        editable = False
+        if IS_WINDOWS and source_hwnd:
+            try:
+                class _GTI(ctypes.Structure):
+                    _fields_ = [("cbSize", ctypes.c_ulong), ("flags", ctypes.c_ulong),
+                                 ("hwndActive", ctypes.c_void_p), ("hwndFocus", ctypes.c_void_p),
+                                 ("hwndCapture", ctypes.c_void_p), ("hwndMenuOwner", ctypes.c_void_p),
+                                 ("hwndMoveSize", ctypes.c_void_p), ("hwndCaret", ctypes.c_void_p),
+                                 ("rcCaret", ctypes.c_long * 4)]
+                gti = _GTI()
+                gti.cbSize = ctypes.sizeof(_GTI)
+                tid = ctypes.windll.user32.GetWindowThreadProcessId(source_hwnd, None)
+                ctypes.windll.user32.GetGUIThreadInfo(tid, ctypes.byref(gti))
+                editable = bool(gti.hwndCaret)
+            except Exception:
+                pass
+
+        if not editable and self.bar:
+            # Open full bar immediately — model runs inside it
+            self.bar.run_externally(skill, text, source_hwnd)
+            return
+
+        # Editable field: run inline and paste back
+        def execute():
+            try:
+                mod = skill["module"]
+                if hasattr(mod, "prompt"):
+                    result = ""
+                    for chunk in bridge.generate_stream(mod.prompt(text)):
+                        result += chunk
+                    result = re.sub(r"<think>[\s\S]*?</think>", "", result).strip()
+                else:
+                    result = mod.run(text)
+                if result and not result.startswith("[Scryptian Error]"):
+                    pyperclip.copy(result)
+                    telemetry.send("skill_run", {"name": skill["title"], "via": "selection"})
+                    time.sleep(0.12)
+                    ctypes.windll.user32.SetForegroundWindow(source_hwnd)
+                    time.sleep(0.06)
+                    keyboard.send("ctrl+v")
+            except Exception as e:
+                print(f"[Scryptian] Selection skill error: {e}")
+
+        threading.Thread(target=execute, daemon=True).start()
+
+    def _fade_in(self, win, alpha):
+        if not self.window or self.window is not win:
+            return
+        alpha = min(alpha + 0.08, 1.0)
+        try:
+            win.attributes("-alpha", alpha)
+        except Exception:
+            return
+        if alpha < 1.0:
+            self.root.after(16, lambda: self._fade_in(win, alpha))
+
+    def _fade_out(self, win, alpha):
+        if not win:
+            return
+        alpha = max(alpha - 0.1, 0.0)
+        try:
+            win.attributes("-alpha", alpha)
+        except Exception:
+            return
+        if alpha > 0.0:
+            self.root.after(16, lambda: self._fade_out(win, alpha))
+        else:
+            try:
+                win.destroy()
+            except Exception:
+                pass
+
+    def _start_click_watcher(self):
+        """Install WH_MOUSE_LL in a dedicated thread with its own message loop."""
+        if not self.window:
+            return
+        # Cache rect on main thread
+        self._watch_rect = (
+            self.window.winfo_x(),
+            self.window.winfo_y(),
+            self.window.winfo_width(),
+            self.window.winfo_height(),
+        )
+        self._watch_active = True
+
+        def _run_hook():
+            import ctypes
+            import ctypes.wintypes
+
+            WH_MOUSE_LL = 14
+            WM_LBUTTONDOWN = 0x0201
+            WM_RBUTTONDOWN = 0x0204
+
+            HOOKPROC = ctypes.WINFUNCTYPE(
+                ctypes.c_long, ctypes.c_int, ctypes.c_ulong, ctypes.POINTER(ctypes.c_ulong)
+            )
+
+            def low_level_mouse_proc(nCode, wParam, lParam):
+                if nCode >= 0 and self._watch_active and wParam in (WM_LBUTTONDOWN, WM_RBUTTONDOWN):
+                    try:
+                        mx = ctypes.cast(lParam, ctypes.POINTER(ctypes.wintypes.POINT)).contents.x
+                        my = ctypes.cast(lParam, ctypes.POINTER(ctypes.wintypes.POINT)).contents.y
+                        wx, wy, ww, wh = self._watch_rect
+                        if not (wx <= mx <= wx + ww and wy <= my <= wy + wh):
+                            self._watch_active = False
+                            self.root.after(0, self._dismiss)
+                    except Exception:
+                        pass
+                return ctypes.windll.user32.CallNextHookEx(
+                    ctypes.c_void_p(0), nCode, wParam, lParam
+                )
+
+            cb = HOOKPROC(low_level_mouse_proc)
+            hook = ctypes.windll.user32.SetWindowsHookExW(WH_MOUSE_LL, cb, None, 0)
+
+            msg = ctypes.wintypes.MSG()
+            while self._watch_active:
+                ret = ctypes.windll.user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
+                if ret <= 0:
+                    break
+                ctypes.windll.user32.TranslateMessage(ctypes.byref(msg))
+                ctypes.windll.user32.DispatchMessageW(ctypes.byref(msg))
+
+            ctypes.windll.user32.UnhookWindowsHookEx(hook)
+
+        threading.Thread(target=_run_hook, daemon=True).start()
+
+    def _dismiss(self):
+        self._watch_active = False
+        self._cancel_dismiss()
+        self.root.after(0, self._destroy_window)
+
+    def _cancel_dismiss(self):
+        if self._dismiss_job:
+            self.root.after_cancel(self._dismiss_job)
+            self._dismiss_job = None
+
+    def _destroy_window(self):
+        if self.window:
+            win = self.window
+            self.window = None
+            try:
+                current_alpha = win.attributes("-alpha")
+            except Exception:
+                current_alpha = 1.0
+            self._fade_out(win, current_alpha)
 
 
 def _kill_other_instances():
@@ -730,6 +1198,28 @@ def main():
     root.withdraw()
 
     bar = ScryptianBar(root, skills)
+    toolbar = SelectionToolbar(root, skills, bar=bar)
+
+    sel_queue = queue.Queue()
+
+    def _on_selection(text, x, y, source_hwnd):
+        sel_queue.put((text, x, y, source_hwnd))
+
+    def _poll_selection():
+        try:
+            while True:
+                text, x, y, hwnd = sel_queue.get_nowait()
+                toolbar.show(text, x, y, hwnd)
+        except queue.Empty:
+            pass
+        root.after(150, _poll_selection)
+
+    if IS_WINDOWS:
+        selection_watcher.start(_on_selection)
+        root.after(150, _poll_selection)
+
+    if os.path.exists(MODEL_PATH):
+        threading.Thread(target=bridge._get_llm, daemon=True).start()
 
     keyboard.add_hotkey(HOTKEY, bar.toggle)
 
@@ -748,6 +1238,33 @@ def main():
     print("[Scryptian] Autostart updated.")
 
     tray.start(on_quit=root.quit, on_open=bar.toggle)
+
+    def _check_update():
+        try:
+            from urllib import request as _req
+            import json as _json
+            import ssl as _ssl
+            from telemetry import APP_VERSION
+            try:
+                import certifi
+                ctx = _ssl.create_default_context(cafile=certifi.where())
+            except Exception:
+                ctx = _ssl.create_default_context()
+            url = "https://api.github.com/repos/adrianium/Scryptian/releases/latest"
+            req = _req.Request(url, headers={"User-Agent": "Scryptian"})
+            data = _json.loads(_req.urlopen(req, timeout=5, context=ctx).read())
+            latest = data.get("tag_name", "").lstrip("v")
+            current = APP_VERSION.lstrip("v")
+            if latest and latest != current:
+                tray.set_update_available(latest)
+                tray.notify(
+                    f"Scryptian {latest} is available",
+                    "Right-click the tray icon to update"
+                )
+        except Exception:
+            pass
+
+    root.after(15000, lambda: threading.Thread(target=_check_update, daemon=False).start())
 
     # Show bar on first launch so user knows it's working
     root.after(500, bar.toggle)
