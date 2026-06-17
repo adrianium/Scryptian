@@ -1264,7 +1264,7 @@ def main():
                 tray.set_update_available(latest)
                 tray.notify(
                     f"Scryptian {latest} is available",
-                    "Right-click the tray icon to update"
+                    "Click the Scryptian icon near the clock to update"
                 )
         except Exception:
             pass

@@ -1,11 +1,13 @@
 # @title: Translate to my language
-# @description: Translate text to your system language (Google Translate)
+# @description: Translate text to your language (Google Translate)
 # @author: Scryptian
 
-import locale
+import os
 from urllib import request, parse
 import json
 import ssl
+
+_LANG_FILE = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Scryptian", "translate_lang.txt")
 
 
 def _ssl_ctx():
@@ -16,30 +18,62 @@ def _ssl_ctx():
         return ssl.create_default_context()
 
 
-def _get_lang_code():
-    """Detect language from active keyboard layout, fallback to system locale."""
+def _load_lang():
     try:
-        import ctypes
-        hwnd = ctypes.windll.user32.GetForegroundWindow()
-        thread_id = ctypes.windll.user32.GetWindowThreadProcessId(hwnd, None)
-        klid = ctypes.windll.user32.GetKeyboardLayout(thread_id)
-        lang_id = klid & 0xFFFF
-        import locale as _locale
-        lang = _locale.windows_locale.get(lang_id, "")
-        if lang:
-            return lang.split("_")[0]
+        if os.path.exists(_LANG_FILE):
+            with open(_LANG_FILE, "r") as f:
+                return f.read().strip()
     except Exception:
         pass
+    return None
+
+
+def _save_lang(code):
     try:
-        code = locale.getdefaultlocale()[0]
-        return code.split("_")[0] if code else "en"
+        os.makedirs(os.path.dirname(_LANG_FILE), exist_ok=True)
+        with open(_LANG_FILE, "w") as f:
+            f.write(code.strip().lower())
     except Exception:
-        return "en"
+        pass
+
+
+def _ask_lang():
+    """Ask user for target language via PowerShell InputBox — works from any thread."""
+    try:
+        import subprocess
+        ps = (
+            "[System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic') | Out-Null; "
+            "$r = [Microsoft.VisualBasic.Interaction]::InputBox("
+            "'Enter your language code (e.g. ru, de, fr, zh, ar)', 'Scryptian — Translate', ''); "
+            "Write-Output $r"
+        )
+        result = subprocess.run(
+            ["powershell", "-Sta", "-Command", ps],
+            capture_output=True, text=True, timeout=60,
+            creationflags=0x08000000  # CREATE_NO_WINDOW
+        )
+        lang = result.stdout.strip()
+        if lang:
+            return lang.strip().lower()
+    except Exception:
+        pass
+    return None
+
+
+def _get_lang_code():
+    lang = _load_lang()
+    if lang:
+        return lang
+    lang = _ask_lang()
+    if lang:
+        _save_lang(lang)
+        return lang
+    return "en"
 
 
 def run(text):
     """
-    text: text from clipboard to translate to system language
+    text: text from clipboard to translate to your language
     """
     try:
         tl = _get_lang_code()
