@@ -2,9 +2,32 @@
 # Connector | Optimizer | Unifier
 
 import os
+import threading
 from config import MODEL_PATH, MODELS_DIR, MODEL_URL, MODEL_FILE, CONTEXT_SIZE, TEMPERATURE
 
 _llm = None
+_idle_timer = None
+_load_lock = threading.Lock()
+IDLE_TIMEOUT = 600  # seconds before unloading (10 minutes)
+
+
+def _schedule_unload():
+    """Reset idle timer. Model unloads after IDLE_TIMEOUT seconds of no use."""
+    global _idle_timer
+    if _idle_timer:
+        _idle_timer.cancel()
+    _idle_timer = threading.Timer(IDLE_TIMEOUT, _unload_model)
+    _idle_timer.daemon = True
+    _idle_timer.start()
+
+
+def _unload_model():
+    """Unload model from RAM."""
+    global _llm, _idle_timer
+    if _llm is not None:
+        _llm = None
+        print(f"[Scryptian] Model unloaded from RAM (idle {IDLE_TIMEOUT}s).")
+    _idle_timer = None
 
 
 def _download_model(on_progress=None):
@@ -67,31 +90,40 @@ def _get_llm(on_progress=None):
     """Lazy-load the model on first call. Downloads if missing."""
     global _llm
     if _llm is not None:
+        _schedule_unload()
         return _llm
 
-    if not os.path.exists(MODEL_PATH):
-        if not _download_model(on_progress):
+    with _load_lock:
+        if _llm is not None:
+            _schedule_unload()
+            return _llm
+
+        if not os.path.exists(MODEL_PATH):
+            if not _download_model(on_progress):
+                return None
+
+        from llama_cpp import Llama
+        if on_progress:
+            on_progress("Loading model...")
+        try:
+            _llm = Llama(
+                model_path=MODEL_PATH,
+                n_ctx=CONTEXT_SIZE,
+                n_threads=os.cpu_count() or 4,
+                verbose=False,
+            )
+            import telemetry
+            telemetry.send("model_loaded")
+            print("[Scryptian] Model loaded into RAM.")
+        except Exception as e:
+            import telemetry
+            telemetry.send("model_load_failed", {"error": str(e)})
+            if on_progress:
+                on_progress(f"[Scryptian Error] Model load failed: {e}")
             return None
 
-    from llama_cpp import Llama
-    if on_progress:
-        on_progress("Loading model...")
-    try:
-        _llm = Llama(
-            model_path=MODEL_PATH,
-            n_ctx=CONTEXT_SIZE,
-            n_threads=os.cpu_count() or 4,
-            verbose=False,
-        )
-        import telemetry
-        telemetry.send("model_loaded")
-    except Exception as e:
-        import telemetry
-        telemetry.send("model_load_failed", {"error": str(e)})
-        if on_progress:
-            on_progress(f"[Scryptian Error] Model load failed: {e}")
-        return None
-    return _llm
+        _schedule_unload()
+        return _llm
 
 
 def _messages(prompt: str):
@@ -108,6 +140,7 @@ def generate(prompt: str) -> str:
     Takes a prompt (string), returns model response (string).
     """
     try:
+        _schedule_unload()
         llm = _get_llm()
         if llm is None:
             return "[Scryptian Error] Model failed to load. Check logs for details."
@@ -130,6 +163,7 @@ def generate_stream(prompt: str):
     Streaming LLM call. Yields text chunks as they arrive.
     """
     try:
+        _schedule_unload()
         llm = _get_llm()
         if llm is None:
             yield "[Scryptian Error] Model failed to load. Check logs for details."

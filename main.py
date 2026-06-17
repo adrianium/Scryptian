@@ -1203,6 +1203,7 @@ def main():
     sel_queue = queue.Queue()
 
     def _on_selection(text, x, y, source_hwnd):
+        threading.Thread(target=bridge._get_llm, daemon=True).start()
         sel_queue.put((text, x, y, source_hwnd))
 
     def _poll_selection():
@@ -1221,7 +1222,11 @@ def main():
     if os.path.exists(MODEL_PATH):
         threading.Thread(target=bridge._get_llm, daemon=True).start()
 
-    keyboard.add_hotkey(HOTKEY, bar.toggle)
+    def _hotkey_handler():
+        threading.Thread(target=bridge._get_llm, daemon=True).start()
+        bar.toggle()
+
+    keyboard.add_hotkey(HOTKEY, _hotkey_handler)
 
     def _rehook():
         """Re-register hotkey periodically to survive sleep/hibernate."""
@@ -1229,7 +1234,7 @@ def main():
             keyboard.remove_hotkey(HOTKEY)
         except Exception:
             pass
-        keyboard.add_hotkey(HOTKEY, bar.toggle)
+        keyboard.add_hotkey(HOTKEY, _hotkey_handler)
         root.after(300000, _rehook)  # every 5 minutes
 
     root.after(300000, _rehook)
@@ -1264,7 +1269,11 @@ def main():
         except Exception:
             pass
 
-    root.after(15000, lambda: threading.Thread(target=_check_update, daemon=False).start())
+    def _schedule_update_check():
+        threading.Thread(target=_check_update, daemon=False).start()
+        root.after(5 * 60 * 60 * 1000, _schedule_update_check)
+
+    root.after(15000, _schedule_update_check)
 
     # Show bar on first launch so user knows it's working
     root.after(500, bar.toggle)
