@@ -541,6 +541,7 @@ class ScryptianBar:
             if self.last_result:
                 pyperclip.copy(self.last_result)
                 self._auto_paste()
+                telemetry.send("result_copied", {"skill": getattr(self, "last_skill_title", "unknown")})
                 print("[Scryptian] Copied to clipboard.")
             self._hide()
             return
@@ -597,6 +598,7 @@ class ScryptianBar:
                     if stripped and not stripped.startswith("[Scryptian Error]"):
                         if self.window and self.visible:
                             self.last_result = stripped
+                            self.last_skill_title = skill["title"]
                             self.has_result = True
                             self.root.after(0, lambda: self._finish_stream())
                         else:
@@ -614,6 +616,7 @@ class ScryptianBar:
                     if result and not result.startswith("[Scryptian Error]"):
                         if self.window and self.visible:
                             self.last_result = result
+                            self.last_skill_title = skill["title"]
                             self.has_result = True
                             self.root.after(0, lambda: self._show_result(result))
                         else:
@@ -1192,6 +1195,7 @@ def main():
     print("[Scryptian] Waiting...")
 
     telemetry.send("app_started", {"skills": len(skills)})
+    telemetry.send_first_launch()
 
     # Hidden root tkinter window — keeps mainloop on the main thread
     root = tk.Tk()
@@ -1260,12 +1264,11 @@ def main():
             data = _json.loads(_req.urlopen(req, timeout=5, context=ctx).read())
             latest = data.get("tag_name", "").lstrip("v")
             current = APP_VERSION.lstrip("v")
+            telemetry.send("update_check", {"current_version": current, "latest_version": latest})
             if latest and latest != current:
+                telemetry.send("update_available", {"current_version": current, "latest_version": latest})
                 tray.set_update_available(latest)
-                tray.notify(
-                    f"Scryptian {latest} is available",
-                    "Click the Scryptian icon near the clock to update"
-                )
+                root.after(0, lambda v=latest: tray.show_update_popup(v, tray.RELEASES_URL, root))
         except Exception:
             pass
 

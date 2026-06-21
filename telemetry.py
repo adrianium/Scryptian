@@ -24,7 +24,7 @@ def _get_id():
     return uid
 
 
-APP_VERSION = "0.3.7"
+APP_VERSION = "0.3.8"
 
 
 def _os_info():
@@ -34,6 +34,20 @@ def _os_info():
 def _machine_id():
     """Stable fingerprint based on machine name — survives reinstall."""
     return hashlib.md5(platform.node().encode()).hexdigest()[:16]
+
+
+_FIRST_LAUNCH_FILE = os.path.join(BASE_DIR, ".first_launch_sent")
+
+
+def send_first_launch():
+    """Send first_launch event only once ever."""
+    if os.path.exists(_FIRST_LAUNCH_FILE):
+        return
+    try:
+        open(_FIRST_LAUNCH_FILE, "w").close()
+    except Exception:
+        return
+    send("first_launch")
 
 
 def send(event: str, properties: dict = None):

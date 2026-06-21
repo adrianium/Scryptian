@@ -152,6 +152,13 @@ def open_editor(root, skills_dir, on_saved=None, skill=None):
         with open(fpath, "w", encoding="utf-8") as f:
             f.write(code)
 
+        try:
+            import telemetry
+            event = "skill_edited" if skill else "skill_created"
+            telemetry.send(event, {"title": title})
+        except Exception:
+            pass
+
         dlg.destroy()
         if on_saved:
             on_saved()
@@ -164,6 +171,11 @@ def open_editor(root, skills_dir, on_saved=None, skill=None):
             fpath = os.path.join(skills_dir, skill.get("filename", ""))
             if os.path.exists(fpath):
                 os.remove(fpath)
+            try:
+                import telemetry
+                telemetry.send("skill_deleted", {"title": skill.get("title", "")})
+            except Exception:
+                pass
             dlg.destroy()
             if on_saved:
                 on_saved()

@@ -36,6 +36,50 @@ def notify(title, message):
             pass
 
 
+def show_update_popup(version, releases_url, root=None):
+    """Show a custom in-app update notification popup in bottom-right corner."""
+    import tkinter as tk
+
+    try:
+        win = tk.Toplevel(root)
+        win.overrideredirect(True)
+        win.attributes("-topmost", True)
+        win.attributes("-alpha", 0.97)
+        win.configure(bg="#161b22")
+
+        w, h = 300, 80
+        sw = win.winfo_screenwidth()
+        sh = win.winfo_screenheight()
+        x = sw - w - 16
+        y = sh - h - 48
+        win.geometry(f"{w}x{h}+{x}+{y}")
+
+        tk.Label(win, text=f"Scryptian {version} is available",
+                 bg="#161b22", fg="#f5f5f5",
+                 font=("Segoe UI", 10, "bold")).place(x=12, y=10)
+
+        tk.Label(win, text="Click to update →",
+                 bg="#161b22", fg="#9a9a9a",
+                 font=("Segoe UI", 9), cursor="hand2").place(x=12, y=34)
+
+        def _open(e=None):
+            try:
+                import telemetry
+                telemetry.send("update_clicked", {"version": version})
+            except Exception:
+                pass
+            webbrowser.open(releases_url)
+            win.destroy()
+
+        win.bind("<Button-1>", _open)
+        for w_ in win.winfo_children():
+            w_.bind("<Button-1>", _open)
+
+        win.after(8000, win.destroy)
+    except Exception:
+        pass
+
+
 def set_update_available(version):
     """Called when a new version is detected — adds menu item."""
     global _update_version

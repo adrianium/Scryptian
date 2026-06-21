@@ -3,11 +3,18 @@
 # @author: Scryptian
 
 import os
+import sys
 from urllib import request, parse
 import json
 import ssl
+import bridge
 
-_LANG_FILE = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Scryptian", "translate_lang.txt")
+if getattr(sys, "frozen", False):
+    _BASE = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Scryptian")
+else:
+    _BASE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+_LANG_FILE = os.path.join(_BASE, "translate_lang.txt")
 
 
 def _ssl_ctx():
@@ -65,10 +72,10 @@ def _get_lang_code():
     if lang:
         return lang
     lang = _ask_lang()
-    if lang:
-        _save_lang(lang)
-        return lang
-    return "en"
+    if not lang:
+        lang = "en"
+    _save_lang(lang)
+    return lang
 
 
 def run(text):
@@ -82,5 +89,5 @@ def run(text):
         resp = request.urlopen(f"{url}?{params}", timeout=10, context=_ssl_ctx())
         data = json.loads(resp.read())
         return "".join(part[0] for part in data[0] if part[0])
-    except Exception as e:
-        return f"[Scryptian Error] Translation failed: {e}"
+    except Exception:
+        return bridge.generate(f"Translate the following text to {tl}. Output ONLY the translated text:\n\n{text}")
