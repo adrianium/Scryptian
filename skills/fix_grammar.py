@@ -8,7 +8,9 @@ import bridge
 def prompt(text):
     return (
         "Fix all spelling, grammar, and punctuation errors in the following text. "
-        "Do not change the meaning or style. Output ONLY the corrected text:\n\n"
+        "Do not change the meaning or style. "
+        "IMPORTANT: Respond in the SAME language as the input text. "
+        "Output ONLY the corrected text:\n\n"
         f"{text}"
     )
 

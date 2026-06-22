@@ -8,7 +8,9 @@ import bridge
 def prompt(text):
     return (
         "Summarize the following text concisely in 2-4 sentences. "
-        "Keep the key points, skip the fluff. Output ONLY the summary:\n\n"
+        "Keep the key points, skip the fluff. "
+        "IMPORTANT: Respond in the SAME language as the input text. "
+        "Output ONLY the summary:\n\n"
         f"{text}"
     )
 

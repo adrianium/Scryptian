@@ -8,7 +8,9 @@ import bridge
 def prompt(text):
     return (
         "Rewrite the following text in a warm, friendly, and approachable tone. "
-        "Keep the original meaning and length. Output ONLY the rewritten text:\n\n"
+        "Keep the original meaning and length. "
+        "IMPORTANT: Respond in the SAME language as the input text. "
+        "Output ONLY the rewritten text:\n\n"
         f"{text}"
     )
 
