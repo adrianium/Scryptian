@@ -606,8 +606,10 @@ class ScryptianBar:
                         telemetry.send("skill_run", {"name": skill["title"]})
                         print(f"[Scryptian] Done!")
                     elif stripped.startswith("[Scryptian Error]"):
+                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "error", "error": stripped[:200]})
                         self.root.after(0, lambda t=stripped: self._show_result(t))
                     else:
+                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "empty"})
                         self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
                 else:
                     # Fallback: non-streaming
@@ -624,10 +626,13 @@ class ScryptianBar:
                         telemetry.send("skill_run", {"name": skill["title"]})
                         print(f"[Scryptian] Done!")
                     elif result and result.startswith("[Scryptian Error]"):
+                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "error", "error": result[:200]})
                         self.root.after(0, lambda: self._show_result(result))
                     else:
+                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "empty"})
                         self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
             except Exception as e:
+                telemetry.send("skill_failed", {"name": skill["title"], "reason": "exception", "error": str(e)[:200]})
                 err_msg = f"Error: {e}"
                 self.root.after(0, lambda msg=err_msg: self._show_result(msg))
 
@@ -668,6 +673,7 @@ class ScryptianBar:
                         self.root.after(0, self._finish_stream)
                         telemetry.send("skill_run", {"name": skill["title"], "via": "selection"})
                     else:
+                        telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "error_or_empty", "error": (stripped or "")[:200]})
                         self.root.after(0, lambda t=stripped: self._show_result(t or "Skill returned an empty result."))
                 else:
                     result = mod.run(input_text)
@@ -678,8 +684,10 @@ class ScryptianBar:
                         self.root.after(0, lambda: self._show_result(result))
                         telemetry.send("skill_run", {"name": skill["title"], "via": "selection"})
                     else:
+                        telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "error_or_empty", "error": (result or "")[:200]})
                         self.root.after(0, lambda t=result: self._show_result(t or "Skill returned an empty result."))
             except Exception as e:
+                telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "exception", "error": str(e)[:200]})
                 self.root.after(0, lambda msg=str(e): self._show_result(f"Error: {msg}"))
 
         threading.Thread(target=execute, daemon=True).start()
@@ -992,7 +1000,10 @@ class SelectionToolbar:
                     ctypes.windll.user32.SetForegroundWindow(source_hwnd)
                     time.sleep(0.06)
                     keyboard.send("ctrl+v")
+                else:
+                    telemetry.send("skill_failed", {"name": skill["title"], "via": "selection_inline", "reason": "error_or_empty", "error": (result or "")[:200]})
             except Exception as e:
+                telemetry.send("skill_failed", {"name": skill["title"], "via": "selection_inline", "reason": "exception", "error": str(e)[:200]})
                 print(f"[Scryptian] Selection skill error: {e}")
 
         threading.Thread(target=execute, daemon=True).start()

@@ -14,6 +14,8 @@ venv/
 *.swo
 *~
 .id
+.first_launch_sent
+first_launch_sent.txt
 *.gguf
 models/
 *.exe

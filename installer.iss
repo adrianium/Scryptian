@@ -59,10 +59,22 @@ begin
   Exec('taskkill', '/f /im Scryptian.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
+procedure CleanOldInstall();
+begin
+  // Remove old Program Files (x86) installation
+  if DirExists('C:\Program Files (x86)\Scryptian') then
+    DelTree('C:\Program Files (x86)\Scryptian', True, True, True);
+  // Fix registry autostart to point to new location
+  RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Scryptian');
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssInstall then
+  begin
     KillScryptian();
+    CleanOldInstall();
+  end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

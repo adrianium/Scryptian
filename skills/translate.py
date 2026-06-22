@@ -12,7 +12,8 @@ import bridge
 if getattr(sys, "frozen", False):
     _BASE = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Scryptian")
 else:
-    _BASE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    _BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.makedirs(_BASE, exist_ok=True)
 
 _LANG_FILE = os.path.join(_BASE, "translate_lang.txt")
 
@@ -26,6 +27,17 @@ def _ssl_ctx():
 
 
 def _load_lang():
+    # Try registry first (survives file cleanup)
+    try:
+        import winreg
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Scryptian", 0, winreg.KEY_READ)
+        value, _ = winreg.QueryValueEx(key, "TranslateLang")
+        winreg.CloseKey(key)
+        if value:
+            return value.strip().lower()
+    except Exception:
+        pass
+    # Fallback to file
     try:
         if os.path.exists(_LANG_FILE):
             with open(_LANG_FILE, "r") as f:
@@ -36,10 +48,20 @@ def _load_lang():
 
 
 def _save_lang(code):
+    code = code.strip().lower()
+    # Save to registry (primary)
+    try:
+        import winreg
+        key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Scryptian")
+        winreg.SetValueEx(key, "TranslateLang", 0, winreg.REG_SZ, code)
+        winreg.CloseKey(key)
+    except Exception:
+        pass
+    # Save to file (backup)
     try:
         os.makedirs(os.path.dirname(_LANG_FILE), exist_ok=True)
         with open(_LANG_FILE, "w") as f:
-            f.write(code.strip().lower())
+            f.write(code)
     except Exception:
         pass
 
