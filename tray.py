@@ -36,6 +36,80 @@ def notify(title, message):
             pass
 
 
+def _get_work_area():
+    """Return (left, top, right, bottom) of the usable screen area (excludes taskbar)."""
+    try:
+        import ctypes
+        import ctypes.wintypes
+        SPI_GETWORKAREA = 0x0030
+        rc = ctypes.wintypes.RECT()
+        ctypes.windll.user32.SystemParametersInfoW(SPI_GETWORKAREA, 0, ctypes.byref(rc), 0)
+        return rc.left, rc.top, rc.right, rc.bottom
+    except Exception:
+        return None
+
+
+def show_notify_popup(title, message, root=None, duration=5000):
+    """Show a custom in-app notification popup in bottom-right corner."""
+    import tkinter as tk
+
+    try:
+        win = tk.Toplevel(root)
+        win.overrideredirect(True)
+        win.attributes("-topmost", True)
+        win.attributes("-alpha", 0.97)
+        win.configure(bg="#161b22")
+
+        w, h = 360, 90
+        wa = _get_work_area()
+        if wa:
+            _, _, right, bottom = wa
+        else:
+            right = win.winfo_screenwidth()
+            bottom = win.winfo_screenheight()
+        x = right - w - 16
+        y = bottom - h - 12
+        win.geometry(f"{w}x{h}+{x}+{y}")
+
+        tk.Label(win, text="Scryptian",
+                 bg="#161b22", fg="#58a6ff",
+                 font=("Segoe UI", 8, "bold")).place(x=14, y=10)
+
+        tk.Label(win, text=title,
+                 bg="#161b22", fg="#f0f0f0",
+                 font=("Segoe UI", 10, "bold")).place(x=14, y=28)
+
+        tk.Label(win, text=message,
+                 bg="#161b22", fg="#8b949e",
+                 font=("Segoe UI", 9)).place(x=14, y=52)
+
+        try:
+            import winsound
+            _snd = os.path.join(_icon_dir(), "docs", "assets", "scryptian-notification.wav")
+            if os.path.exists(_snd):
+                threading.Thread(target=lambda: winsound.PlaySound(_snd, winsound.SND_FILENAME), daemon=True).start()
+        except Exception:
+            pass
+
+        def _fade_out(alpha=0.97):
+            try:
+                if alpha <= 0.0:
+                    win.destroy()
+                    return
+                win.attributes("-alpha", alpha)
+                win.after(30, lambda: _fade_out(alpha - 0.05))
+            except Exception:
+                pass
+
+        win.bind("<Button-1>", lambda e: win.destroy())
+        for w_ in win.winfo_children():
+            w_.bind("<Button-1>", lambda e: win.destroy())
+
+        win.after(duration, _fade_out)
+    except Exception:
+        pass
+
+
 def show_update_popup(version, releases_url, root=None):
     """Show a custom in-app update notification popup in bottom-right corner."""
     import tkinter as tk
@@ -48,10 +122,14 @@ def show_update_popup(version, releases_url, root=None):
         win.configure(bg="#161b22")
 
         w, h = 300, 80
-        sw = win.winfo_screenwidth()
-        sh = win.winfo_screenheight()
-        x = sw - w - 16
-        y = sh - h - 48
+        wa = _get_work_area()
+        if wa:
+            _, _, right, bottom = wa
+        else:
+            right = win.winfo_screenwidth()
+            bottom = win.winfo_screenheight()
+        x = right - w - 16
+        y = bottom - h - 12
         win.geometry(f"{w}x{h}+{x}+{y}")
 
         tk.Label(win, text=f"Scryptian {version} is available",

@@ -10,6 +10,7 @@ import tkinter as tk
 import pyperclip
 import keyboard
 import time
+import datetime
 import bridge
 import telemetry
 import tray
@@ -39,6 +40,53 @@ if IS_WINDOWS:
 from config import HOTKEY, BASE_DIR
 import bootstrap
 SKILLS_DIR = os.path.join(BASE_DIR, "skills")
+
+
+def _get_source_app(hwnd) -> str:
+    """Get exe name of the window that was active before Scryptian opened."""
+    try:
+        if not hwnd:
+            return "unknown"
+        import ctypes
+        import ctypes.wintypes
+        pid = ctypes.wintypes.DWORD()
+        ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        h = ctypes.windll.kernel32.OpenProcess(0x0410, False, pid.value)
+        buf = ctypes.create_unicode_buffer(260)
+        ctypes.windll.psapi.GetModuleFileNameExW(h, None, buf, 260)
+        ctypes.windll.kernel32.CloseHandle(h)
+        return os.path.basename(buf.value).lower() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _format_last_used(iso: str) -> str:
+    """Convert ISO UTC timestamp to human-readable relative string."""
+    try:
+        dt = datetime.datetime.fromisoformat(iso)
+        delta = datetime.datetime.now(datetime.timezone.utc) - dt.replace(tzinfo=datetime.timezone.utc)
+        days = delta.days
+        if days == 0:
+            return "today"
+        elif days == 1:
+            return "yesterday"
+        elif days < 7:
+            return f"{days}d ago"
+        elif days < 30:
+            return f"{days // 7}w ago"
+        else:
+            return f"{days // 30}mo ago"
+    except Exception:
+        return ""
+
+
+def _track_skill(skill_id: str) -> None:
+    """Record count and last_used for a skill after successful run."""
+    state = bridge.get_state(skill_id)
+    bridge.set_state(skill_id, {
+        "count": state.get("count", 0) + 1,
+        "last_used": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    })
 
 
 # ── Skill scanner ──
@@ -399,15 +447,26 @@ class ScryptianBar:
             return
 
         for i, p in enumerate(self.filtered):
-            row = self._make_row(p["title"], p["description"], i, pinnable=True)
+            skill_id = p.get("filename", "").replace(".py", "")
+            row = self._make_row(p["title"], p["description"], i, pinnable=True, skill_id=skill_id)
             self._skill_rows.append(row)
 
         # "Add skill" shortcut — only when no filter is active
         self._has_add_item = False
+        self._has_folder_item = False
+        self._has_feedback_item = False
         if not self.entry.get().strip():
             row = self._make_row("+ Add your own skill", "", len(self.filtered))
             self._skill_rows.append(row)
             self._has_add_item = True
+
+            row2 = self._make_row("📁 Open skills folder", "", len(self.filtered) + 1)
+            self._skill_rows.append(row2)
+            self._has_folder_item = True
+
+            row3 = self._make_row("💬 Help & feedback (discord server)", "", len(self.filtered) + 2)
+            self._skill_rows.append(row3)
+            self._has_feedback_item = True
 
         self.list_frame.pack(fill="x", padx=6, pady=(0, 2))
         self.skill_hint.pack(fill="x", padx=12, pady=(0, 6))
@@ -420,7 +479,7 @@ class ScryptianBar:
         self.selected_index = max(0, min(self.selected_index, max_idx))
         self._highlight_row()
 
-    def _make_row(self, title, desc, idx, pinnable=False):
+    def _make_row(self, title, desc, idx, pinnable=False, skill_id=None):
         """Creates a single skill row with title (bright) and description (dim)."""
         row = tk.Frame(self.list_frame, bg="#1e1e2e", cursor="hand2")
         row.pack(fill="x", padx=4, pady=1)
@@ -430,6 +489,22 @@ class ScryptianBar:
             bg="#1e1e2e", fg="#cdd6f4", anchor="w",
         )
         title_lbl.pack(side="left", fill="x", expand=True)
+
+        if skill_id:
+            state = bridge.get_state(skill_id)
+            count = state.get("count", 0)
+            last_used = state.get("last_used", "")
+            if count > 0:
+                stats_parts = [f"{count}×"]
+                if last_used:
+                    stats_parts.append(_format_last_used(last_used))
+                stats_text = "  ".join(stats_parts)
+                stats_lbl = tk.Label(
+                    row, text=stats_text, font=("Segoe UI", 9),
+                    bg="#1e1e2e", fg="#45475a", anchor="e", padx=4,
+                )
+                stats_lbl.pack(side="left")
+                stats_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
         if pinnable:
             skill_obj = self.filtered[idx] if idx < len(self.filtered) else None
@@ -550,8 +625,20 @@ class ScryptianBar:
             return
 
         # "Add skill" item selected
-        if self._has_add_item and self.selected_index >= len(self.filtered):
+        if self._has_add_item and self.selected_index == len(self.filtered):
             self._open_new_skill_editor()
+            return
+
+        # "Open skills folder" item selected
+        if self._has_folder_item and self.selected_index == len(self.filtered) + 1:
+            self._open_skills_folder()
+            return
+
+        # "Help & feedback" item selected
+        if self._has_feedback_item and self.selected_index == len(self.filtered) + 2:
+            import webbrowser
+            telemetry.send("feedback_clicked")
+            webbrowser.open("https://discord.gg/JyAJuN8xk")
             return
 
         skill = self.filtered[self.selected_index]
@@ -574,14 +661,21 @@ class ScryptianBar:
 
         self.processing = True
         print(f"[Scryptian] Running: {skill['title']}...")
+        _t0 = time.time()
+        _source_app = _get_source_app(getattr(self, '_source_hwnd', None))
 
         def execute():
             try:
                 # Ensure model is ready (download/load if needed)
-                if not bridge.is_model_ready():
+                if not bridge.is_model_in_memory():
                     def on_progress(msg):
-                        self.root.after(0, lambda m=msg: self._show_result(m))
+                        if self.visible:
+                            self.root.after(0, lambda m=msg: self._show_result(m))
+                    if not bridge.is_model_ready():
+                        self.root.after(0, lambda: self._show_result(f"One-time setup: downloading {bridge.MODEL_FILE} (~2 GB)..."))
                     bridge._get_llm(on_progress=on_progress)
+                    if bridge.was_just_downloaded():
+                        self.root.after(0, lambda: tray.show_notify_popup("Scryptian", "AI model ready. Skills are now available.", self.root))
 
                 mod = skill["module"]
                 if hasattr(mod, "prompt"):
@@ -603,7 +697,8 @@ class ScryptianBar:
                             self.root.after(0, lambda: self._finish_stream())
                         else:
                             self.pending_result = stripped
-                        telemetry.send("skill_run", {"name": skill["title"]})
+                        telemetry.send("skill_run", {"name": skill["title"], "source_app": _source_app, "text_len": len(input_text), "elapsed_sec": round(time.time() - _t0, 2)})
+                        _track_skill(skill["filename"].replace(".py", ""))
                         print(f"[Scryptian] Done!")
                     elif stripped.startswith("[Scryptian Error]"):
                         telemetry.send("skill_failed", {"name": skill["title"], "reason": "error", "error": stripped[:200]})
@@ -611,6 +706,29 @@ class ScryptianBar:
                     else:
                         telemetry.send("skill_failed", {"name": skill["title"], "reason": "empty"})
                         self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
+                elif hasattr(mod, "run_stream"):
+                    # run_stream: skill controls streaming + state
+                    full_text = ""
+                    for chunk in mod.run_stream(input_text):
+                        full_text += chunk
+                        text_snapshot = full_text
+                        self.root.after(0, lambda t=text_snapshot: self._update_stream(t))
+                    self.processing = False
+                    stripped = full_text.strip()
+                    if stripped and not stripped.startswith("[Scryptian Error]"):
+                        if self.window and self.visible:
+                            self.last_result = stripped
+                            self.last_skill_title = skill["title"]
+                            self.has_result = True
+                            self.root.after(0, self._finish_stream)
+                        else:
+                            self.pending_result = stripped
+                        telemetry.send("skill_run", {"name": skill["title"], "source_app": _source_app, "text_len": len(input_text), "elapsed_sec": round(time.time() - _t0, 2)})
+                        _track_skill(skill["filename"].replace(".py", ""))
+                        print(f"[Scryptian] Done!")
+                    else:
+                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "error_or_empty"})
+                        self.root.after(0, lambda t=stripped: self._show_result(t or "Skill returned an empty result."))
                 else:
                     # Fallback: non-streaming
                     result = mod.run(input_text)
@@ -623,7 +741,8 @@ class ScryptianBar:
                             self.root.after(0, lambda: self._show_result(result))
                         else:
                             self.pending_result = result
-                        telemetry.send("skill_run", {"name": skill["title"]})
+                        telemetry.send("skill_run", {"name": skill["title"], "source_app": _source_app, "text_len": len(input_text), "elapsed_sec": round(time.time() - _t0, 2)})
+                        _track_skill(skill["filename"].replace(".py", ""))
                         print(f"[Scryptian] Done!")
                     elif result and result.startswith("[Scryptian Error]"):
                         telemetry.send("skill_failed", {"name": skill["title"], "reason": "error", "error": result[:200]})
@@ -655,10 +774,15 @@ class ScryptianBar:
 
         def execute():
             try:
-                if not bridge.is_model_ready():
+                if not bridge.is_model_in_memory():
                     def on_progress(msg):
-                        self.root.after(0, lambda m=msg: self._show_result(m))
+                        if self.visible:
+                            self.root.after(0, lambda m=msg: self._show_result(m))
+                    if not bridge.is_model_ready():
+                        self.root.after(0, lambda: self._show_result(f"One-time setup: downloading {bridge.MODEL_FILE} (~2 GB)..."))
                     bridge._get_llm(on_progress=on_progress)
+                    if bridge.was_just_downloaded():
+                        self.root.after(0, lambda: tray.show_notify_popup("Scryptian", "AI model ready. Skills are now available.", self.root))
                 mod = skill["module"]
                 if hasattr(mod, "prompt"):
                     full_text = ""

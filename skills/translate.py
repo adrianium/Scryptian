@@ -27,7 +27,11 @@ def _ssl_ctx():
 
 
 def _load_lang():
-    # Try registry first (survives file cleanup)
+    # Try shared profile first
+    lang = bridge.get_profile().get("lang")
+    if lang:
+        return lang.strip().lower()
+    # Fallback: registry (legacy)
     try:
         import winreg
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Scryptian", 0, winreg.KEY_READ)
@@ -37,7 +41,7 @@ def _load_lang():
             return value.strip().lower()
     except Exception:
         pass
-    # Fallback to file
+    # Fallback: file (legacy)
     try:
         if os.path.exists(_LANG_FILE):
             with open(_LANG_FILE, "r") as f:
@@ -49,19 +53,14 @@ def _load_lang():
 
 def _save_lang(code):
     code = code.strip().lower()
-    # Save to registry (primary)
+    # Save to shared profile (primary)
+    bridge.set_profile({"lang": code})
+    # Keep registry as backup (legacy)
     try:
         import winreg
         key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Scryptian")
         winreg.SetValueEx(key, "TranslateLang", 0, winreg.REG_SZ, code)
         winreg.CloseKey(key)
-    except Exception:
-        pass
-    # Save to file (backup)
-    try:
-        os.makedirs(os.path.dirname(_LANG_FILE), exist_ok=True)
-        with open(_LANG_FILE, "w") as f:
-            f.write(code)
     except Exception:
         pass
 
@@ -112,4 +111,6 @@ def run(text):
         data = json.loads(resp.read())
         return "".join(part[0] for part in data[0] if part[0])
     except Exception:
+        if not bridge.is_model_ready():
+            return "[Scryptian Error] Translation failed: no internet connection and AI model is not downloaded yet."
         return bridge.generate(f"Translate the following text to {tl}. Output ONLY the translated text:\n\n{text}")

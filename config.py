@@ -15,9 +15,9 @@ HOTKEY = "ctrl+alt"
 
 # ── Model (GGUF) ──
 MODELS_DIR = os.path.join(BASE_DIR, "models")
-MODEL_FILE = "SmolLM3-Q4_K_M.gguf"
+MODEL_FILE = "HuggingFaceTB_SmolLM3-3B-Q4_K_M.gguf"
 MODEL_PATH = os.path.join(MODELS_DIR, MODEL_FILE)
-MODEL_URL = "https://huggingface.co/ggml-org/SmolLM3-3B-GGUF/resolve/main/SmolLM3-Q4_K_M.gguf"
+MODEL_URL = "https://huggingface.co/bartowski/HuggingFaceTB_SmolLM3-3B-GGUF/resolve/main/HuggingFaceTB_SmolLM3-3B-Q4_K_M.gguf?download=true"
 CONTEXT_SIZE = 2048
 TEMPERATURE = 0
 

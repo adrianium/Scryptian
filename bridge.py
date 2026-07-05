@@ -1,206 +1,67 @@
-# bridge.py — Bridge between Scryptian skills and local LLM
-# Connector | Optimizer | Unifier
+# bridge.py — Scryptian skill runtime: state, profile, and optional LLM access
+# Core layer: state + profile (no LLM knowledge)
+# LLM re-exported from llm.py for backward compatibility
 
 import os
+import json
 import threading
-from config import MODEL_PATH, MODELS_DIR, MODEL_URL, MODEL_FILE, CONTEXT_SIZE, TEMPERATURE
 
-_llm = None
-_idle_timer = None
-_load_lock = threading.Lock()
-IDLE_TIMEOUT = 600  # seconds before unloading (10 minutes)
+_DATA_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Scryptian", "state")
+_PROFILE_PATH = os.path.join(_DATA_DIR, "_profile.json")
+_state_lock = threading.Lock()
 
 
-def _schedule_unload():
-    """Reset idle timer. Model unloads after IDLE_TIMEOUT seconds of no use."""
-    global _idle_timer
-    if _idle_timer:
-        _idle_timer.cancel()
-    _idle_timer = threading.Timer(IDLE_TIMEOUT, _unload_model)
-    _idle_timer.daemon = True
-    _idle_timer.start()
-
-
-def _unload_model():
-    """Unload model from RAM."""
-    global _llm, _idle_timer
-    if _llm is not None:
-        _llm = None
-        print(f"[Scryptian] Model unloaded from RAM (idle {IDLE_TIMEOUT}s).")
-    _idle_timer = None
-
-
-def _download_model(on_progress=None):
-    """Download GGUF model from HuggingFace using stdlib only."""
-    from urllib import request
-    import ssl
-    import shutil
-
-    os.makedirs(MODELS_DIR, exist_ok=True)
-    tmp_path = MODEL_PATH + ".part"
-
-    import telemetry
-    telemetry.send("model_download_started")
-
-    if on_progress:
-        on_progress(f"Downloading {MODEL_FILE} for AI skills (one time only)...")
-
+def get_profile() -> dict:
+    """Read shared user profile. Readable by all skills."""
     try:
+        if os.path.exists(_PROFILE_PATH):
+            with open(_PROFILE_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+def set_profile(data: dict) -> None:
+    """Merge data into shared user profile."""
+    with _state_lock:
         try:
-            import certifi
-            ctx = ssl.create_default_context(cafile=certifi.where())
-        except ImportError:
-            ctx = ssl.create_default_context()
-        with request.urlopen(MODEL_URL, timeout=600, context=ctx) as resp:
-            total = int(resp.headers.get("Content-Length", 0))
-            downloaded = 0
-            with open(tmp_path, "wb") as f:
-                while True:
-                    chunk = resp.read(1024 * 1024)  # 1MB chunks
-                    if not chunk:
-                        break
-                    f.write(chunk)
-                    downloaded += len(chunk)
-                    if total:
-                        pct = int(downloaded / total * 100)
-                        mb_done = downloaded // (1024 * 1024)
-                        mb_total = total // (1024 * 1024)
-                        if on_progress:
-                            on_progress(f"Downloading model... {pct}%  ({mb_done}/{mb_total} MB)")
-        shutil.move(tmp_path, MODEL_PATH)
-        telemetry.send("model_download_finished")
-        if on_progress:
-            on_progress("Download complete. Preparing model...")
-        return True
-    except Exception as e:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
-        telemetry.send("model_download_failed", {"error": str(e)})
-        if on_progress:
-            on_progress(f"[Scryptian Error] Download failed: {e}")
-        return False
+            os.makedirs(_DATA_DIR, exist_ok=True)
+            current = get_profile()
+            current.update(data)
+            with open(_PROFILE_PATH, "w", encoding="utf-8") as f:
+                json.dump(current, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
 
 
-def is_model_ready():
-    """Check if model is loaded or file exists."""
-    return _llm is not None or os.path.exists(MODEL_PATH)
+def get_state(skill_id: str) -> dict:
+    """Read per-skill isolated state."""
+    try:
+        path = os.path.join(_DATA_DIR, f"{skill_id}.json")
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
 
 
-def _get_llm(on_progress=None):
-    """Lazy-load the model on first call. Downloads if missing."""
-    global _llm
-    if _llm is not None:
-        _schedule_unload()
-        return _llm
-
-    with _load_lock:
-        if _llm is not None:
-            _schedule_unload()
-            return _llm
-
-        if not os.path.exists(MODEL_PATH):
-            if not _download_model(on_progress):
-                return None
-
-        from llama_cpp import Llama
-        if on_progress:
-            on_progress("Loading model...")
+def set_state(skill_id: str, data: dict) -> None:
+    """Merge data into per-skill isolated state."""
+    with _state_lock:
         try:
-            _llm = Llama(
-                model_path=MODEL_PATH,
-                n_ctx=CONTEXT_SIZE,
-                n_threads=os.cpu_count() or 4,
-                verbose=False,
-            )
-            import telemetry
-            telemetry.send("model_loaded")
-            print("[Scryptian] Model loaded into RAM.")
-        except Exception as e:
-            import telemetry
-            telemetry.send("model_load_failed", {"error": str(e)})
-            if on_progress:
-                on_progress(f"[Scryptian Error] Model load failed: {e}")
-            return None
+            os.makedirs(_DATA_DIR, exist_ok=True)
+            current = get_state(skill_id)
+            current.update(data)
+            path = os.path.join(_DATA_DIR, f"{skill_id}.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(current, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
 
-        _schedule_unload()
-        return _llm
-
-
-def _messages(prompt: str):
-    """Format prompt as chat messages for the model."""
-    return [
-        {"role": "system", "content": "/no_think\nYou are a helpful assistant. Follow instructions precisely. Output only what is asked, nothing extra. Never ask questions back. This is not a chat."},
-        {"role": "user", "content": prompt},
-    ]
-
-
-def generate(prompt: str) -> str:
-    """
-    Single LLM entry point for all skills.
-    Takes a prompt (string), returns model response (string).
-    """
-    try:
-        _schedule_unload()
-        llm = _get_llm()
-        if llm is None:
-            return "[Scryptian Error] Model failed to load. Check logs for details."
-
-        result = llm.create_chat_completion(
-            messages=_messages(prompt),
-            max_tokens=1024,
-            temperature=TEMPERATURE,
-        )
-        import re
-        raw = result["choices"][0]["message"]["content"].strip()
-        raw = re.sub(r"<think>[\s\S]*?</think>", "", raw).strip()
-        return raw
-    except Exception as e:
-        return f"[Scryptian Error] {e}"
-
-
-def generate_stream(prompt: str):
-    """
-    Streaming LLM call. Yields text chunks as they arrive.
-    """
-    try:
-        _schedule_unload()
-        llm = _get_llm()
-        if llm is None:
-            yield "[Scryptian Error] Model failed to load. Check logs for details."
-            return
-
-        buf = ""
-        in_think = False
-        think_done = False
-        for chunk in llm.create_chat_completion(
-            messages=_messages(prompt),
-            max_tokens=1024,
-            temperature=TEMPERATURE,
-            stream=True,
-        ):
-            delta = chunk["choices"][0].get("delta", {})
-            token = delta.get("content", "")
-            if not token:
-                continue
-            buf += token
-
-            if not think_done:
-                if "<think>" in buf and not in_think:
-                    in_think = True
-                if in_think:
-                    if "</think>" in buf:
-                        in_think = False
-                        think_done = True
-                        import re
-                        after = re.sub(r"<think>[\s\S]*?</think>", "", buf).strip()
-                        buf = after
-                        if after:
-                            yield after
-                    continue
-                else:
-                    think_done = True
-
-            if think_done and not in_think:
-                yield token
-    except Exception as e:
-        yield f"[Scryptian Error] {e}"
+# LLM access — optional, re-exported for backward compatibility
+# Skills that need LLM: import bridge and use bridge.generate()
+# Skills that don't need LLM: import only bridge (state/profile)
+from llm import generate, generate_stream, is_model_ready, is_model_in_memory, was_just_downloaded, _get_llm
+from config import MODEL_FILE

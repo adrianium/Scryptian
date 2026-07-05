@@ -1,5 +1,5 @@
 #define MyAppName "Scryptian"
-#define MyAppVersion "0.3.8"
+#define MyAppVersion "0.5.0"
 #define MyAppPublisher "adrianium"
 #define MyAppURL "https://github.com/adrianium/Scryptian"
 #define MyAppExeName "Scryptian.exe"
@@ -39,6 +39,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "dist\Scryptian\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "uninstall_telemetry.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -84,7 +85,7 @@ var
 begin
   if CurUninstallStep = usUninstall then
   begin
-    Exec('powershell', '-NonInteractive -WindowStyle Hidden -Command "$id=''unknown''; $f=$env:LOCALAPPDATA+''\Scryptian\.id''; if(Test-Path $f){$id=(Get-Content $f -Raw).Trim()}; $mid=[System.BitConverter]::ToString([System.Security.Cryptography.MD5]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($env:COMPUTERNAME))).Replace(''-'','''').ToLower().Substring(0,16); $body=''{\\"api_key\\":\\"phc_nyYF49YRbnnsjJbMqFwZbXxpiPfU249NAnmnZHuPavei\\",\\"event\\":\\"uninstalled\\",\\"distinct_id\\":\\\"''+$id+''\\"\ ,\\"properties\\":{\\"machine_id\\":\\\"''+$mid+''\\\"}}'' ; try{Invoke-WebRequest -Uri ''https://us.i.posthog.com/capture/'' -Method POST -ContentType ''application/json'' -Body $body -TimeoutSec 5}catch{}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec('powershell', '-ExecutionPolicy Bypass -NonInteractive -WindowStyle Hidden -File "' + ExpandConstant('{app}') + '\uninstall_telemetry.ps1"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
   if CurUninstallStep = usPostUninstall then
   begin
