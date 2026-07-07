@@ -1329,7 +1329,46 @@ def main():
     print(f"[Scryptian] Hotkey: {HOTKEY}")
     print("[Scryptian] Waiting...")
 
-    telemetry.send("app_started", {"skills": len(skills)})
+    def _sys_info():
+        info = {"skills": len(skills)}
+        try:
+            import subprocess, re
+            r = subprocess.run(["wmic", "cpu", "get", "Name,NumberOfCores"], capture_output=True, text=True, timeout=5, creationflags=0x08000000)
+            lines = [l.strip() for l in r.stdout.strip().splitlines() if l.strip() and l.strip().lower() != "name  numberofcores"]
+            if lines:
+                parts = lines[0].rsplit(None, 1)
+                if len(parts) == 2:
+                    info["cpu_name"] = parts[0].strip()
+                    info["cpu_cores"] = int(parts[1])
+        except Exception:
+            pass
+        try:
+            import subprocess
+            r = subprocess.run(["wmic", "computersystem", "get", "TotalPhysicalMemory"], capture_output=True, text=True, timeout=5, creationflags=0x08000000)
+            for line in r.stdout.splitlines():
+                line = line.strip()
+                if line.isdigit():
+                    info["ram_gb"] = round(int(line) / (1024 ** 3), 1)
+                    break
+        except Exception:
+            pass
+        try:
+            import platform
+            info["os_version"] = platform.version()
+        except Exception:
+            pass
+        try:
+            import ctypes
+            pf = ctypes.windll.kernel32.IsProcessorFeaturePresent
+            info["has_avx"]    = bool(pf(17))
+            info["has_avx2"]   = bool(pf(40))
+            info["has_avx512"] = bool(pf(41))
+            info["has_fma"]    = bool(pf(19))
+        except Exception:
+            pass
+        return info
+
+    telemetry.send("app_started", _sys_info())
     telemetry.send_first_launch()
 
     # Hidden root tkinter window — keeps mainloop on the main thread

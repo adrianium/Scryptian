@@ -49,6 +49,7 @@ def _download_model(on_progress=None):
 
     import telemetry
     telemetry.send("model_download_started")
+    print(f"[Scryptian] Starting model download: {MODEL_URL}")
 
     if on_progress:
         on_progress(f"Downloading {MODEL_FILE} for AI skills (one time only)...")
@@ -80,9 +81,21 @@ def _download_model(on_progress=None):
                         on_progress(f"Retrying download... (attempt {attempt}/{max_retries})")
                     import time
                     time.sleep(3)
-                with request.urlopen(MODEL_URL, timeout=600, context=ctx) as resp:
+                if on_progress:
+                    on_progress(f"Connecting to server...")
+                print(f"[Scryptian] Connecting (attempt {attempt}/{max_retries})...")
+                import socket
+                old_timeout = socket.getdefaulttimeout()
+                socket.setdefaulttimeout(30)
+                try:
+                    resp_obj = request.urlopen(MODEL_URL, timeout=30, context=ctx)
+                finally:
+                    socket.setdefaulttimeout(old_timeout)
+                with resp_obj as resp:
                     total = int(resp.headers.get("Content-Length", 0))
+                    print(f"[Scryptian] Connected. Content-Length: {total // (1024*1024)} MB")
                     downloaded = 0
+                    last_logged_pct = -1
                     with open(tmp_path, "wb") as f:
                         while True:
                             chunk = resp.read(1024 * 1024)
@@ -96,10 +109,14 @@ def _download_model(on_progress=None):
                                 mb_total = total // (1024 * 1024)
                                 if on_progress:
                                     on_progress(f"Downloading AI model... {pct}%  ({mb_done}/{mb_total} MB)  —  one time only")
+                                if pct != last_logged_pct and pct % 5 == 0:
+                                    last_logged_pct = pct
+                                    print(f"[Scryptian] Download {pct}% ({mb_done}/{mb_total} MB)")
                 last_error = None
                 break
             except Exception as e:
                 last_error = e
+                print(f"[Scryptian] Download attempt {attempt} failed: {e}")
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 
@@ -156,18 +173,6 @@ def _get_llm(on_progress=None):
             _schedule_unload()
             return _llm
 
-        if os.path.isdir(MODELS_DIR):
-            for f in os.listdir(MODELS_DIR):
-                if f.endswith(".gguf") and f != MODEL_FILE:
-                    old_path = os.path.join(MODELS_DIR, f)
-                    try:
-                        os.remove(old_path)
-                        import telemetry
-                        telemetry.send("model_old_removed", {"file": f})
-                        print(f"[Scryptian] Removed outdated model: {f}")
-                    except Exception:
-                        pass
-
         if os.path.exists(MODEL_PATH) and not _is_valid_gguf(MODEL_PATH):
             print("[Scryptian] Corrupted model file detected, deleting and re-downloading...")
             os.remove(MODEL_PATH)
@@ -182,6 +187,14 @@ def _get_llm(on_progress=None):
         if on_progress:
             on_progress("Loading model into memory...")
         try:
+            import telemetry as _tel
+            import llama_cpp as _lc
+            import platform as _pl
+            _tel.send("model_load_started", {
+                "model_file": MODEL_FILE,
+                "llama_cpp_version": getattr(_lc, "__version__", "unknown"),
+                "python_arch": _pl.architecture()[0],
+            })
             _llm = Llama(
                 model_path=MODEL_PATH,
                 n_ctx=CONTEXT_SIZE,
@@ -195,7 +208,22 @@ def _get_llm(on_progress=None):
             global _last_load_error
             _last_load_error = str(e)
             import telemetry
-            telemetry.send("model_load_failed", {"error": str(e)})
+            import platform as _pl2
+            _cpu_name = "unknown"
+            try:
+                import subprocess as _sp
+                _r = _sp.run(["wmic", "cpu", "get", "Name"], capture_output=True, text=True, timeout=3, creationflags=0x08000000)
+                _lines = [l.strip() for l in _r.stdout.splitlines() if l.strip() and l.strip().lower() != "name"]
+                if _lines:
+                    _cpu_name = _lines[0]
+            except Exception:
+                pass
+            telemetry.send("model_load_failed", {
+                "error": str(e),
+                "model_file": MODEL_FILE,
+                "cpu_name": _cpu_name,
+                "python_arch": _pl2.architecture()[0],
+            })
             err_str = str(e)
             if "0xe06d7363" in err_str or "-529697949" in err_str:
                 user_msg = "[Scryptian Error] Your CPU does not support the AI model. This requires a processor with AVX2 support (Intel 4th gen+ or AMD Ryzen+)."
