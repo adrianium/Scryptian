@@ -3,6 +3,9 @@
 import os
 import sys
 
+# ── App version (used for skill bundle compatibility checks) ──
+APP_VERSION = "1.4.0"
+
 # ── Base directory (works for both .py and .exe) ──
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'Scryptian')

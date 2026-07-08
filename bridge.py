@@ -60,6 +60,43 @@ def set_state(skill_id: str, data: dict) -> None:
         except Exception:
             pass
 
+
+_root_ref = None
+
+
+def set_root(root) -> None:
+    """Register the Tk root so notify() can render the custom popup on the UI thread.
+
+    Called once by the host at startup. Skills never call this.
+    """
+    global _root_ref
+    _root_ref = root
+
+
+def notify(title: str, message: str) -> None:
+    """Show a Scryptian notification. Safe to call from any skill or thread.
+
+    Uses the custom in-app popup (bottom-right, branded, with sound) when the UI
+    is available, marshalling onto the Tk main thread. Falls back to a native
+    tray notification if the UI root is not registered.
+
+    Skills should use this for long-running progress (start/finish) feedback.
+    """
+    import tray
+    if _root_ref is not None:
+        try:
+            _root_ref.after(
+                0, lambda: tray.show_notify_popup(title, message, _root_ref)
+            )
+            return
+        except Exception:
+            pass
+    try:
+        tray.notify(title, message)
+    except Exception:
+        pass
+
+
 # LLM access — optional, re-exported for backward compatibility
 # Skills that need LLM: import bridge and use bridge.generate()
 # Skills that don't need LLM: import only bridge (state/profile)

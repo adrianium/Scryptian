@@ -60,7 +60,28 @@ def show_notify_popup(title, message, root=None, duration=5000):
         win.attributes("-alpha", 0.97)
         win.configure(bg="#161b22")
 
-        w, h = 360, 90
+        w = 360
+        wrap = w - 28
+
+        tk.Label(win, text="Scryptian",
+                 bg="#161b22", fg="#58a6ff",
+                 font=("Segoe UI", 8, "bold")).place(x=14, y=10)
+
+        tk.Label(win, text=title,
+                 bg="#161b22", fg="#f0f0f0",
+                 font=("Segoe UI", 10, "bold"),
+                 wraplength=wrap, justify="left").place(x=14, y=28)
+
+        msg = tk.Label(win, text=message,
+                       bg="#161b22", fg="#8b949e",
+                       font=("Segoe UI", 9),
+                       wraplength=wrap, justify="left")
+        msg.place(x=14, y=52)
+
+        # Size the popup to fit the (wrapped) message instead of clipping it.
+        win.update_idletasks()
+        h = 52 + max(24, msg.winfo_reqheight()) + 14
+
         wa = _get_work_area()
         if wa:
             _, _, right, bottom = wa
@@ -70,18 +91,6 @@ def show_notify_popup(title, message, root=None, duration=5000):
         x = right - w - 16
         y = bottom - h - 12
         win.geometry(f"{w}x{h}+{x}+{y}")
-
-        tk.Label(win, text="Scryptian",
-                 bg="#161b22", fg="#58a6ff",
-                 font=("Segoe UI", 8, "bold")).place(x=14, y=10)
-
-        tk.Label(win, text=title,
-                 bg="#161b22", fg="#f0f0f0",
-                 font=("Segoe UI", 10, "bold")).place(x=14, y=28)
-
-        tk.Label(win, text=message,
-                 bg="#161b22", fg="#8b949e",
-                 font=("Segoe UI", 9)).place(x=14, y=52)
 
         try:
             import winsound

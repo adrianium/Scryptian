@@ -14,6 +14,7 @@ import datetime
 import bridge
 import telemetry
 import tray
+import store
 import autostart
 import queue
 import selection_watcher
@@ -37,7 +38,7 @@ if IS_WINDOWS:
             pass
 
 # ── Settings ──
-from config import HOTKEY, BASE_DIR
+from config import HOTKEY, BASE_DIR, APP_VERSION
 import bootstrap
 SKILLS_DIR = os.path.join(BASE_DIR, "skills")
 
@@ -90,32 +91,109 @@ def _track_skill(skill_id: str) -> None:
 
 
 # ── Skill scanner ──
+def _version_tuple(v):
+    """Parse a dotted version string into a comparable tuple. Bad input -> (0,)."""
+    try:
+        return tuple(int(x) for x in str(v).strip().split("."))
+    except Exception:
+        return (0,)
+
+
+def _version_ge(a, b):
+    """Return True if version a >= version b."""
+    ta, tb = _version_tuple(a), _version_tuple(b)
+    length = max(len(ta), len(tb))
+    ta += (0,) * (length - len(ta))
+    tb += (0,) * (length - len(tb))
+    return ta >= tb
+
+
 def scan_skills():
     """
-    Scans the skills/ folder, reads metadata (@title, @description)
-    and loads modules. Returns a list of dicts.
+    Scans the skills/ folder and returns a list of skill dicts.
+    Supports two formats:
+      - legacy: a single `<name>.py` file with `# @title:` header comments
+      - bundle: a folder with `manifest.json` + entry module + optional `libs/`
     """
     skills = []
     if not os.path.isdir(SKILLS_DIR):
         return skills
 
-    for filename in sorted(os.listdir(SKILLS_DIR)):
-        if not filename.endswith(".py") or filename.startswith("_"):
+    for entry in sorted(os.listdir(SKILLS_DIR)):
+        path = os.path.join(SKILLS_DIR, entry)
+
+        # ── Bundle: a folder containing manifest.json ──
+        if os.path.isdir(path):
+            if entry.startswith("_") or entry == "libs":
+                continue
+            if os.path.exists(os.path.join(path, "manifest.json")):
+                skill = _load_bundle(entry, path)
+                if skill:
+                    skills.append(skill)
             continue
 
-        filepath = os.path.join(SKILLS_DIR, filename)
-        meta = _parse_metadata(filepath)
-        module = _load_module(filename, filepath)
+        # ── Legacy: single .py file ──
+        if not entry.endswith(".py") or entry.startswith("_"):
+            continue
 
+        meta = _parse_metadata(path)
+        module = _load_module(entry, path)
         if module and hasattr(module, "run"):
             skills.append({
-                "title": meta.get("title", filename.replace(".py", "")),
+                "title": meta.get("title", entry.replace(".py", "")),
                 "description": meta.get("description", ""),
                 "author": meta.get("author", ""),
                 "module": module,
-                "filename": filename,
+                "filename": entry,
+                "needs_llm": True,
+                "format": "legacy",
             })
     return skills
+
+
+def _load_bundle(name, bundle_dir):
+    """Load a skill bundle folder. Returns a skill dict or None."""
+    import json
+    try:
+        with open(os.path.join(bundle_dir, "manifest.json"), "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+    except Exception as e:
+        print(f"[Scryptian] Bad manifest in bundle '{name}': {e}")
+        return None
+
+    # Version gate
+    min_ver = manifest.get("min_app_version")
+    if min_ver and not _version_ge(APP_VERSION, min_ver):
+        print(f"[Scryptian] Skipping '{name}': needs app >= {min_ver} (current {APP_VERSION}).")
+        return None
+
+    # Make bundled libs importable for this skill
+    libs_dir = os.path.join(bundle_dir, "libs")
+    if os.path.isdir(libs_dir) and libs_dir not in sys.path:
+        sys.path.insert(0, libs_dir)
+
+    entry = manifest.get("entry", "skill.py")
+    entry_path = os.path.join(bundle_dir, entry)
+    if not os.path.exists(entry_path):
+        print(f"[Scryptian] Bundle '{name}' entry '{entry}' not found.")
+        return None
+
+    module = _load_module(f"{name}_{entry}", entry_path)
+    if not module or not hasattr(module, "run"):
+        print(f"[Scryptian] Bundle '{name}' has no run().")
+        return None
+
+    return {
+        "title": manifest.get("title", name),
+        "description": manifest.get("description", ""),
+        "author": manifest.get("author", ""),
+        "version": manifest.get("version", ""),
+        "module": module,
+        "filename": name,
+        "needs_llm": bool(manifest.get("needs_llm", True)),
+        "background": bool(manifest.get("background", False)),
+        "format": "bundle",
+    }
 
 
 def _parse_metadata(filepath):
@@ -164,6 +242,11 @@ class ScryptianBar:
         self.processing = False
         self.pending_result = None
         self._has_add_item = False
+        self._has_folder_item = False
+        self._has_feedback_item = False
+        self._has_store_item = False
+        self.store_frame = None
+        self.in_store = False
         self._source_hwnd = None
 
     def toggle(self):
@@ -316,6 +399,9 @@ class ScryptianBar:
 
         self.visible = True
         self.selected_index = 0
+        self.in_store = False
+        self.store_frame = None
+        self.processing = False
         self._bar_fade_in(0.0)
 
         # If there's a pending result from a background task, show it
@@ -455,6 +541,7 @@ class ScryptianBar:
         self._has_add_item = False
         self._has_folder_item = False
         self._has_feedback_item = False
+        self._has_store_item = False
         if not self.entry.get().strip():
             row = self._make_row("+ Add your own skill", "", len(self.filtered))
             self._skill_rows.append(row)
@@ -467,6 +554,10 @@ class ScryptianBar:
             row3 = self._make_row("💬 Help & feedback (discord server)", "", len(self.filtered) + 2)
             self._skill_rows.append(row3)
             self._has_feedback_item = True
+
+            row4 = self._make_row("🏪 Store", "", len(self.filtered) + 3)
+            self._skill_rows.append(row4)
+            self._has_store_item = True
 
         self.list_frame.pack(fill="x", padx=6, pady=(0, 2))
         self.skill_hint.pack(fill="x", padx=12, pady=(0, 6))
@@ -641,7 +732,12 @@ class ScryptianBar:
             webbrowser.open("https://discord.gg/JyAJuN8xk")
             return
 
+        if self._has_store_item and self.selected_index == len(self.filtered) + 3:
+            self._open_store()
+            return
+
         skill = self.filtered[self.selected_index]
+        is_bg = bool(skill.get("background", False))
 
         # Get text from clipboard
         try:
@@ -649,8 +745,44 @@ class ScryptianBar:
         except Exception:
             input_text = ""
 
-        if not input_text.strip():
+        # Background skills (long file jobs) don't rely on clipboard text.
+        if not input_text.strip() and not is_bg:
             self._show_result("Clipboard is empty.")
+            return
+
+        # ── Background (fire-and-forget) skills: run detached, free the bar ──
+        if is_bg:
+            if getattr(self, "_bg_running", False):
+                self._show_result("A background task is already running.\nPlease wait for it to finish.")
+                return
+            self._bg_running = True
+            print(f"[Scryptian] Running (background): {skill['title']}...")
+            _bt0 = time.time()
+            _bg_source = _get_source_app(getattr(self, '_source_hwnd', None))
+            _bg_mod = skill["module"]
+
+            def bg_execute():
+                try:
+                    if skill.get("needs_llm", True) and not bridge.is_model_in_memory():
+                        bridge._get_llm()
+                    result = _bg_mod.run(input_text)
+                    if isinstance(result, str) and result.startswith("[Scryptian Error]"):
+                        bridge.notify(skill["title"], result.replace("[Scryptian Error]", "").strip() or "Task failed.")
+                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "bg_error", "error": result[:200]})
+                    else:
+                        telemetry.send("skill_run", {"name": skill["title"], "source_app": _bg_source, "text_len": len(input_text), "elapsed_sec": round(time.time() - _bt0, 2), "background": True})
+                        _track_skill(skill["filename"].replace(".py", ""))
+                        print(f"[Scryptian] Done (background): {skill['title']}")
+                except Exception as e:
+                    print(f"[Scryptian] Background skill error: {e}")
+                    bridge.notify(skill["title"], f"Task failed: {e}")
+                finally:
+                    self._bg_running = False
+
+            threading.Thread(target=bg_execute, daemon=True).start()
+            self._show_result(f"'{skill['title']}' started in the background.\nYou'll be notified when it's done.")
+            if self.window:
+                self.window.after(2500, self._hide)
             return
 
         # Hide list, show status
@@ -666,9 +798,9 @@ class ScryptianBar:
 
         def execute():
             try:
-                # Ensure model is ready (download/load if needed).
+                # Ensure model is ready (download/load if needed) — only for skills that need the LLM.
                 # Progress is delivered through the global listener registered at startup.
-                if not bridge.is_model_in_memory():
+                if skill.get("needs_llm", True) and not bridge.is_model_in_memory():
                     self.root.after(0, lambda: self._show_result("Preparing AI model..."))
                     bridge._get_llm()
                     if bridge.was_just_downloaded():
@@ -771,7 +903,7 @@ class ScryptianBar:
 
         def execute():
             try:
-                if not bridge.is_model_in_memory():
+                if skill.get("needs_llm", True) and not bridge.is_model_in_memory():
                     self.root.after(0, lambda: self._show_result("Preparing AI model..."))
                     bridge._get_llm()
                     if bridge.was_just_downloaded():
@@ -987,6 +1119,171 @@ class ScryptianBar:
             subprocess.Popen(["open", SKILLS_DIR])
         else:
             subprocess.Popen(["xdg-open", SKILLS_DIR])
+
+    def _open_store(self):
+        """Show the online skill store inline inside the bar."""
+        if not self.window:
+            return
+        telemetry.send("store_opened")
+        self.in_store = True
+        self.processing = True  # keep bar open during network activity
+
+        # Hide the normal views
+        self.list_frame.pack_forget()
+        self.skill_hint.pack_forget()
+        self.separator.pack_forget()
+        self.result_box.pack_forget()
+        self.hint_label.pack_forget()
+        self.placeholder.place_forget()
+        self.entry.config(state="disabled")
+
+        # Build the store panel
+        if self.store_frame:
+            self.store_frame.destroy()
+        self.store_frame = tk.Frame(self.container, bg="#1e1e2e")
+        self.store_frame.pack(fill="x", padx=12, pady=(0, 10))
+
+        header = tk.Frame(self.store_frame, bg="#1e1e2e")
+        header.pack(fill="x", pady=(0, 6))
+        tk.Label(header, text="🏪 Skill Store", font=("Segoe UI", 12, "bold"),
+                 bg="#1e1e2e", fg="#cdd6f4").pack(side="left")
+        back = tk.Label(header, text="← Back", font=("Segoe UI", 10),
+                        bg="#1e1e2e", fg="#89b4fa", cursor="hand2")
+        back.pack(side="right")
+        back.bind("<Button-1>", lambda e: self._close_store())
+        back.bind("<Enter>", lambda e: back.config(fg="#b4befe"))
+        back.bind("<Leave>", lambda e: back.config(fg="#89b4fa"))
+
+        self.store_status = tk.Label(self.store_frame, text="Loading...",
+                                     font=("Segoe UI", 9), bg="#1e1e2e",
+                                     fg="#a6adc8", anchor="w")
+        self.store_status.pack(fill="x", pady=(0, 4))
+
+        self.store_rows = tk.Frame(self.store_frame, bg="#1e1e2e")
+        self.store_rows.pack(fill="x")
+
+        # ── Footer: submit your own skill via Discord ──
+        footer = tk.Frame(self.store_frame, bg="#1e1e2e")
+        footer.pack(fill="x", pady=(12, 0))
+
+        add_btn = tk.Label(
+            footer,
+            text="➕  Add your skill here  →  Discord",
+            font=("Segoe UI", 10, "bold"),
+            bg="#5865f2", fg="#ffffff",
+            padx=12, pady=8, cursor="hand2",
+        )
+        add_btn.pack(fill="x")
+        add_btn.bind("<Button-1>", lambda e: self._open_store_discord())
+        add_btn.bind("<Enter>", lambda e: add_btn.config(bg="#4752c4"))
+        add_btn.bind("<Leave>", lambda e: add_btn.config(bg="#5865f2"))
+
+        self.window.update_idletasks()
+        self._resize(self.container.winfo_reqheight() + 4)
+
+        threading.Thread(target=self._load_store, daemon=True).start()
+
+    def _open_store_discord(self):
+        import webbrowser
+        telemetry.send("store_add_skill_clicked")
+        webbrowser.open("https://discord.gg/xDgwGNpsx")
+
+    def _load_store(self):
+        try:
+            skills = store.fetch_registry()
+            self.root.after(0, lambda: self._render_store(skills))
+        except Exception as e:
+            err = str(e)
+            self.root.after(0, lambda: self._store_error(err))
+
+    def _store_error(self, err):
+        if not self.window or not self.in_store:
+            return
+        self.store_status.config(text=f"Failed to load store: {err}")
+
+    def _render_store(self, skills):
+        if not self.window or not self.in_store:
+            return
+        self.store_status.config(text=f"{len(skills)} skill(s) available")
+        for w in self.store_rows.winfo_children():
+            w.destroy()
+
+        if not skills:
+            tk.Label(self.store_rows, text="No skills available right now.",
+                     font=("Segoe UI", 9), bg="#1e1e2e", fg="#585b70").pack(pady=10)
+        else:
+            for skill in skills:
+                self._store_row(skill)
+
+        self.window.update_idletasks()
+        self._resize(self.container.winfo_reqheight() + 4)
+
+    def _store_row(self, skill):
+        row = tk.Frame(self.store_rows, bg="#1e1e2e")
+        row.pack(fill="x", pady=3)
+
+        tf = tk.Frame(row, bg="#1e1e2e")
+        tf.pack(side="left", fill="x", expand=True)
+        tk.Label(tf, text=skill.get("title", ""), font=("Segoe UI", 10, "bold"),
+                 bg="#1e1e2e", fg="#cdd6f4", anchor="w").pack(fill="x")
+        tk.Label(tf, text=skill.get("description", ""), font=("Segoe UI", 8),
+                 bg="#1e1e2e", fg="#a6adc8", anchor="w", justify="left",
+                 wraplength=max(200, self._bar_width - 180)).pack(fill="x")
+
+        installed = store.is_installed(skill, SKILLS_DIR)
+        btn = tk.Label(row, text="Installed" if installed else "Install",
+                       font=("Segoe UI", 9, "bold"),
+                       bg="#45475a" if installed else "#89b4fa",
+                       fg="#a6adc8" if installed else "#1e1e2e",
+                       padx=10, pady=4,
+                       cursor="arrow" if installed else "hand2")
+        btn.pack(side="right", padx=(8, 0))
+        if not installed:
+            btn.bind("<Button-1>", lambda e, s=skill, b=btn: self._store_install(s, b))
+
+    def _store_install(self, skill, btn):
+        btn.config(text="Installing...", bg="#f9e2af", fg="#1e1e2e", cursor="arrow")
+        btn.unbind("<Button-1>")
+
+        def do():
+            try:
+                store.install_skill(skill, SKILLS_DIR)
+                self.root.after(0, lambda: self._store_install_done(skill, btn, True))
+            except Exception as e:
+                err = str(e)
+                self.root.after(0, lambda: self._store_install_done(skill, btn, False, err))
+
+        threading.Thread(target=do, daemon=True).start()
+
+    def _store_install_done(self, skill, btn, success, error=None):
+        if not self.window:
+            return
+        try:
+            if success:
+                btn.config(text="Installed", bg="#45475a", fg="#a6adc8", cursor="arrow")
+                self.skills = scan_skills()
+                telemetry.send("skill_installed", {"filename": skill.get("filename", "")})
+            else:
+                btn.config(text="Retry", bg="#f38ba8", fg="#1e1e2e", cursor="hand2")
+                btn.bind("<Button-1>", lambda e, s=skill, b=btn: self._store_install(s, b))
+                if error:
+                    self.store_status.config(text=f"Install failed: {error}")
+        except Exception:
+            pass
+
+    def _close_store(self):
+        """Return from the store to the normal skill list."""
+        self.in_store = False
+        self.processing = False
+        if self.store_frame:
+            self.store_frame.destroy()
+            self.store_frame = None
+        if not self.window:
+            return
+        self.entry.config(state="normal")
+        self.skills = scan_skills()
+        self._update_filter("")
+        self.entry.focus_set()
 
 
 class SelectionToolbar:
@@ -1367,6 +1664,9 @@ def main():
     # Hidden root tkinter window — keeps mainloop on the main thread
     root = tk.Tk()
     root.withdraw()
+
+    # Let skills raise branded notifications via bridge.notify()
+    bridge.set_root(root)
 
     bar = ScryptianBar(root, skills)
     toolbar = SelectionToolbar(root, skills, bar=bar)
