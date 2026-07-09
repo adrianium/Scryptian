@@ -22,8 +22,10 @@ def setup():
         os.makedirs(SKILLS_DIR, exist_ok=True)
         return
 
-    # Preserve models folder, pins, and custom skills
-    _KEEP_FILES = ("models", ".id", "pinned.json")
+    # Preserve models, telemetry id, pins, custom skills, and user state.
+    # "state" holds the shared profile (e.g. PDF target language) and per-skill
+    # data (usage counts, learned profiles) — must survive updates.
+    _KEEP_FILES = ("models", ".id", "pinned.json", "state")
 
     if os.path.isdir(BASE_DIR):
         for item in os.listdir(BASE_DIR):

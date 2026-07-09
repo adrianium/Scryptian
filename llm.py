@@ -3,7 +3,7 @@
 
 import os
 import threading
-from config import MODEL_PATH, MODELS_DIR, MODEL_URL, MODEL_FILE, CONTEXT_SIZE, TEMPERATURE
+from config import MODEL_PATH, MODELS_DIR, MODEL_URL, MODEL_FILE, MODEL_MIN_BYTES, CONTEXT_SIZE, TEMPERATURE
 
 _llm = None
 _idle_timer = None
@@ -31,8 +31,16 @@ def _unload_model():
 
 
 def _is_valid_gguf(path: str) -> bool:
-    """Check GGUF magic bytes — first 4 bytes must be b'GGUF'."""
+    """Validate the model file: correct GGUF magic AND a plausible size.
+
+    The magic-bytes check alone passes for truncated/incomplete downloads,
+    which then crash llama.cpp with "Failed to load model from file". Also
+    requiring the file to be at least MODEL_MIN_BYTES rejects such files so
+    they get re-downloaded instead of failing to load.
+    """
     try:
+        if os.path.getsize(path) < MODEL_MIN_BYTES:
+            return False
         with open(path, "rb") as f:
             return f.read(4) == b"GGUF"
     except Exception:
@@ -127,6 +135,22 @@ def _download_model():
                             mb = downloaded // (1024 * 1024)
                             tot = total // (1024 * 1024)
                             _report(f"Downloading AI model... {pct}%  ({mb}/{tot} MB)")
+
+        # Reject an incomplete download: if the server told us the size and we
+        # received fewer bytes, the file is truncated (would pass the magic
+        # check but fail to load). Remove it so a retry re-downloads cleanly.
+        if total and downloaded != total:
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+            telemetry.send("model_download_failed", {
+                "error": "incomplete download",
+                "expected_bytes": total,
+                "received_bytes": downloaded,
+            })
+            _report("[Scryptian Error] Download was incomplete. Please try again.")
+            return False
 
         shutil.move(tmp_path, MODEL_PATH)
         if not _is_valid_gguf(MODEL_PATH):

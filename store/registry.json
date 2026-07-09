@@ -36,15 +36,36 @@
       "filename": "translate_zh.py"
     },
     {
+      "id": "change-tone-to-friendly",
+      "title": "Change tone to friendly",
+      "description": "Rewrite text in a friendly, casual tone",
+      "author": "Scryptian",
+      "filename": "friendly_tone.py"
+    },
+    {
+      "id": "change-tone-to-professional",
+      "title": "Change tone to professional",
+      "description": "Rewrite text in a professional, formal tone",
+      "author": "Scryptian",
+      "filename": "professional_tone.py"
+    },
+    {
+      "id": "key-points",
+      "title": "Extract key points",
+      "description": "Pull out the main points from text as a short bullet list",
+      "author": "Scryptian",
+      "filename": "key_points.py"
+    },
+    {
       "id": "translate-pdf",
       "title": "Translate PDF file",
-      "description": "Pick a PDF and save a translated copy in your language (Google Translate)",
+      "description": "Pick a PDF, choose a language, and save a translated copy (Google Translate)",
       "author": "Scryptian",
       "type": "bundle",
       "filename": "translate_pdf",
       "archive": "translate_pdf.zip",
-      "version": "1.6.0",
-      "min_app_version": "1.4.0"
+      "version": "1.8.0",
+      "min_app_version": "0.5.1"
     }
   ]
 }

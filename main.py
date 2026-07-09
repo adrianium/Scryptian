@@ -15,6 +15,7 @@ import bridge
 import telemetry
 import tray
 import store
+import updater
 import autostart
 import queue
 import selection_watcher
@@ -38,7 +39,7 @@ if IS_WINDOWS:
             pass
 
 # ── Settings ──
-from config import HOTKEY, BASE_DIR, APP_VERSION
+from config import HOTKEY, BASE_DIR, APP_VERSION, MAX_SKILL_INPUT_CHARS
 import bootstrap
 SKILLS_DIR = os.path.join(BASE_DIR, "skills")
 
@@ -59,6 +60,33 @@ def _get_source_app(hwnd) -> str:
         return os.path.basename(buf.value).lower() or "unknown"
     except Exception:
         return "unknown"
+
+
+def _check_input_limit(skill, input_text, via):
+    """Guard instant LLM skills against oversized input.
+
+    Returns a short, simple-English message (understandable for weak-English
+    users) when the input exceeds MAX_SKILL_INPUT_CHARS, and sends a telemetry
+    signal so we can see demand for long-input handling. Background and non-LLM
+    skills are exempt. Returns None when the input is fine.
+    """
+    if skill.get("background", False) or not skill.get("needs_llm", True):
+        return None
+    n = len(input_text or "")
+    if n <= MAX_SKILL_INPUT_CHARS:
+        return None
+    telemetry.send("skill_failed", {
+        "name": skill.get("title", "unknown"),
+        "via": via,
+        "reason": "input_too_long",
+        "text_len": n,
+        "limit": MAX_SKILL_INPUT_CHARS,
+    })
+    return (
+        "Text too long.\n"
+        f"Limit: {MAX_SKILL_INPUT_CHARS} characters.   Your text: {n}.\n"
+        "Please select less text and try again."
+    )
 
 
 def _format_last_used(iso: str) -> str:
@@ -785,6 +813,15 @@ class ScryptianBar:
                 self.window.after(2500, self._hide)
             return
 
+        # Guardrail: reject oversized input for instant LLM skills.
+        _limit_msg = _check_input_limit(skill, input_text, "bar")
+        if _limit_msg:
+            self.list_frame.pack_forget()
+            self.skill_hint.pack_forget()
+            self.entry.config(state="disabled")
+            self._show_result(_limit_msg)
+            return
+
         # Hide list, show status
         self.list_frame.pack_forget()
         self.skill_hint.pack_forget()
@@ -1373,6 +1410,12 @@ class SelectionToolbar:
         source_hwnd = self._source_hwnd
         self._dismiss()
 
+        # Guardrail: reject oversized input for instant LLM skills.
+        _limit_msg = _check_input_limit(skill, text, "selection")
+        if _limit_msg:
+            bridge.notify("Text too long", "Please select less text and try again.")
+            return
+
         # Check caret synchronously (fast WinAPI call) before deciding flow
         editable = False
         if IS_WINDOWS and source_hwnd:
@@ -1732,6 +1775,69 @@ def main():
 
     tray.start(on_quit=root.quit, on_open=bar.toggle)
 
+    # Staged installer waiting to be applied when the user goes idle.
+    # "since" marks when it became ready; if the silent apply never happens
+    # (e.g. antivirus blocks it), we fall back to a manual-update prompt.
+    _pending_update = {"path": None, "version": None, "since": None, "fallback_shown": False}
+    _FALLBACK_AFTER = 6 * 60 * 60  # seconds before offering a manual update
+
+    def _show_update_fallback(version):
+        """Silent update didn't stick — let the user update manually."""
+        if _pending_update["fallback_shown"]:
+            return
+        _pending_update["fallback_shown"] = True
+        telemetry.send("update_fallback_shown", {"version": version})
+        try:
+            tray.set_update_available(version)
+            tray.show_update_popup(version, tray.RELEASES_URL, root)
+        except Exception:
+            pass
+
+    def _apply_update_when_idle():
+        """Swap to the new version silently once the user is idle and not busy."""
+        try:
+            ready = _pending_update["path"] and os.path.exists(_pending_update["path"])
+            busy = getattr(bar, "processing", False) or getattr(bar, "_bg_running", False)
+            if ready and not busy and updater.idle_seconds() >= 120:
+                telemetry.send("update_applying", {"version": _pending_update["version"]})
+                updater.launch_installer(_pending_update["path"])
+                root.quit()   # installer will close/replace/relaunch us
+                return
+            # Silent apply hasn't happened in time (blocked/never idle) → manual.
+            since = _pending_update["since"]
+            if since and (time.time() - since) >= _FALLBACK_AFTER:
+                _show_update_fallback(_pending_update["version"])
+        except Exception:
+            pass
+        root.after(60000, _apply_update_when_idle)
+
+    def _start_auto_update(latest, assets):
+        """Download the installer in the background, then poll for an idle moment."""
+        def _dl():
+            try:
+                url = updater.find_setup_url(assets)
+                if not url:
+                    print("[Scryptian] No installer asset found in release.")
+                    root.after(0, lambda: _show_update_fallback(latest))
+                    return
+                dest = os.path.join(updater.updates_dir(), f"Scryptian_Setup_{latest}.exe")
+                if not os.path.exists(dest):
+                    updater.download(url, dest)
+                _pending_update["path"] = dest
+                _pending_update["version"] = latest
+                _pending_update["since"] = time.time()
+                telemetry.send("update_downloaded", {"version": latest})
+                print(f"[Scryptian] Update {latest} downloaded — will apply when idle.")
+            except Exception as e:
+                telemetry.send("update_download_failed", {"version": latest, "error": str(e)[:200]})
+                print(f"[Scryptian] Update download failed: {e}")
+                # Download itself failed (often AV) → offer manual update.
+                _pending_update["version"] = latest
+                root.after(0, lambda: _show_update_fallback(latest))
+
+        threading.Thread(target=_dl, daemon=True).start()
+        root.after(60000, _apply_update_when_idle)
+
     def _check_update():
         try:
             from urllib import request as _req
@@ -1749,10 +1855,18 @@ def main():
             latest = data.get("tag_name", "").lstrip("v")
             current = APP_VERSION.lstrip("v")
             telemetry.send("update_check", {"current_version": current, "latest_version": latest})
-            if latest and latest != current:
+            # Only notify/update when the release is strictly NEWER than what's
+            # installed. Plain inequality wrongly flagged older tags (e.g. 0.3.8
+            # vs installed 0.5.0) as available every check.
+            if latest and _version_ge(latest, current) and not _version_ge(current, latest):
                 telemetry.send("update_available", {"current_version": current, "latest_version": latest})
-                tray.set_update_available(latest)
-                root.after(0, lambda v=latest: tray.show_update_popup(v, tray.RELEASES_URL, root))
+                if updater.is_frozen():
+                    # Installed build: update silently in the background.
+                    root.after(0, lambda v=latest, a=data.get("assets", []): _start_auto_update(v, a))
+                else:
+                    # Dev/source run: just notify (nothing to swap).
+                    tray.set_update_available(latest)
+                    root.after(0, lambda v=latest: tray.show_update_popup(v, tray.RELEASES_URL, root))
         except Exception:
             pass
 

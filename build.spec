@@ -18,6 +18,10 @@ a = Analysis(
         ('tray.py', '.'),
         ('autostart.py', '.'),
         ('bootstrap.py', '.'),
+        # Only top-level single-file skills are bundled.
+        # The 'translate_pdf' bundle (folder + ~22 MB libs/) is intentionally
+        # EXCLUDED from the build — it ships via the store (registry + zip) and
+        # is downloaded on demand, keeping the installer small.
         ('skills/*.py', 'skills'),
         ('docs/assets/scryptian-notification.wav', 'docs/assets'),
         ('selection_watcher.py', '.'),

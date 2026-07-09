@@ -1,5 +1,5 @@
 #define MyAppName "Scryptian"
-#define MyAppVersion "0.5.0"
+#define MyAppVersion "0.5.1"
 #define MyAppPublisher "adrianium"
 #define MyAppURL "https://github.com/adrianium/Scryptian"
 #define MyAppExeName "Scryptian.exe"
@@ -48,11 +48,29 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; Auto-update path: relaunch the app after a silent update. Guarded by the
+; /AUTOUPDATE switch so normal (non-update) silent installs do NOT auto-launch.
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait; Check: IsAutoUpdate
 
 [UninstallRun]
 Filename: "taskkill"; Parameters: "/f /im {#MyAppExeName}"; Flags: runhidden
 
 [Code]
+function IsAutoUpdate(): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := 1 to ParamCount do
+  begin
+    if CompareText(ParamStr(i), '/AUTOUPDATE') = 0 then
+    begin
+      Result := True;
+      Break;
+    end;
+  end;
+end;
+
 procedure KillScryptian();
 var
   ResultCode: Integer;
