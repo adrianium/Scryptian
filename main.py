@@ -1268,14 +1268,17 @@ class ScryptianBar:
                  wraplength=max(200, self._bar_width - 180)).pack(fill="x")
 
         installed = store.is_installed(skill, SKILLS_DIR)
-        btn = tk.Label(row, text="Installed" if installed else "Install",
-                       font=("Segoe UI", 9, "bold"),
-                       bg="#45475a" if installed else "#89b4fa",
-                       fg="#a6adc8" if installed else "#1e1e2e",
-                       padx=10, pady=4,
-                       cursor="arrow" if installed else "hand2")
+        updatable = installed and store.has_update(skill, SKILLS_DIR)
+        if updatable:
+            label, bg, fg, cursor = "Update", "#89b4fa", "#1e1e2e", "hand2"
+        elif installed:
+            label, bg, fg, cursor = "Installed", "#45475a", "#a6adc8", "arrow"
+        else:
+            label, bg, fg, cursor = "Install", "#89b4fa", "#1e1e2e", "hand2"
+        btn = tk.Label(row, text=label, font=("Segoe UI", 9, "bold"),
+                       bg=bg, fg=fg, padx=10, pady=4, cursor=cursor)
         btn.pack(side="right", padx=(8, 0))
-        if not installed:
+        if updatable or not installed:
             btn.bind("<Button-1>", lambda e, s=skill, b=btn: self._store_install(s, b))
 
     def _store_install(self, skill, btn):

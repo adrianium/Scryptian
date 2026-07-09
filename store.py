@@ -39,6 +39,41 @@ def is_installed(skill, skills_dir):
     return os.path.exists(os.path.join(skills_dir, skill.get("filename", "")))
 
 
+def _version_tuple(v):
+    """Parse a dotted version string into a comparable tuple. Bad input -> (0,)."""
+    try:
+        return tuple(int(x) for x in str(v).strip().split("."))
+    except Exception:
+        return (0,)
+
+
+def installed_version(skill, skills_dir):
+    """Return the locally installed version of a bundle skill, or None.
+
+    Single-file skills carry no version metadata, so this only applies to
+    bundles (which have a manifest.json).
+    """
+    if skill.get("type") != "bundle":
+        return None
+    manifest_path = os.path.join(skills_dir, _bundle_dir_name(skill), "manifest.json")
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            return json.load(f).get("version")
+    except Exception:
+        return None
+
+
+def has_update(skill, skills_dir):
+    """True if the skill is installed but the registry offers a newer version."""
+    if not is_installed(skill, skills_dir):
+        return False
+    registry_ver = skill.get("version")
+    local_ver = installed_version(skill, skills_dir)
+    if not registry_ver or not local_ver:
+        return False
+    return _version_tuple(registry_ver) > _version_tuple(local_ver)
+
+
 def install_skill(skill, skills_dir):
     """Download and install a skill. Returns the installed path."""
     os.makedirs(skills_dir, exist_ok=True)

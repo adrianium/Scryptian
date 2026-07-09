@@ -64,7 +64,7 @@
       "type": "bundle",
       "filename": "translate_pdf",
       "archive": "translate_pdf.zip",
-      "version": "1.8.0",
+      "version": "1.8.1",
       "min_app_version": "0.5.1"
     }
   ]

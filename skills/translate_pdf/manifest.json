@@ -1,0 +1,15 @@
+{
+  "id": "translate-pdf",
+  "title": "Translate PDF file",
+  "description": "Pick a PDF, choose a language, and save a translated copy (Google Translate)",
+  "author": "Scryptian",
+  "version": "1.8.1",
+  "entry": "skill.py",
+  "needs_llm": false,
+  "background": true,
+  "requires": [
+    "pdfminer.six",
+    "reportlab"
+  ],
+  "min_app_version": "0.5.1"
+}
