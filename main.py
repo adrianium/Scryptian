@@ -1294,8 +1294,34 @@ class ScryptianBar:
                                      fg="#a6adc8", anchor="w")
         self.store_status.pack(fill="x", pady=(0, 4))
 
-        self.store_rows = tk.Frame(self.store_frame, bg="#1e1e2e")
-        self.store_rows.pack(fill="x")
+        rows_shell = tk.Frame(self.store_frame, bg="#1e1e2e")
+        rows_shell.pack(fill="both", expand=True)
+
+        self.store_canvas = tk.Canvas(
+            rows_shell, height=420, width=max(560, self._bar_width - 24),
+            bg="#1e1e2e", highlightthickness=0, bd=0,
+        )
+        scrollbar = tk.Scrollbar(
+            rows_shell, orient="vertical", command=self.store_canvas.yview,
+            bg="#313244", troughcolor="#1e1e2e", activebackground="#585b70",
+        )
+        self.store_canvas.configure(yscrollcommand=scrollbar.set)
+        self.store_canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        self.store_rows = tk.Frame(self.store_canvas, bg="#1e1e2e")
+        self.store_canvas_window = self.store_canvas.create_window(
+            (0, 0), window=self.store_rows, anchor="nw",
+        )
+        self.store_rows.bind(
+            "<Configure>",
+            lambda e: self.store_canvas.configure(scrollregion=self.store_canvas.bbox("all")),
+        )
+        self.store_canvas.bind(
+            "<Configure>",
+            lambda e: self.store_canvas.itemconfigure(self.store_canvas_window, width=e.width),
+        )
+        self.store_canvas.bind_all("<MouseWheel>", self._store_mousewheel)
 
         # ── Footer: submit your own skill via Discord ──
         footer = tk.Frame(self.store_frame, bg="#1e1e2e")
@@ -1336,6 +1362,10 @@ class ScryptianBar:
             return
         self.store_status.config(text=f"Failed to load store: {err}")
 
+    def _store_mousewheel(self, event):
+        if self.in_store and getattr(self, "store_canvas", None):
+            self.store_canvas.yview_scroll(-int(event.delta / 120), "units")
+
     def _render_store(self, skills):
         if not self.window or not self.in_store:
             return
@@ -1345,25 +1375,32 @@ class ScryptianBar:
 
         if not skills:
             tk.Label(self.store_rows, text="No skills available right now.",
-                     font=("Segoe UI", 9), bg="#1e1e2e", fg="#585b70").pack(pady=10)
+                     font=("Segoe UI", 11), bg="#1e1e2e", fg="#585b70").grid(
+                         row=0, column=0, columnspan=2, pady=20)
         else:
-            for skill in skills:
-                self._store_row(skill)
+            for index, skill in enumerate(skills):
+                self._store_row(skill, index)
 
         self.window.update_idletasks()
         self._resize(self.container.winfo_reqheight() + 4)
 
-    def _store_row(self, skill):
-        row = tk.Frame(self.store_rows, bg="#1e1e2e")
-        row.pack(fill="x", pady=3)
+    def _store_row(self, skill, index):
+        column = index % 2
+        row_number = index // 2
+        card = tk.Frame(
+            self.store_rows, bg="#313244", padx=12, pady=10,
+            highlightthickness=1, highlightbackground="#45475a",
+        )
+        card.grid(row=row_number, column=column, sticky="nsew", padx=5, pady=5)
+        self.store_rows.grid_columnconfigure(column, weight=1, uniform="store_card")
 
-        tf = tk.Frame(row, bg="#1e1e2e")
-        tf.pack(side="left", fill="x", expand=True)
-        tk.Label(tf, text=skill.get("title", ""), font=("Segoe UI", 10, "bold"),
-                 bg="#1e1e2e", fg="#cdd6f4", anchor="w").pack(fill="x")
-        tk.Label(tf, text=skill.get("description", ""), font=("Segoe UI", 8),
-                 bg="#1e1e2e", fg="#a6adc8", anchor="w", justify="left",
-                 wraplength=max(200, self._bar_width - 180)).pack(fill="x")
+        card_width = max(220, (self._bar_width - 80) // 2)
+        tk.Label(card, text=skill.get("title", ""), font=("Segoe UI", 11, "bold"),
+                 bg="#313244", fg="#cdd6f4", anchor="w", justify="left",
+                 wraplength=card_width).pack(fill="x")
+        tk.Label(card, text=skill.get("description", ""), font=("Segoe UI", 9),
+                 bg="#313244", fg="#a6adc8", anchor="w", justify="left",
+                 wraplength=card_width).pack(fill="x", pady=(5, 10))
 
         installed = store.is_installed(skill, SKILLS_DIR)
         updatable = installed and store.has_update(skill, SKILLS_DIR)
@@ -1373,9 +1410,9 @@ class ScryptianBar:
             label, bg, fg, cursor = "Installed", "#45475a", "#a6adc8", "arrow"
         else:
             label, bg, fg, cursor = "Install", "#89b4fa", "#1e1e2e", "hand2"
-        btn = tk.Label(row, text=label, font=("Segoe UI", 9, "bold"),
-                       bg=bg, fg=fg, padx=10, pady=4, cursor=cursor)
-        btn.pack(side="right", padx=(8, 0))
+        btn = tk.Label(card, text=label, font=("Segoe UI", 10, "bold"),
+                       bg=bg, fg=fg, padx=12, pady=6, cursor=cursor)
+        btn.pack(anchor="e")
         if updatable or not installed:
             btn.bind("<Button-1>", lambda e, s=skill, b=btn: self._store_install(s, b))
 
@@ -1413,6 +1450,7 @@ class ScryptianBar:
         """Return from the store to the normal skill list."""
         self.in_store = False
         self.processing = False
+        self.root.unbind_all("<MouseWheel>")
         if self.store_frame:
             self.store_frame.destroy()
             self.store_frame = None
