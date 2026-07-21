@@ -193,7 +193,7 @@ def was_just_downloaded() -> bool:
     return False
 
 
-def _get_llm(on_progress=None):
+def _get_llm(on_progress=None, download=True):
     global _llm
     if on_progress:
         set_progress_listener(on_progress)
@@ -214,6 +214,8 @@ def _get_llm(on_progress=None):
             telemetry.send("model_corrupted")
 
         if not os.path.exists(MODEL_PATH):
+            if not download:
+                return None
             if not _download_model():
                 return None
 

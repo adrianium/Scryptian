@@ -59,13 +59,13 @@ def open_settings(root, skill, on_saved=None):
     current = get_values(skill)
 
     dlg = tk.Toplevel(root)
-    dlg.title(f"{skill.get('title', 'Skill')} — Settings")
+    dlg.title(f"{skill.get('title', 'Action')} — Settings")
     dlg.configure(bg=BG)
     dlg.resizable(False, False)
     dlg.attributes("-topmost", True)
     dlg.grab_set()
 
-    tk.Label(dlg, text=f"\u2699  {skill.get('title', 'Skill')} settings",
+    tk.Label(dlg, text=f"\u2699  {skill.get('title', 'Action')} settings",
              bg=BG, fg=FG, font=("Segoe UI", 12, "bold"), anchor="w").pack(
         fill="x", padx=12, pady=(12, 4))
 

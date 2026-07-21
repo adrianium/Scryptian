@@ -1,0 +1,13 @@
+{
+  "id": "csv_to_excel",
+  "title": "CSV to Excel",
+  "description": "Convert CSV text to an Excel (.xlsx) file",
+  "author": "Scryptian",
+  "version": "1.0.0",
+  "entry": "skill.py",
+  "needs_llm": false,
+  "input": "file",
+  "background": false,
+  "requires": [],
+  "min_app_version": "0.5.1"
+}

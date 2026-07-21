@@ -21,12 +21,14 @@ def _ssl_ctx():
 
 
 def _ask_lang():
-    """Ask the target language on every run (predictable, visible choice).
+    """Return target language from settings, or ask via dialog as fallback."""
+    try:
+        chosen = (bridge.get_state("translate-pdf").get("settings", {}) or {}).get("lang", "")
+    except Exception:
+        chosen = ""
+    if chosen:
+        return chosen
 
-    The last used language is pre-filled as the default so it's one keypress
-    for repeat users, but always shown and editable. Returns the code, or None
-    if the user cancels or leaves it blank.
-    """
     default = (bridge.get_profile().get("lang") or "").strip().lower()
     try:
         ps = (
@@ -41,35 +43,11 @@ def _ask_lang():
                            creationflags=0x08000000)
         lang = r.stdout.strip().lower()
         if lang:
-            bridge.set_profile({"lang": lang})  # remember as next default
+            bridge.set_profile({"lang": lang})
             return lang
     except Exception:
         pass
     return None
-
-
-def _pick_pdf():
-    """Open a native file picker (works from any thread via PowerShell)."""
-    try:
-        print("[translate_pdf] opening file picker...")
-        ps = (
-            "Add-Type -AssemblyName System.Windows.Forms; "
-            "$owner = New-Object System.Windows.Forms.Form; "
-            "$owner.TopMost = $true; $owner.ShowInTaskbar = $false; "
-            "$f = New-Object System.Windows.Forms.OpenFileDialog; "
-            "$f.Filter = 'PDF files (*.pdf)|*.pdf'; "
-            "$f.Title = 'Scryptian - choose a PDF to translate'; "
-            "if ($f.ShowDialog($owner) -eq 'OK') { Write-Output $f.FileName }"
-        )
-        r = subprocess.run(["powershell", "-Sta", "-Command", ps],
-                           capture_output=True, text=True, timeout=300,
-                           creationflags=0x08000000)
-        path = r.stdout.strip()
-        print(f"[translate_pdf] picked: {path or '(cancelled)'}")
-        return path or None
-    except Exception as e:
-        print(f"[translate_pdf] picker error: {e}")
-        return None
 
 
 def _translate_chunk(text, tl):
@@ -211,13 +189,13 @@ def _box_font_size(box, LTChar):
 
 def run(text):
     """
-    Ignores clipboard text. Lets the user pick a PDF, translates it block by
-    block, and rebuilds a clean, flowing translated document (reading order,
-    consistent fonts, automatic pagination) so nothing floats or shrinks.
+    Accepts a PDF file path (from Ctrl+C in Explorer). Translates block by
+    block and rebuilds a clean, flowing translated document.
     """
-    src = _pick_pdf()
-    if not src:
-        return "Cancelled — no PDF selected."
+    text = (text or "").strip()
+    if not text.endswith(".pdf") or not os.path.isfile(text):
+        return "[Scryptian Error] No PDF file provided. Copy a PDF file (Ctrl+C) and try again."
+    src = text
     if not os.path.exists(src):
         return "[Scryptian Error] File not found."
 

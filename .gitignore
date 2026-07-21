@@ -25,6 +25,13 @@ models/
 # (its libs/ folder is ~22 MB). Distribution: store/skills/translate_pdf.zip
 skills/translate_pdf/
 skills/wikipedia/
+skills/csv_tp_excel/
+skills/csv_to_json/
+skills/currency/
+skills/dictionary/
+skills/pdf_to_word/
 
 # Store assets are managed through Supabase Storage and the skills table.
 store/
+supabase_store.sql
+store_inserts.sql

@@ -37,7 +37,7 @@ def open_editor(root, skills_dir, on_saved=None, skill=None):
     on_saved: callback() called after save.
     """
     dlg = tk.Toplevel(root)
-    dlg.title("Edit Skill" if skill else "New Skill")
+    dlg.title("Edit Action" if skill else "New Action")
     dlg.configure(bg=BG)
     dlg.resizable(False, False)
     dlg.attributes("-topmost", True)
@@ -122,7 +122,7 @@ def open_editor(root, skills_dir, on_saved=None, skill=None):
             prompt = ""
 
         if not title:
-            messagebox.showwarning("Missing title", "Please enter a skill title.", parent=dlg)
+            messagebox.showwarning("Missing title", "Please enter an action title.", parent=dlg)
             return
         if not prompt:
             messagebox.showwarning("Missing instructions", "Please enter instructions.", parent=dlg)
@@ -166,7 +166,7 @@ def open_editor(root, skills_dir, on_saved=None, skill=None):
     def delete():
         if not skill:
             return
-        if messagebox.askyesno("Delete skill",
+        if messagebox.askyesno("Delete action",
                                f"Delete '{skill['title']}'?", parent=dlg):
             fpath = os.path.join(skills_dir, skill.get("filename", ""))
             if os.path.exists(fpath):

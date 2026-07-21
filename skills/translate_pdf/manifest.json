@@ -1,15 +1,41 @@
 {
   "id": "translate-pdf",
   "title": "Translate PDF file",
-  "description": "Pick a PDF, choose a language, and save a translated copy (Google Translate)",
+  "description": "Copy a PDF (Ctrl+C), choose a language, and save a translated copy (Google Translate)",
   "author": "Scryptian",
   "version": "1.8.1",
   "entry": "skill.py",
   "needs_llm": false,
+  "input": "file",
   "background": true,
   "requires": [
     "pdfminer.six",
     "reportlab"
   ],
-  "min_app_version": "0.5.1"
+  "min_app_version": "0.5.1",
+  "settings": [
+    {
+      "key": "lang",
+      "label": "Translate to",
+      "type": "select",
+      "default": "en",
+      "options": [
+        { "value": "en", "label": "English" },
+        { "value": "ru", "label": "Русский" },
+        { "value": "de", "label": "Deutsch" },
+        { "value": "fr", "label": "Français" },
+        { "value": "es", "label": "Español" },
+        { "value": "it", "label": "Italiano" },
+        { "value": "pt", "label": "Português" },
+        { "value": "zh", "label": "中文" },
+        { "value": "ja", "label": "日本語" },
+        { "value": "ar", "label": "العربية" },
+        { "value": "tr", "label": "Türkçe" },
+        { "value": "pl", "label": "Polski" },
+        { "value": "uk", "label": "Українська" },
+        { "value": "ko", "label": "한국어" },
+        { "value": "hi", "label": "हिन्दी" }
+      ]
+    }
+  ]
 }
