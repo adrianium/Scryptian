@@ -1,5 +1,5 @@
 #define MyAppName "Scryptian"
-#define MyAppVersion "0.5.4"
+#define MyAppVersion "0.5.5"
 #define MyAppPublisher "adrianium"
 #define MyAppURL "https://github.com/adrianium/Scryptian"
 #define MyAppExeName "Scryptian.exe"
@@ -13,7 +13,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={autopf}\{#MyAppName}
+DefaultDirName={localappdata}\{#MyAppName}\Application
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=
@@ -26,7 +26,6 @@ SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayIcon={app}\{#MyAppExeName}
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
 CloseApplications=yes
 CloseApplicationsFilter=Scryptian.exe
 RestartApplications=yes
@@ -80,9 +79,11 @@ end;
 
 procedure CleanOldInstall();
 begin
-  // Remove old Program Files (x86) installation
+  // Remove old installations
   if DirExists('C:\Program Files (x86)\Scryptian') then
     DelTree('C:\Program Files (x86)\Scryptian', True, True, True);
+  if DirExists('C:\Program Files\Scryptian') then
+    DelTree('C:\Program Files\Scryptian', True, True, True);
   // Fix registry autostart to point to new location
   RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Scryptian');
 end;
