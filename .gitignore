@@ -16,6 +16,8 @@ venv/
 .id
 .first_launch_sent
 first_launch_sent.txt
+pinned.json
+main_pinned.json
 *.gguf
 models/
 *.exe
@@ -25,7 +27,7 @@ models/
 # (its libs/ folder is ~22 MB). Distribution: store/skills/translate_pdf.zip
 skills/translate_pdf/
 skills/wikipedia/
-skills/csv_tp_excel/
+skills/csv_to_excel/
 skills/csv_to_json/
 skills/currency/
 skills/dictionary/

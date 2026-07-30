@@ -26,6 +26,7 @@ a = Analysis(
         ('docs/assets/scryptian-notification.wav', 'docs/assets'),
         ('selection_watcher.py', '.'),
         ('pins.py', '.'),
+        ('main_pins.py', '.'),
         ('skill_editor.py', '.'),
         ('skill_settings.py', '.'),
         ('.env', '.')

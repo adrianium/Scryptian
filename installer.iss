@@ -1,5 +1,5 @@
 #define MyAppName "Scryptian"
-#define MyAppVersion "0.5.5"
+#define MyAppVersion "0.5.6"
 #define MyAppPublisher "adrianium"
 #define MyAppURL "https://github.com/adrianium/Scryptian"
 #define MyAppExeName "Scryptian.exe"

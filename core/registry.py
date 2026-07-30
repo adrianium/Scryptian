@@ -101,6 +101,7 @@ def _load_bundle(name, bundle_dir):
         "background": bool(manifest.get("background", False)),
         "settings": manifest.get("settings", []),
         "format": "bundle",
+        "_dir": bundle_dir,
     }
 
 

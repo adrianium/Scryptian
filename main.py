@@ -21,6 +21,7 @@ import autostart
 import queue
 import selection_watcher
 import pins as pins_module
+import main_pins
 import skill_editor
 import skill_settings
 import core
@@ -373,6 +374,10 @@ class ScryptianBar:
         report_btn.bind("<Enter>", lambda e: report_btn.config(fg="#cdd6f4"))
         report_btn.bind("<Leave>", lambda e: report_btn.config(fg="#6c7086"))
 
+        # Chain bar — quick actions on result
+        self.chain_frame = tk.Frame(self.container, bg="#1e1e2e")
+        self._chain_btns = []
+
         self.window.attributes("-topmost", True)
         self.window.update_idletasks()
         self.window.lift()
@@ -382,6 +387,11 @@ class ScryptianBar:
 
         # Hide when clicking outside
         self.window.bind("<FocusOut>", self._on_focus_out)
+
+        # Chain hotkeys
+        self.window.bind("<Control-Key-1>", lambda e: self._run_chain("Summarize"))
+        self.window.bind("<Control-Key-2>", lambda e: self._run_chain("Change tone to professional"))
+        self.window.bind("<Control-Key-3>", lambda e: self._run_chain("Change tone to friendly"))
 
         self.visible = True
         self.selected_index = 0
@@ -483,15 +493,21 @@ class ScryptianBar:
     def _on_key(self, event):
         if event.keysym in ("Return", "Escape", "Up", "Down"):
             return
+        if str(self.entry.cget("state")) == "disabled":
+            return
         query = self.entry.get()
         if query:
             self.placeholder.place_forget()
+            try:
+                self._hide_chain()
+            except Exception:
+                pass
         else:
             self.placeholder.place(x=14, y=8)
         self._update_filter(query)
 
     def _update_filter(self, query):
-        """Filters skills by input."""
+        """Filters skills by input. Pinned skills float to top when no filter."""
         q = query.lower().strip()
         if q:
             self.filtered = [
@@ -499,7 +515,9 @@ class ScryptianBar:
                 if q in s["title"].lower()
             ]
         else:
-            self.filtered = list(self.skills)
+            pinned = main_pins.get_pinned_skills(self.skills)
+            rest = [s for s in self.skills if s["title"] not in main_pins.load()]
+            self.filtered = pinned + rest
 
         self._render_list()
 
@@ -586,6 +604,20 @@ class ScryptianBar:
         if pinnable:
             skill_obj = self.filtered[idx] if idx < len(self.filtered) else None
 
+            # Main-bar pin (left of star)
+            mpinned = main_pins.is_pinned(title)
+            pin_lbl = tk.Label(
+                row,
+                text="\ue718" if mpinned else "\ue77a",
+                font=("Segoe MDL2 Assets", 12),
+                bg="#1e1e2e",
+                fg="#a6e3a1" if mpinned else "#6c7086",
+                cursor="hand2",
+                padx=4,
+            )
+            pin_lbl.pack(side="right")
+            pin_lbl.bind("<Button-1>", lambda e, t=title: self._toggle_main_pin(t))
+
             # Star always rightmost
             pinned = pins_module.is_pinned(title)
             star_lbl = tk.Label(
@@ -649,6 +681,10 @@ class ScryptianBar:
     def _toggle_pin(self, title):
         pins_module.toggle(title)
         self._render_list()
+
+    def _toggle_main_pin(self, title):
+        main_pins.toggle(title)
+        self._update_filter(self.entry.get())
 
     def _click_row(self, idx):
         """Handle click on a skill row."""
@@ -753,7 +789,7 @@ class ScryptianBar:
 
         # Background skills (long file jobs) don't rely on clipboard text.
         if not input_text.strip() and not is_bg:
-            self._show_result("Clipboard is empty.")
+            self._show_result("Clipboard is empty. Copy some text first (Ctrl+C), then try again.")
             return
 
         # ── Background (fire-and-forget) skills: run detached, free the bar ──
@@ -926,6 +962,7 @@ class ScryptianBar:
         self.separator.pack_forget()
         self.result_box.pack_forget()
         self.hint_label.pack_forget()
+        self.chain_frame.pack_forget()
 
         self.result_box.config(state="normal")
         self.result_box.delete("1.0", tk.END)
@@ -951,10 +988,11 @@ class ScryptianBar:
         self._resize(needed + 4)
 
     def _finish_stream(self):
-        """Called when streaming is complete — shows hint label."""
+        """Called when streaming is complete — shows hint label and chain."""
         if not self.window:
             return
         self.hint_label.pack(fill="x", padx=12, pady=(0, 6))
+        self._show_chain()
         self.window.update_idletasks()
         needed = self.container.winfo_reqheight()
         self._resize(needed + 4)
@@ -968,6 +1006,7 @@ class ScryptianBar:
         self.separator.pack_forget()
         self.result_box.pack_forget()
         self.hint_label.pack_forget()
+        self.chain_frame.pack_forget()
 
         # Update text
         self.result_box.config(state="normal")
@@ -992,10 +1031,141 @@ class ScryptianBar:
 
         if self.has_result:
             self.hint_label.pack(fill="x", padx=12, pady=(0, 6))
+            self._show_chain()
 
         self.window.update_idletasks()
         needed = self.container.winfo_reqheight()
         self._resize(needed + 4)
+
+    def _show_chain(self):
+        """Show quick-action chain buttons below the result."""
+        self.chain_frame.pack_forget()
+        for b in self._chain_btns:
+            b.destroy()
+        self._chain_btns.clear()
+
+        self.chain_frame.columnconfigure(0, weight=1, uniform="chain")
+        self.chain_frame.columnconfigure(1, weight=1, uniform="chain")
+        self.chain_frame.columnconfigure(2, weight=1, uniform="chain")
+
+        chains = [
+            ("Summarize", "Summarize", "Ctrl+1"),
+            ("Change tone to professional", "Change Tone to Professional", "Ctrl+2"),
+            ("Change tone to friendly", "Change Tone to Friendly", "Ctrl+3"),
+        ]
+        for i, (skill_title, label, hotkey) in enumerate(chains):
+            btn = tk.Label(
+                self.chain_frame,
+                text=f"{label}\n[{hotkey}]",
+                font=("Segoe UI", 9),
+                bg="#313244",
+                fg="#a6adc8",
+                cursor="hand2",
+                padx=6,
+                pady=5,
+                justify="center",
+            )
+            btn.grid(row=0, column=i, sticky="ew", padx=(0, 4) if i < 2 else (0, 0))
+            btn.bind("<Button-1>", lambda e, t=skill_title: self._run_chain(t))
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#45475a", fg="#cdd6f4"))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#313244", fg="#a6adc8"))
+            self._chain_btns.append(btn)
+
+        self.chain_frame.pack(fill="x", padx=10, pady=(0, 6))
+        self.window.update_idletasks()
+        needed = self.container.winfo_reqheight()
+        self._resize(needed + 4)
+
+    def _hide_chain(self):
+        """Hide chain buttons (e.g. when starting a new skill)."""
+        self.chain_frame.pack_forget()
+        for b in self._chain_btns:
+            b.destroy()
+        self._chain_btns.clear()
+
+    def _run_chain(self, skill_title):
+        """Run a chain skill on the current result text."""
+        text = self.last_result
+        if not text:
+            return
+
+        skill = next((s for s in self.skills if s["title"] == skill_title), None)
+        if not skill:
+            return
+
+        from_skill = getattr(self, "last_skill_title", "unknown")
+
+        self._hide_chain()
+        self.processing = True
+        self.entry.config(state="disabled")
+
+        # Show processing indicator and resize
+        self.result_box.config(state="normal")
+        self.result_box.delete("1.0", tk.END)
+        self.result_box.insert("1.0", f"\u2699 {skill_title}  \u2014  processing...")
+        self.result_box.config(state="disabled")
+        self.result_box.config(height=2)
+        self.window.update_idletasks()
+        needed = self.container.winfo_reqheight()
+        self._resize(needed + 4)
+
+        telemetry.send("chain_started", {
+            "from_skill": from_skill,
+            "chain_skill": skill_title,
+            "input_len": len(text),
+        })
+
+        _t0 = time.time()
+
+        def execute():
+            try:
+                full_text = ""
+                for chunk in core.run_skill_stream(skill, text):
+                    full_text = chunk
+                    snapshot = full_text
+                    self.root.after(0, lambda t=snapshot: self._update_stream(t))
+                stripped = full_text.strip()
+                elapsed = round(time.time() - _t0, 2)
+                if stripped.startswith("[Scryptian Error]"):
+                    telemetry.send("chain_failed", {
+                        "from_skill": from_skill,
+                        "chain_skill": skill_title,
+                        "error": stripped[:200],
+                        "elapsed": elapsed,
+                    })
+                    self.root.after(0, lambda r=stripped: self._finish_chain(r))
+                elif stripped:
+                    telemetry.send("chain_completed", {
+                        "from_skill": from_skill,
+                        "chain_skill": skill_title,
+                        "elapsed": elapsed,
+                        "output_len": len(stripped),
+                    })
+                    self.last_result = stripped
+                    self.root.after(0, lambda r=stripped: self._finish_chain(r))
+                else:
+                    telemetry.send("chain_failed", {
+                        "from_skill": from_skill,
+                        "chain_skill": skill_title,
+                        "error": "empty_result",
+                        "elapsed": elapsed,
+                    })
+                    self.root.after(0, lambda: self._finish_chain(text))
+            except Exception as e:
+                telemetry.send("chain_failed", {
+                    "from_skill": from_skill,
+                    "chain_skill": skill_title,
+                    "error": str(e)[:200],
+                })
+                self.root.after(0, lambda msg=str(e): self._finish_chain(f"Error: {msg}"))
+
+        threading.Thread(target=execute, daemon=True).start()
+
+    def _finish_chain(self, result):
+        """Called on main thread when chain skill completes."""
+        self.processing = False
+        self.has_result = True
+        self._show_result(result)
 
 
     def _open_report_dialog(self):
