@@ -44,6 +44,7 @@ if IS_WINDOWS:
 
 # ── Settings ──
 from config import HOTKEY, BASE_DIR, APP_VERSION, MAX_SKILL_INPUT_CHARS
+from core.registry import _version_ge
 import bootstrap
 SKILLS_DIR = os.path.join(BASE_DIR, "skills")
 
@@ -1814,17 +1815,21 @@ def main():
             data = _json.loads(_req.urlopen(req, timeout=5, context=ctx).read())
             latest = data.get("tag_name", "").lstrip("v")
             current = APP_VERSION.lstrip("v")
+            try:
+                newer = latest and _version_ge(latest, current) and not _version_ge(current, latest)
+            except Exception as e:
+                telemetry.send("update_check", {
+                    "current_version": current,
+                    "latest_version": latest,
+                    "error": f"{type(e).__name__}: {e}",
+                })
+                return
             telemetry.send("update_check", {"current_version": current, "latest_version": latest})
-            # Only notify/update when the release is strictly NEWER than what's
-            # installed. Plain inequality wrongly flagged older tags (e.g. 0.3.8
-            # vs installed 0.5.0) as available every check.
-            if latest and _version_ge(latest, current) and not _version_ge(current, latest):
+            if newer:
                 telemetry.send("update_available", {"current_version": current, "latest_version": latest})
                 if updater.is_frozen():
-                    # Installed build: update silently in the background.
                     root.after(0, lambda v=latest, a=data.get("assets", []): _start_auto_update(v, a))
                 else:
-                    # Dev/source run: just notify (nothing to swap).
                     tray.set_update_available(latest)
                     root.after(0, lambda v=latest: tray.show_update_popup(v, tray.RELEASES_URL, root))
         except Exception:
