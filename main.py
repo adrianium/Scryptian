@@ -379,6 +379,11 @@ class ScryptianBar:
         self.chain_frame = tk.Frame(self.container, bg="#1e1e2e")
         self._chain_btns = []
 
+        # Processing animation
+        self._anim_job = None
+        self._anim_skill = ""
+        self._anim_frame = 0
+
         self.window.attributes("-topmost", True)
         self.window.update_idletasks()
         self.window.lift()
@@ -745,7 +750,7 @@ class ScryptianBar:
         """Runs the selected skill or copies the result."""
         if self.has_result:
             if self.last_result:
-                pyperclip.copy(self.last_result)
+                pyperclip.copy(self.last_result + "\n\n— Scryptian")
                 self._auto_paste()
                 telemetry.send("result_copied", {"skill": getattr(self, "last_skill_title", "unknown")})
                 print("[Scryptian] Copied to clipboard.")
@@ -828,7 +833,7 @@ class ScryptianBar:
         self.list_frame.pack_forget()
         self.skill_hint.pack_forget()
         self.entry.config(state="disabled")
-        self._show_result(f"⚙ {skill['title']}  —  processing...")
+        self._start_anim(skill["title"])
 
         self.processing = True
         print(f"[Scryptian] Running: {skill['title']}...")
@@ -910,7 +915,7 @@ class ScryptianBar:
         self.list_frame.pack_forget()
         self.skill_hint.pack_forget()
         self.entry.config(state="disabled")
-        self._show_result(f"⚙ {skill['title']}  —  processing...")
+        self._start_anim(skill["title"])
         self.processing = True
         _t0 = time.time()
         _src = _get_source_app(getattr(self, '_source_hwnd', None))
@@ -990,6 +995,7 @@ class ScryptianBar:
 
     def _finish_stream(self):
         """Called when streaming is complete — shows hint label and chain."""
+        self._stop_anim()
         if not self.window:
             return
         self.hint_label.pack(fill="x", padx=12, pady=(0, 6))
@@ -1002,6 +1008,10 @@ class ScryptianBar:
         """Shows result below the bar, dynamically expanding the window."""
         if not self.window:
             return
+
+        # Stop animation if this is a real result (not an animation frame)
+        if self._anim_skill and not text.startswith(self._anim_skill):
+            self._stop_anim()
 
         # Unpack everything before repacking
         self.separator.pack_forget()
@@ -1038,6 +1048,29 @@ class ScryptianBar:
         needed = self.container.winfo_reqheight()
         self._resize(needed + 4)
 
+    def _start_anim(self, skill_title):
+        """Start processing animation: Skill  |  •  →  ••  →  •••"""
+        self._stop_anim()
+        self._anim_skill = skill_title
+        self._anim_frame = 0
+        self._tick_anim()
+
+    def _tick_anim(self):
+        """Advance one frame of the processing animation."""
+        if not self._anim_skill:
+            return
+        dots = "•" * (self._anim_frame + 1)
+        self._show_result(f"{self._anim_skill} {dots}")
+        self._anim_frame = (self._anim_frame + 1) % 3
+        self._anim_job = self.root.after(200, self._tick_anim)
+
+    def _stop_anim(self):
+        """Stop processing animation."""
+        if self._anim_job:
+            self.root.after_cancel(self._anim_job)
+            self._anim_job = None
+        self._anim_skill = ""
+
     def _show_chain(self):
         """Show quick-action chain buttons below the result."""
         self.chain_frame.pack_forget()
@@ -1052,7 +1085,7 @@ class ScryptianBar:
         chains = [
             ("Summarize", "Summarize", "Ctrl+1"),
             ("Change tone to professional", "Change Tone to Professional", "Ctrl+2"),
-            ("Change tone to friendly", "Change Tone to Friendly", "Ctrl+3"),
+            ("Fact Check", "Fact Check", "Ctrl+3"),
         ]
         for i, (skill_title, label, hotkey) in enumerate(chains):
             btn = tk.Label(
@@ -1100,15 +1133,7 @@ class ScryptianBar:
         self.processing = True
         self.entry.config(state="disabled")
 
-        # Show processing indicator and resize
-        self.result_box.config(state="normal")
-        self.result_box.delete("1.0", tk.END)
-        self.result_box.insert("1.0", f"\u2699 {skill_title}  \u2014  processing...")
-        self.result_box.config(state="disabled")
-        self.result_box.config(height=2)
-        self.window.update_idletasks()
-        needed = self.container.winfo_reqheight()
-        self._resize(needed + 4)
+        self._start_anim(skill_title)
 
         telemetry.send("chain_started", {
             "from_skill": from_skill,
@@ -1164,6 +1189,7 @@ class ScryptianBar:
 
     def _finish_chain(self, result):
         """Called on main thread when chain skill completes."""
+        self._stop_anim()
         self.processing = False
         self.has_result = True
         self._show_result(result)
