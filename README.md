@@ -1,7 +1,6 @@
 Scryptian
 
-Writing tools for Windows. Inline AI text editing — offline, private, free.
-
+Windows tool for transforming (translate, fact checking, convert and etc.) any text on the screen.
 https://adrianium.github.io/Scryptian/ (tool WebPage)
 
 <video src="https://github.com/user-attachments/assets/0c794465-b705-4983-9c2b-291fdc372977" autoplay loop muted playsinline></video>
@@ -15,15 +14,16 @@ How it works
 
 Skills
 
-- Translate to my language
-- Translate to English
+- Translate to English and other languages
+- Fact checking
+- Translate PDF
+- Convertors (PDF to DOCX and etc.)
 - Summarize
 - Improve writing
 - Fix spelling and grammar
 - Change tone to friendly
 - Change tone to professional
 - Explain this in simple terms
-- Humanize
 
 Add your own: one `.py` file in `skills/` = one skill.
 
