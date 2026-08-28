@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scryptian — Local AI instant text editing bar</title>
+  <title>Scryptian - Translating text without leaving window when you work</title>
   <script>
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onFeatureFlags".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
     posthog.init('phc_nyYF49YRbnnsjJbMqFwZbXxpiPfU249NAnmnZHuPavei', {api_host: 'https://us.i.posthog.com'});
@@ -87,6 +87,18 @@
       margin-right: auto;
     }
 
+    .tagline1 {
+      margin: 0;
+      font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+      line-height: 1.2;
+      color: var(--text-secondary);
+      max-width: 50ch;
+      text-align: center;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 1rem;
+    }
+
     .value-punch {
       margin: 2.25rem 0 0;
       font-size: 0.95rem;
@@ -143,6 +155,7 @@
       text-align: center;
       color: var(--text-secondary);
       font-size: 0.9rem;
+      margin-bottom: 2rem;
     }
 
     .pill {
@@ -309,6 +322,8 @@
   <main>
     <header>
       <h1>Scryptian</h1>
+      <!-- <p class="tagline1">Tool for transforming (translate, fact checking, convert and etc.) any text on the screen</p> -->
+      <p class="tagline1">Translating text without leaving window when you work</p>
       <p class="tagline">
         Works with <strong>any text</strong> on the screen.
       </p>
@@ -338,6 +353,17 @@
         <div class="hero-video__label">Demo</div>
         <video src="assets/scryptian-demo.mp4" autoplay muted playsinline loop></video>
       </div> -->
+
+      <details class="panel">
+      <summary>
+        <span class="pill">Why do other people use Scryptian?</span>
+      </summary>
+      <div class="panel-content vt-panel">
+        <p class="vt-note">
+          For communication in Slack, Telegram, WhatsApp with foreign colleagues or clients. There is no longer a need to run to the browser every time for a translator. With Scryptian, the tool comes where you work!
+        </p>
+      </div>
+    </details>
 
       <!-- Demo video box -->
     <div class="hero-video">
@@ -389,6 +415,17 @@
         <p class="skills-note">Add your own: one <code>.py</code> file in <code>skills/</code> = one skill.</p>
       </div>
     </details> -->
+
+    <details class="panel">
+      <summary>
+        <span class="pill">Why do other people use Scryptian?</span>
+      </summary>
+      <div class="panel-content vt-panel">
+        <p class="vt-note">
+          For communication in Slack, Telegram, WhatsApp with foreign colleagues or clients. There is no longer a need to run to the browser every time for a translator. With Scryptian, the tool comes where you work!
+        </p>
+      </div>
+    </details>
 
     <!--
     <details class="panel">
