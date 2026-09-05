@@ -30,6 +30,13 @@ def _version_ge(a, b):
     return ta >= tb
 
 
+def _safe_int(v):
+    try:
+        return int(str(v).strip())
+    except (TypeError, ValueError):
+        return 0
+
+
 def _parse_metadata(filepath):
     meta = {}
     pattern = re.compile(r"^#\s*@(\w+):\s*(.+)$")
@@ -94,6 +101,8 @@ def _load_bundle(name, bundle_dir):
         "title": manifest.get("title", name),
         "description": manifest.get("description", ""),
         "author": manifest.get("author", ""),
+        "author_id": manifest.get("author_id", ""),
+        "price": _safe_int(manifest.get("price", 0)),
         "version": manifest.get("version", ""),
         "module": module,
         "filename": name,
@@ -132,9 +141,11 @@ def scan_skills():
                 "title": meta.get("title", entry.replace(".py", "")),
                 "description": meta.get("description", ""),
                 "author": meta.get("author", ""),
+                "author_id": meta.get("author_id", ""),
+                "price": _safe_int(meta.get("price", "0")),
                 "module": module,
                 "filename": entry,
-                "needs_llm": True,
+                "needs_llm": meta.get("needs_llm", "true").strip().lower() != "false",
                 "format": "legacy",
             })
     return skills

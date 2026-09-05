@@ -3,6 +3,7 @@
 
 import threading
 import time
+import source_detect
 
 _on_selection_cb = None
 _COOLDOWN = 1.5
@@ -44,7 +45,7 @@ def _on_copy():
             pt = ctypes.wintypes.POINT()
             ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
             cx, cy = pt.x, pt.y
-            hwnd = ctypes.windll.user32.GetForegroundWindow()
+            hwnd = source_detect.get_source_window()
         except Exception:
             cx, cy, hwnd = 0, 0, 0
 

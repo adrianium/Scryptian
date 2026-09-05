@@ -1,8 +1,7 @@
 Scryptian - Privacy Notice
 --------------------------
 
-Scryptian is free and runs AI locally on your PC - no subscription,
-no OpenAI, no account required.
+Scryptian is free and runs AI locally on your PC - no subscription, no account required.
 
 Some skills use external services (e.g. Google Translate for translation).
 All other skills process your text entirely on your machine.

@@ -24,6 +24,8 @@ a = Analysis(
         # is downloaded on demand, keeping the installer small.
         ('skills/*.py', 'skills'),
         ('docs/assets/scryptian-notification.wav', 'docs/assets'),
+        ('docs/assets/slippers.png', 'docs/assets'),
+        ('docs/assets/up-and-down.png', 'docs/assets'),
         ('selection_watcher.py', '.'),
         ('pins.py', '.'),
         ('main_pins.py', '.'),

@@ -7,6 +7,8 @@ import re
 import importlib.util
 import threading
 import tkinter as tk
+from tkinter import ttk
+from PIL import Image, ImageTk
 import pyperclip
 import keyboard
 import time
@@ -25,8 +27,30 @@ import main_pins
 import skill_editor
 import skill_settings
 import core
+import source_detect
+import wallet
 
 IS_WINDOWS = sys.platform == "win32"
+
+
+def _wallet_ok(skill):
+    """Pre-check: can the user afford this skill? Returns False (and notifies) if not."""
+    price = int(skill.get("price", 0) or 0)
+    if price <= 0 or wallet.can_afford(price):
+        return True
+    bal = wallet.balance() or 0
+    bridge.notify("Not enough swords", f"Need {price}, you have {bal}.")
+    return False
+
+
+def _charge_skill(skill):
+    """Charge the skill's price on a successful outcome (70% author / 30% platform)."""
+    price = int(skill.get("price", 0) or 0)
+    author_id = skill.get("author_id", "") or ""
+    if price <= 0 or not author_id:
+        return
+    skill_id = skill.get("id") or skill.get("filename", "").replace(".py", "")
+    wallet.charge(price, author_id, skill_id)
 
 if IS_WINDOWS:
     import ctypes
@@ -49,120 +73,7 @@ import bootstrap
 SKILLS_DIR = os.path.join(BASE_DIR, "skills")
 
 
-_BROWSERS = {
-    "chrome.exe", "msedge.exe", "firefox.exe", "brave.exe",
-    "opera.exe", "opera_gx.exe", "vivaldi.exe", "arc.exe",
-}
-
-# Known sites, detected LOCALLY from the browser window title. Only the matched
-# label below is ever sent — the raw title (which may contain personal data)
-# never leaves the machine. No match -> "other". First hit wins.
-_SITE_KEYWORDS = (
-    ("youtube", ("youtube",)),
-    ("reddit", ("reddit",)),
-    ("gmail", ("gmail",)),
-    ("outlook", ("outlook",)),
-    ("chatgpt", ("chatgpt", "openai")),
-    ("github", ("github",)),
-    ("stackoverflow", ("stack overflow", "stackoverflow")),
-    ("wikipedia", ("wikipedia", "википедия")),
-    ("twitter/x", ("twitter", "/ x", "x.com")),
-    ("facebook", ("facebook",)),
-    ("instagram", ("instagram",)),
-    ("linkedin", ("linkedin",)),
-    ("telegram", ("telegram",)),
-    ("whatsapp", ("whatsapp",)),
-    ("discord", ("discord",)),
-    ("amazon", ("amazon",)),
-    ("netflix", ("netflix",)),
-    ("medium", ("medium",)),
-    ("quora", ("quora",)),
-    ("vk", ("vkontakte", "вконтакте")),
-    ("yandex", ("yandex", "яндекс")),
-    ("google-docs", ("google docs", "google документы")),
-    ("google-search", ("google search", " - поиск в google")),
-    ("notion", ("notion",)),
-)
-
-
-def _detect_site(title: str) -> str:
-    """Map a browser window title to a whitelisted site label (local only).
-
-    Returns the matched label, or "other". The input title is used purely for
-    this local lookup and is never stored or transmitted.
-    """
-    t = (title or "").lower()
-    if not t:
-        return "other"
-    for label, keys in _SITE_KEYWORDS:
-        for k in keys:
-            if k in t:
-                return label
-    return "other"
-
-
-def _get_source_app(hwnd) -> dict:
-    """Describe the window active before Scryptian opened.
-
-    Returns {"source_app": <exe>} and, only for browsers, {"source_site": <label>}
-    where the label comes from a local whitelist. The raw window title is never
-    included, so no personal data (document names, email subjects, private pages)
-    is ever transmitted. Scryptian's own process is ignored.
-    """
-    result = {"source_app": "unknown"}
-    try:
-        if not hwnd:
-            return result
-        import ctypes
-        import ctypes.wintypes
-        pid = ctypes.wintypes.DWORD()
-        ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-
-        # Ignore Scryptian's own windows — they must never count as a source.
-        if pid.value == ctypes.windll.kernel32.GetCurrentProcessId():
-            return result
-
-        h = ctypes.windll.kernel32.OpenProcess(0x0410, False, pid.value)
-        buf = ctypes.create_unicode_buffer(260)
-        ctypes.windll.psapi.GetModuleFileNameExW(h, None, buf, 260)
-        ctypes.windll.kernel32.CloseHandle(h)
-        exe = os.path.basename(buf.value).lower() or "unknown"
-        result["source_app"] = exe
-
-        # Only browsers get site-level context — and only as a whitelisted label
-        # derived locally. For other apps the exe (e.g. winword.exe) is enough.
-        if exe in _BROWSERS:
-            length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
-            title = ""
-            if length:
-                tbuf = ctypes.create_unicode_buffer(length + 1)
-                ctypes.windll.user32.GetWindowTextW(hwnd, tbuf, length + 1)
-                title = tbuf.value
-            result["source_site"] = _detect_site(title)
-
-        return result
-    except Exception:
-        return result
-
-
-def _format_last_used(iso: str) -> str:
-    """Convert ISO UTC timestamp to human-readable relative string."""
-    try:
-        dt = datetime.datetime.fromisoformat(iso)
-        delta = datetime.datetime.now(datetime.timezone.utc) - dt.replace(tzinfo=datetime.timezone.utc)
-        days = delta.days
-        if days == 0:
-            return "today"
-        elif days == 1:
-            return "yesterday"
-        elif days < 7:
-            return f"{days}d ago"
-        elif days < 30:
-            return f"{days // 7}w ago"
-        else:
-            return f"{days // 30}mo ago"
-    except Exception:
-        return ""
+# Source app/site detection lives in source_detect.py (ctypes-only, no deps).
 
 
 def _track_skill(skill_id: str) -> None:
@@ -225,10 +136,6 @@ class ScryptianBar:
         self.last_result = ""
         self.processing = False
         self.pending_result = None
-        self._has_add_item = False
-        self._has_folder_item = False
-        self._has_feedback_item = False
-        self._has_store_item = False
         self.store_frame = None
         self.in_store = False
         self.store_panel = StorePanel(self)
@@ -237,10 +144,9 @@ class ScryptianBar:
     def toggle(self):
         """Show/hide the bar (called from any thread)."""
         if IS_WINDOWS and not self.visible:
-            try:
-                self._source_hwnd = ctypes.windll.user32.GetForegroundWindow()
-            except Exception:
-                self._source_hwnd = None
+            hwnd = source_detect.get_source_window()
+            if hwnd:
+                self._source_hwnd = hwnd
         telemetry.send("hotkey_pressed")
         self.root.after(0, self._do_toggle)
 
@@ -250,6 +156,22 @@ class ScryptianBar:
             self._hide()
         else:
             self._show()
+
+    def _update_balance(self):
+        if not hasattr(self, "balance_label"):
+            return
+        try:
+            bal = wallet.cached_balance()
+            if bal is None:
+                self.balance_label.config(text="Balance: ")
+            else:
+                self.balance_label.config(text=f"Balance: {bal} slippers")
+        except Exception:
+            pass
+
+    def _refresh_balance(self):
+        wallet.ensure_wallet()
+        self.root.after(0, self._update_balance)
 
     def _show(self):
         if self.window and self.visible:
@@ -266,7 +188,7 @@ class ScryptianBar:
         self.window.title("Scryptian")
         self.window.overrideredirect(True)
         self.window.attributes("-toolwindow", True)
-        self.window.configure(bg="#313244")
+        self.window.configure(bg="#2e3348")
 
         # ── Size and center position ──
         screen_w = self.root.winfo_screenwidth()
@@ -282,38 +204,95 @@ class ScryptianBar:
         self.window.update_idletasks()
 
         # ── Border ──
-        self.border = tk.Frame(self.window, bg="#45475a", padx=1, pady=1)
+        self.border = tk.Frame(self.window, bg="#2e3348", padx=1, pady=1)
         self.border.pack(fill="both", expand=True)
 
         # ── Container ──
-        self.container = tk.Frame(self.border, bg="#1e1e2e")
+        self.container = tk.Frame(self.border, bg="#1c2030")
         self.container.pack(fill="both", expand=True)
 
+        # ── Balance (right side) ──
+        self.balance_frame = tk.Frame(self.container, bg="#1c2030")
+        self.balance_frame.pack(fill="x", padx=12, pady=(4, 0))
+
+        self.balance_content = tk.Frame(self.balance_frame, bg="#1c2030")
+        self.balance_content.pack(side="right")
+
+        self.balance_icon = tk.Label(
+            self.balance_content,
+            text="🩴",
+            font=("Segoe UI Emoji", 13),
+            bg="#1c2030",
+            fg="#2cff00",
+            width=2,
+            anchor="center",
+        )
+        self.balance_icon.pack(side="left", padx=(0, 2), pady=(0, 1))
+        self.balance_photo = None
+        try:
+            icon_path = os.path.join(BASE_DIR, "docs", "assets", "slippers.png")
+            source = Image.open(icon_path).convert("RGBA")
+            alpha = source.getchannel("A").resize((26, 26), Image.Resampling.LANCZOS)
+            icon = Image.new("RGBA", (26, 26), "#2cff00")
+            icon.putalpha(alpha)
+            self.balance_photo = ImageTk.PhotoImage(icon)
+            self.balance_icon.config(image=self.balance_photo, text="", width=26)
+        except Exception:
+            pass
+
+        self.balance_label = tk.Label(
+            self.balance_content,
+            text="",
+            font=("Segoe UI", 11),
+            bg="#1c2030",
+            fg="#2cff00",
+            anchor="e",
+        )
+        self.balance_label.pack(side="left")
+
+        self.balance_hotkey = tk.Label(
+            self.balance_frame,
+            text="[ Ctrl+0 ]",
+            font=("Segoe UI", 10),
+            bg="#1c2030",
+            fg="#a0a0a0",
+            anchor="e",
+        )
+        self.balance_hotkey.pack(side="right", padx=(0, 16), pady=(3, 0))
+        self._update_balance()
+        threading.Thread(target=self._refresh_balance, daemon=True).start()
+
         # ── Input field ──
-        self.entry = tk.Entry(
+        self.entry_shell = tk.Frame(
             self.container,
-            font=("Segoe UI", 16),
-            bg="#1e1e2e",
-            fg="#cdd6f4",
-            disabledbackground="#1e1e2e",
-            disabledforeground="#585b70",
-            insertbackground="#cdd6f4",
+            bg="#252a3c",
+            padx=4,
+            highlightthickness=1,
+            highlightbackground="#292e3e",
+            highlightcolor="#303548",
+        )
+        self.entry_shell.pack(fill="x", padx=12, pady=8)
+        self.entry = tk.Entry(
+            self.entry_shell,
+            font=("Segoe UI", 14),
+            bg="#252a3c",
+            fg="#ffffff",
+            disabledbackground="#252a3c",
+            disabledforeground="#b0b0b0",
+            insertbackground="#707080",
             relief="flat",
             borderwidth=0,
+            highlightthickness=0,
         )
-        self.entry.pack(fill="x", padx=12, pady=8)
+        self.entry.pack(fill="x")
+        self.placeholder_text = "Works with text from clipboard"
+        self._placeholder_active = True
+        self.entry.insert(0, self.placeholder_text)
+        self.entry.config(fg="#b0b0b0")
 
-        self.placeholder = tk.Label(
-            self.container,
-            text="Works with text from clipboard",
-            font=("Segoe UI", 16),
-            bg="#1e1e2e",
-            fg="#585b70",
-        )
-        self.placeholder.place(x=14, y=8)
-
-        self.placeholder.bind("<Button-1>", lambda e: self.entry.focus_set())
-
+        self.entry.bind("<FocusIn>", self._on_entry_focus_in)
+        self.entry.bind("<FocusOut>", self._on_entry_focus_out)
+        self.entry.bind("<KeyPress>", self._on_entry_keypress)
         self.entry.bind("<KeyRelease>", self._on_key)
         self.entry.bind("<Escape>", lambda e: self._hide())
         self.entry.bind("<Down>", self._select_next)
@@ -323,60 +302,88 @@ class ScryptianBar:
         self.window.bind("<Escape>", lambda e: self._hide())
 
         # ── Result list (hidden until input) ──
-        self.list_frame = tk.Frame(self.container, bg="#1e1e2e")
+        self.list_frame = tk.Frame(self.container, bg="#1c2030")
         self._skill_rows = []
+        self._special_widgets = []
+
+        # Scrollable skill list + fixed special-action bar
+        self.list_view = tk.Frame(self.list_frame, bg="#1c2030")
+        self.list_view.pack_propagate(False)
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure("Scryptian.Vertical.TScrollbar",
+                        background="#3a3f58", troughcolor="#1c2030",
+                        arrowcolor="#1c2030", bordercolor="#1c2030",
+                        lightcolor="#3a3f58", darkcolor="#3a3f58",
+                        relief="flat")
+        style.map("Scryptian.Vertical.TScrollbar",
+                  background=[("active", "#2e3348")])
+        self.list_canvas = tk.Canvas(self.list_view, bg="#1c2030", highlightthickness=0, bd=0)
+        self.list_scroll = ttk.Scrollbar(self.list_view, orient="vertical", command=self.list_canvas.yview, style="Scryptian.Vertical.TScrollbar")
+        self.list_inner = tk.Frame(self.list_canvas, bg="#1c2030")
+        self.list_canvas.configure(yscrollcommand=self.list_scroll.set)
+        self._list_window = self.list_canvas.create_window((0, 0), window=self.list_inner, anchor="nw")
+        self.list_inner.bind("<Configure>", lambda e: self.list_canvas.configure(scrollregion=self.list_canvas.bbox("all")))
+        self.list_canvas.bind("<Configure>", lambda e: self.list_canvas.itemconfigure(self._list_window, width=e.width))
+        self.list_canvas.bind("<Enter>", lambda e: self.list_canvas.bind_all("<MouseWheel>", self._on_list_wheel))
+        self.list_canvas.bind("<Leave>", lambda e: self.list_canvas.unbind_all("<MouseWheel>"))
+        self.list_canvas.pack(side="left", fill="both", expand=True)
+        self.list_scroll.pack(side="right", fill="y")
+        self.special_frame = tk.Frame(self.list_frame, bg="#1c2030")
+        self.special_frame.pack(side="bottom", fill="x", padx=4, pady=(0, 2))
+        self.list_view.pack(side="top", fill="x")
 
         # ── Response area (hidden until result) ──
-        self.separator = tk.Frame(self.container, bg="#45475a", height=1)
+        self.separator = tk.Frame(self.container, bg="#2e3348", height=1)
         self.result_box = tk.Text(
             self.container,
-            font=("Consolas", 13),
-            bg="#1e1e2e",
-            fg="#a6adc8",
+            font=("Segoe UI", 13),
+            bg="#1c2030",
+            fg="#ffffff",
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
             wrap="word",
             state="disabled",
         )
-        self.skill_hint = tk.Frame(self.container, bg="#1e1e2e")
+        self.skill_hint = tk.Frame(self.container, bg="#1c2030")
         tk.Label(
             self.skill_hint,
             text="Ctrl+Alt - hide",
-            font=("Segoe UI", 10),
-            bg="#1e1e2e",
-            fg="#585b70",
+            font=("Segoe UI", 11),
+            bg="#1c2030",
+            fg="#b0b0b0",
         ).pack(side="left")
         tk.Label(
             self.skill_hint,
             text="Enter - run action",
-            font=("Segoe UI", 10),
-            bg="#1e1e2e",
-            fg="#585b70",
+            font=("Segoe UI", 11),
+            bg="#1c2030",
+            fg="#b0b0b0",
         ).pack(side="right")
-        self.hint_label = tk.Frame(self.container, bg="#1e1e2e")
+        self.hint_label = tk.Frame(self.container, bg="#1c2030")
         tk.Label(
             self.hint_label,
             text="Enter - copy to clipboard and close",
-            font=("Segoe UI", 10),
-            bg="#1e1e2e",
-            fg="#585b70",
+            font=("Segoe UI", 11),
+            bg="#1c2030",
+            fg="#b0b0b0",
         ).pack(side="left")
         report_btn = tk.Label(
             self.hint_label,
             text="[ Report ]",
-            font=("Segoe UI", 10),
-            bg="#1e1e2e",
-            fg="#6c7086",
+            font=("Segoe UI", 11),
+            bg="#1c2030",
+            fg="#a0a0a0",
             cursor="hand2",
         )
         report_btn.pack(side="right")
         report_btn.bind("<Button-1>", lambda e: self._open_report_dialog())
-        report_btn.bind("<Enter>", lambda e: report_btn.config(fg="#cdd6f4"))
-        report_btn.bind("<Leave>", lambda e: report_btn.config(fg="#6c7086"))
+        report_btn.bind("<Enter>", lambda e: report_btn.config(fg="#ffffff"))
+        report_btn.bind("<Leave>", lambda e: report_btn.config(fg="#a0a0a0"))
 
         # Chain bar — quick actions on result
-        self.chain_frame = tk.Frame(self.container, bg="#1e1e2e")
+        self.chain_frame = tk.Frame(self.container, bg="#1c2030")
         self._chain_btns = []
 
         # Processing animation
@@ -394,10 +401,11 @@ class ScryptianBar:
         # Hide when clicking outside
         self.window.bind("<FocusOut>", self._on_focus_out)
 
-        # Chain hotkeys
-        self.window.bind("<Control-Key-1>", lambda e: self._run_chain("Summarize"))
-        self.window.bind("<Control-Key-2>", lambda e: self._run_chain("Change tone to professional"))
-        self.window.bind("<Control-Key-3>", lambda e: self._run_chain("Change tone to friendly"))
+        # Hotkeys: chain actions (when result shown) or special actions (in menu)
+        self.window.bind("<Control-Key-1>", lambda e: self._on_hotkey(1))
+        self.window.bind("<Control-Key-2>", lambda e: self._on_hotkey(2))
+        self.window.bind("<Control-Key-3>", lambda e: self._on_hotkey(3))
+        self.window.bind("<Control-Key-4>", lambda e: self._on_hotkey(4))
 
         self.visible = True
         self.selected_index = 0
@@ -496,20 +504,45 @@ class ScryptianBar:
             except Exception:
                 pass
 
+    def _restore_placeholder_cursor(self):
+        if self._placeholder_active and self.entry.winfo_exists():
+            self.entry.selection_clear()
+            self.entry.icursor(0)
+
+    def _on_entry_focus_in(self, event):
+        self.entry_shell.config(highlightbackground="#303548")
+        if self._placeholder_active:
+            self._restore_placeholder_cursor()
+            self.root.after_idle(self._restore_placeholder_cursor)
+
+    def _on_entry_focus_out(self, event):
+        self.entry_shell.config(highlightbackground="#292e3e")
+        if not self._placeholder_active and not self.entry.get():
+            self.entry.insert(0, self.placeholder_text)
+            self._placeholder_active = True
+            self.entry.config(fg="#b0b0b0")
+
+    def _on_entry_keypress(self, event):
+        if not self._placeholder_active:
+            return
+        if event.keysym in ("BackSpace", "Delete"):
+            return "break"
+        if event.char:
+            self.entry.delete(0, "end")
+            self._placeholder_active = False
+            self.entry.config(fg="#ffffff")
+
     def _on_key(self, event):
         if event.keysym in ("Return", "Escape", "Up", "Down"):
             return
         if str(self.entry.cget("state")) == "disabled":
             return
-        query = self.entry.get()
+        query = "" if self._placeholder_active else self.entry.get()
         if query:
-            self.placeholder.place_forget()
             try:
                 self._hide_chain()
             except Exception:
                 pass
-        else:
-            self.placeholder.place(x=14, y=8)
         self._update_filter(query)
 
     def _update_filter(self, query):
@@ -535,11 +568,15 @@ class ScryptianBar:
         for row in self._skill_rows:
             row.destroy()
         self._skill_rows = []
+        for w in self._special_widgets:
+            w.destroy()
+        self._special_widgets = []
 
         if not self.filtered:
             self.list_frame.pack_forget()
             self.skill_hint.pack_forget()
-            self._resize(52)
+            self.window.update_idletasks()
+            self._resize(self.container.winfo_reqheight() + 4)
             return
 
         for i, p in enumerate(self.filtered):
@@ -547,33 +584,33 @@ class ScryptianBar:
             row = self._make_row(p["title"], p["description"], i, pinnable=True, skill_id=skill_id)
             self._skill_rows.append(row)
 
-        # "Add skill" shortcut — only when no filter is active
-        self._has_add_item = False
-        self._has_folder_item = False
-        self._has_feedback_item = False
-        self._has_store_item = False
-        if not self.entry.get().strip():
-            row = self._make_row("+ Add your own action", "", len(self.filtered))
-            self._skill_rows.append(row)
-            self._has_add_item = True
-
-            row2 = self._make_row("📁 Open actions folder", "", len(self.filtered) + 1)
-            self._skill_rows.append(row2)
-            self._has_folder_item = True
-
-            row3 = self._make_row("💬 Help & feedback (discord server)", "", len(self.filtered) + 2)
-            self._skill_rows.append(row3)
-            self._has_feedback_item = True
-
-            row4 = self._make_row("📦 Scryptian Store", "", len(self.filtered) + 3)
-            self._skill_rows.append(row4)
-            self._has_store_item = True
+        # Compact special-action bar — only when no filter is active
+        if self._placeholder_active or not self.entry.get().strip():
+            self._render_special_actions()
 
         self.list_frame.pack(fill="x", padx=6, pady=(0, 2))
         self.skill_hint.pack(fill="x", padx=12, pady=(0, 6))
 
         self.window.update_idletasks()
+
+        # Show the full list first, then shrink it (and enable scrolling) if it
+        # would push the window below the taskbar.
+        list_natural = self.list_inner.winfo_reqheight()
+        self.list_view.config(height=list_natural)
+
+        self.window.update_idletasks()
         needed = self.container.winfo_reqheight()
+
+        wa = self._work_area()
+        if wa:
+            max_window_height = max(wa[3] - self.window.winfo_y() - 16, 100)
+            if needed > max_window_height:
+                overflow = needed - max_window_height
+                new_list_height = max(list_natural - overflow, 80)
+                self.list_view.config(height=new_list_height)
+                self.window.update_idletasks()
+                needed = self.container.winfo_reqheight()
+
         self._resize(needed + 4)
 
         max_idx = len(self._skill_rows) - 1
@@ -582,30 +619,14 @@ class ScryptianBar:
 
     def _make_row(self, title, desc, idx, pinnable=False, skill_id=None):
         """Creates a single skill row with title (bright) and description (dim)."""
-        row = tk.Frame(self.list_frame, bg="#1e1e2e", cursor="hand2")
+        row = tk.Frame(self.list_inner, bg="#1c2030", cursor="hand2")
         row.pack(fill="x", padx=4, pady=1)
 
         title_lbl = tk.Label(
             row, text=f"  {title}", font=("Segoe UI", 13),
-            bg="#1e1e2e", fg="#cdd6f4", anchor="w",
+            bg="#1c2030", fg="#ffffff", anchor="w",
         )
         title_lbl.pack(side="left", fill="x", expand=True)
-
-        if skill_id:
-            state = bridge.get_state(skill_id)
-            count = state.get("count", 0)
-            last_used = state.get("last_used", "")
-            if count > 0:
-                stats_parts = [f"{count}×"]
-                if last_used:
-                    stats_parts.append(_format_last_used(last_used))
-                stats_text = "  ".join(stats_parts)
-                stats_lbl = tk.Label(
-                    row, text=stats_text, font=("Segoe UI", 9),
-                    bg="#1e1e2e", fg="#45475a", anchor="e", padx=4,
-                )
-                stats_lbl.pack(side="left")
-                stats_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
         if pinnable:
             skill_obj = self.filtered[idx] if idx < len(self.filtered) else None
@@ -616,8 +637,8 @@ class ScryptianBar:
                 row,
                 text="\ue718" if mpinned else "\ue77a",
                 font=("Segoe MDL2 Assets", 12),
-                bg="#1e1e2e",
-                fg="#a6e3a1" if mpinned else "#6c7086",
+                bg="#1c2030",
+                fg="#a6e3a1" if mpinned else "#a0a0a0",
                 cursor="hand2",
                 padx=4,
             )
@@ -630,8 +651,8 @@ class ScryptianBar:
                 row,
                 text="\ue735" if pinned else "\ue734",
                 font=("Segoe MDL2 Assets", 13),
-                bg="#1e1e2e",
-                fg="#f9e2af" if pinned else "#6c7086",
+                bg="#1c2030",
+                fg="#f9e2af" if pinned else "#a0a0a0",
                 cursor="hand2",
                 padx=6,
             )
@@ -643,7 +664,7 @@ class ScryptianBar:
                 edit_lbl = tk.Label(
                     row, text="\ue70f",
                     font=("Segoe MDL2 Assets", 11),
-                    bg="#1e1e2e", fg="#89b4fa",
+                    bg="#1c2030", fg="#89b4fa",
                     cursor="hand2", padx=4,
                 )
                 edit_lbl.pack(side="right")
@@ -654,7 +675,7 @@ class ScryptianBar:
                 gear_lbl = tk.Label(
                     row, text="\ue713",
                     font=("Segoe MDL2 Assets", 12),
-                    bg="#1e1e2e", fg="#a6adc8",
+                    bg="#1c2030", fg="#d4d4d4",
                     cursor="hand2", padx=4,
                 )
                 gear_lbl.pack(side="right")
@@ -665,6 +686,47 @@ class ScryptianBar:
         title_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
         return row
+
+    def _render_special_actions(self):
+        """Render compact special-action buttons below the skill list (chain-bar style)."""
+        sep = tk.Frame(self.special_frame, bg="#2e3348", height=1)
+        sep.pack(fill="x", padx=4, pady=(3, 2))
+        self._special_widgets.append(sep)
+
+        grid = tk.Frame(self.special_frame, bg="#1c2030")
+        grid.pack(fill="x", padx=4, pady=(0, 0))
+        self._special_widgets.append(grid)
+        for c in range(4):
+            grid.columnconfigure(c, weight=1, uniform="special")
+
+        actions = [
+            ("➕", "Add your action", "Ctrl+1", self._open_new_skill_editor, False),
+            ("📁", "Open actions folder", "Ctrl+2", self._open_skills_folder, False),
+            ("💬", "Help (Telegram)", "Ctrl+3", self._open_telegram, False),
+            ("📦", "Actions Store", "Ctrl+4", self._open_store, True),
+        ]
+        for i, (icon, label, hotkey, handler, accent) in enumerate(actions):
+            fg = "#2cff00" if accent else "#ffffff"
+            hover_bg = "#1a331a" if accent else "#2e3348"
+            btn = tk.Label(
+                grid, text=f"{icon}\n{label}\n[{hotkey}]", font=("Segoe UI", 10),
+                bg="#252a3c", fg=fg, cursor="hand2",
+                padx=4, pady=4, justify="center",
+            )
+            btn.grid(row=0, column=i, sticky="ew", padx=(0, 4) if i < 3 else (0, 0))
+            btn.bind("<Button-1>", lambda e, h=handler: h())
+            btn.bind("<Enter>", lambda e, b=btn, hb=hover_bg, f=fg: b.config(bg=hb, fg=f))
+            btn.bind("<Leave>", lambda e, b=btn, f=fg: b.config(bg="#252a3c", fg=f))
+
+    def _open_discord(self):
+        import webbrowser
+        telemetry.send("feedback_clicked")
+        webbrowser.open("https://discord.gg/dc6VwAgCpc")
+
+    def _open_telegram(self):
+        import webbrowser
+        telemetry.send("telegram_clicked")
+        webbrowser.open("https://t.me/+dyNesmgH1w9lOGJi")
 
     def _open_new_skill_editor(self):
         def on_saved():
@@ -702,33 +764,81 @@ class ScryptianBar:
         """Highlights the selected row."""
         for i, row in enumerate(self._skill_rows):
             if i == self.selected_index:
-                row.config(bg="#45475a")
+                row.config(bg="#2e3348")
                 for child in row.winfo_children():
-                    child.config(bg="#45475a")
+                    child.config(bg="#2e3348")
             else:
-                row.config(bg="#1e1e2e")
+                row.config(bg="#1c2030")
                 for child in row.winfo_children():
-                    child.config(bg="#1e1e2e")
+                    child.config(bg="#1c2030")
+
+    def _work_area(self):
+        """Return (left, top, right, bottom) of the work area (screen minus taskbar)."""
+        if not IS_WINDOWS:
+            return None
+        try:
+            from ctypes import wintypes
+            rect = wintypes.RECT()
+            # SPI_GETWORKAREA = 0x0030 — primary monitor work area (excludes taskbar).
+            if ctypes.windll.user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(rect), 0):
+                return (rect.left, rect.top, rect.right, rect.bottom)
+        except Exception:
+            pass
+        return None
 
     def _resize(self, height):
-        """Updates window height."""
+        """Updates window height, clamped to the screen work area (above taskbar)."""
         if not self.window:
             return
-        geo = self.window.geometry()
-        parts = geo.split("+")
-        wh = parts[0].split("x")
-        self.window.geometry(f"{wh[0]}x{height}+{parts[1]}+{parts[2]}")
+        wa = self._work_area()
+        if wa:
+            # Never extend below the Windows taskbar; leave a small gap above it.
+            max_height = max(wa[3] - self.window.winfo_y() - 16, 100)
+            height = min(height, max_height)
+        w = self.window.winfo_width()
+        x = self.window.winfo_x()
+        y = self.window.winfo_y()
+        self.window.geometry(f"{w}x{height}+{x}+{y}")
+        self.window.update_idletasks()
+
+    def _on_list_wheel(self, event):
+        """Scroll the skill list with the mouse wheel."""
+        try:
+            self.list_canvas.yview_scroll(int(-event.delta / 120), "units")
+        except Exception:
+            pass
+
+    def _scroll_to_selected(self):
+        """Keep the selected row visible inside the scrollable list."""
+        if not self._skill_rows:
+            return
+        try:
+            row = self._skill_rows[self.selected_index]
+            row_y = row.winfo_y()
+            row_h = row.winfo_height()
+            view_h = self.list_canvas.winfo_height()
+            top = self.list_canvas.canvasy(0)
+            bottom = top + view_h
+            content_h = max(1, self.list_inner.winfo_height())
+            if row_y < top:
+                self.list_canvas.yview_moveto(row_y / content_h)
+            elif row_y + row_h > bottom:
+                self.list_canvas.yview_moveto((row_y + row_h - view_h) / content_h)
+        except Exception:
+            pass
 
     def _select_next(self, event):
         if self._skill_rows:
             max_idx = len(self._skill_rows) - 1
             self.selected_index = min(self.selected_index + 1, max_idx)
             self._highlight_row()
+            self._scroll_to_selected()
 
     def _select_prev(self, event):
         if self._skill_rows:
             self.selected_index = max(self.selected_index - 1, 0)
             self._highlight_row()
+            self._scroll_to_selected()
 
     def _auto_paste(self):
         """Restore focus to source window and paste result."""
@@ -748,6 +858,8 @@ class ScryptianBar:
 
     def _on_enter(self, event):
         """Runs the selected skill or copies the result."""
+        if self.in_store:
+            return
         if self.has_result:
             if self.last_result:
                 pyperclip.copy(self.last_result + "\n\n— Scryptian")
@@ -758,27 +870,6 @@ class ScryptianBar:
             return
 
         if not self.filtered:
-            return
-
-        # "Add skill" item selected
-        if self._has_add_item and self.selected_index == len(self.filtered):
-            self._open_new_skill_editor()
-            return
-
-        # "Open skills folder" item selected
-        if self._has_folder_item and self.selected_index == len(self.filtered) + 1:
-            self._open_skills_folder()
-            return
-
-        # "Help & feedback" item selected
-        if self._has_feedback_item and self.selected_index == len(self.filtered) + 2:
-            import webbrowser
-            telemetry.send("feedback_clicked")
-            webbrowser.open("https://discord.gg/JyAJuN8xk")
-            return
-
-        if self._has_store_item and self.selected_index == len(self.filtered) + 3:
-            self._open_store()
             return
 
         skill = self.filtered[self.selected_index]
@@ -803,10 +894,12 @@ class ScryptianBar:
             if getattr(self, "_bg_running", False):
                 self._show_result("A background task is already running.\nPlease wait for it to finish.")
                 return
+            if not _wallet_ok(skill):
+                return
             self._bg_running = True
             print(f"[Scryptian] Running (background): {skill['title']}...")
             _bt0 = time.time()
-            _bg_src = _get_source_app(getattr(self, '_source_hwnd', None))
+            _bg_src = source_detect.get_source_info(getattr(self, '_source_hwnd', None))
             def bg_execute():
                 try:
                     result = core.run_skill(skill, input_text)
@@ -816,6 +909,7 @@ class ScryptianBar:
                     else:
                         telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _bt0, **_bg_src, background=True))
                         _track_skill(skill["filename"].replace(".py", ""))
+                        _charge_skill(skill)
                         print(f"[Scryptian] Done (background): {skill['title']}")
                 except Exception as e:
                     print(f"[Scryptian] Background skill error: {e}")
@@ -838,7 +932,7 @@ class ScryptianBar:
         self.processing = True
         print(f"[Scryptian] Running: {skill['title']}...")
         _t0 = time.time()
-        _src = _get_source_app(getattr(self, '_source_hwnd', None))
+        _src = source_detect.get_source_info(getattr(self, '_source_hwnd', None))
 
         def execute():
             try:
@@ -918,10 +1012,13 @@ class ScryptianBar:
         self._start_anim(skill["title"])
         self.processing = True
         _t0 = time.time()
-        _src = _get_source_app(getattr(self, '_source_hwnd', None))
+        _src = source_detect.get_source_info(getattr(self, '_source_hwnd', None))
 
         def execute():
             try:
+                if not _wallet_ok(skill):
+                    self.processing = False
+                    return
                 if skill.get("needs_llm", True) and not bridge.is_model_in_memory():
                     self.root.after(0, lambda: self._show_result("Preparing AI model..."))
                     bridge._get_llm()
@@ -940,6 +1037,7 @@ class ScryptianBar:
                         self.has_result = True
                         self.root.after(0, self._finish_stream)
                         telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src, via="selection"))
+                        _charge_skill(skill)
                     else:
                         telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "error_or_empty", "error": (result or "")[:200]})
                         self.root.after(0, lambda t=result: self._show_result(t or "Skill returned an empty result."))
@@ -951,6 +1049,7 @@ class ScryptianBar:
                         self.has_result = True
                         self.root.after(0, lambda: self._show_result(result))
                         telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src, via="selection"))
+                        _charge_skill(skill)
                     else:
                         telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "error_or_empty", "error": (result or "")[:200]})
                         self.root.after(0, lambda t=result: self._show_result(t or "Skill returned an empty result."))
@@ -965,6 +1064,7 @@ class ScryptianBar:
         if not self.window:
             return
 
+        self.entry_shell.pack_forget()
         self.separator.pack_forget()
         self.result_box.pack_forget()
         self.hint_label.pack_forget()
@@ -1014,6 +1114,7 @@ class ScryptianBar:
             self._stop_anim()
 
         # Unpack everything before repacking
+        self.entry_shell.pack_forget()
         self.separator.pack_forget()
         self.result_box.pack_forget()
         self.hint_label.pack_forget()
@@ -1091,9 +1192,9 @@ class ScryptianBar:
             btn = tk.Label(
                 self.chain_frame,
                 text=f"{label}\n[{hotkey}]",
-                font=("Segoe UI", 9),
-                bg="#313244",
-                fg="#a6adc8",
+                font=("Segoe UI", 11),
+                bg="#252a3c",
+                fg="#ffffff",
                 cursor="hand2",
                 padx=6,
                 pady=5,
@@ -1101,8 +1202,8 @@ class ScryptianBar:
             )
             btn.grid(row=0, column=i, sticky="ew", padx=(0, 4) if i < 2 else (0, 0))
             btn.bind("<Button-1>", lambda e, t=skill_title: self._run_chain(t))
-            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#45475a", fg="#cdd6f4"))
-            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#313244", fg="#a6adc8"))
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2e3348", fg="#ffffff"))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#252a3c", fg="#ffffff"))
             self._chain_btns.append(btn)
 
         self.chain_frame.pack(fill="x", padx=10, pady=(0, 6))
@@ -1116,6 +1217,28 @@ class ScryptianBar:
         for b in self._chain_btns:
             b.destroy()
         self._chain_btns.clear()
+
+    def _on_hotkey(self, n):
+        """Dispatch Ctrl+1..4: chain actions when result shown, special actions in menu."""
+        if self.has_result:
+            chain_map = {
+                1: "Summarize",
+                2: "Change tone to professional",
+                3: "Fact Check",
+            }
+            if n in chain_map:
+                self._run_chain(chain_map[n])
+            return
+        if self.in_store:
+            return
+        special_map = {
+            1: self._open_new_skill_editor,
+            2: self._open_skills_folder,
+            3: self._open_telegram,
+            4: self._open_store,
+        }
+        if n in special_map:
+            special_map[n]()
 
     def _run_chain(self, skill_title):
         """Run a chain skill on the current result text."""
@@ -1204,42 +1327,42 @@ class ScryptianBar:
         dlg.overrideredirect(True)
         dlg.attributes("-topmost", True)
         dlg.attributes("-toolwindow", True)
-        dlg.configure(bg="#1e1e2e")
+        dlg.configure(bg="#1c2030")
 
-        outer = tk.Frame(dlg, bg="#45475a", padx=1, pady=1)
+        outer = tk.Frame(dlg, bg="#2e3348", padx=1, pady=1)
         outer.pack(fill="both", expand=True)
-        inner = tk.Frame(outer, bg="#1e1e2e", padx=16, pady=14)
+        inner = tk.Frame(outer, bg="#1c2030", padx=16, pady=14)
         inner.pack(fill="both", expand=True)
 
         tk.Label(inner, text="Send feedback", font=("Segoe UI", 11, "bold"),
-                 bg="#1e1e2e", fg="#cdd6f4", anchor="w").pack(fill="x", pady=(0, 10))
+                 bg="#1c2030", fg="#ffffff", anchor="w").pack(fill="x", pady=(0, 10))
 
         # Contact field
-        tk.Label(inner, text="Contact  (optional)", font=("Segoe UI", 8),
-                 bg="#1e1e2e", fg="#585b70", anchor="w").pack(fill="x")
+        tk.Label(inner, text="Contact  (optional)", font=("Segoe UI", 11),
+                 bg="#1c2030", fg="#b0b0b0", anchor="w").pack(fill="x")
         contact_var = tk.StringVar()
         contact_entry = tk.Entry(inner, textvariable=contact_var,
-                                 font=("Segoe UI", 10), bg="#313244", fg="#cdd6f4",
-                                 insertbackground="#cdd6f4", relief="flat", bd=0)
+                                 font=("Segoe UI", 11), bg="#252a3c", fg="#ffffff",
+                                 insertbackground="#ffffff", relief="flat", bd=0)
         contact_entry.pack(fill="x", pady=(2, 10), ipady=5)
 
         # Message field
-        tk.Label(inner, text="Message", font=("Segoe UI", 8),
-                 bg="#1e1e2e", fg="#585b70", anchor="w").pack(fill="x")
-        msg_text = tk.Text(inner, font=("Segoe UI", 10), bg="#313244", fg="#cdd6f4",
-                           insertbackground="#cdd6f4", relief="flat", bd=0,
+        tk.Label(inner, text="Message", font=("Segoe UI", 11),
+                 bg="#1c2030", fg="#b0b0b0", anchor="w").pack(fill="x")
+        msg_text = tk.Text(inner, font=("Segoe UI", 11), bg="#252a3c", fg="#ffffff",
+                           insertbackground="#ffffff", relief="flat", bd=0,
                            height=4, wrap="word")
         msg_text.pack(fill="x", pady=(2, 12))
 
-        btn_row = tk.Frame(inner, bg="#1e1e2e")
+        btn_row = tk.Frame(inner, bg="#1c2030")
         btn_row.pack(fill="x")
 
-        cancel_btn = tk.Label(btn_row, text="Cancel", font=("Segoe UI", 9),
-                              bg="#1e1e2e", fg="#585b70", cursor="hand2")
+        cancel_btn = tk.Label(btn_row, text="Cancel", font=("Segoe UI", 11),
+                              bg="#1c2030", fg="#b0b0b0", cursor="hand2")
         cancel_btn.pack(side="right", padx=(8, 0))
         cancel_btn.bind("<Button-1>", lambda e: dlg.destroy())
-        cancel_btn.bind("<Enter>", lambda e: cancel_btn.config(fg="#cdd6f4"))
-        cancel_btn.bind("<Leave>", lambda e: cancel_btn.config(fg="#585b70"))
+        cancel_btn.bind("<Enter>", lambda e: cancel_btn.config(fg="#ffffff"))
+        cancel_btn.bind("<Leave>", lambda e: cancel_btn.config(fg="#b0b0b0"))
 
         def _submit():
             msg = msg_text.get("1.0", "end").strip()
@@ -1254,8 +1377,8 @@ class ScryptianBar:
             dlg.destroy()
             self._show_result("Thanks for the feedback!")
 
-        send_btn = tk.Label(btn_row, text="Send", font=("Segoe UI", 9, "bold"),
-                            bg="#cba6f7", fg="#1e1e2e", cursor="hand2",
+        send_btn = tk.Label(btn_row, text="Send", font=("Segoe UI", 11, "bold"),
+                            bg="#cba6f7", fg="#1c2030", cursor="hand2",
                             padx=14, pady=3)
         send_btn.pack(side="right")
         send_btn.bind("<Button-1>", lambda e: _submit())
@@ -1328,39 +1451,39 @@ class SelectionToolbar:
 
         win = tk.Toplevel(self.root)
         win.overrideredirect(True)
-        win.configure(bg="#1e1e2e")
+        win.configure(bg="#1c2030")
         win.attributes("-topmost", True)
 
-        outer = tk.Frame(win, bg="#313244", padx=1, pady=1)
+        outer = tk.Frame(win, bg="#252a3c", padx=1, pady=1)
         outer.pack(fill="both", expand=True)
-        inner = tk.Frame(outer, bg="#1e1e2e", padx=0, pady=2)
+        inner = tk.Frame(outer, bg="#1c2030", padx=0, pady=2)
         inner.pack(fill="both", expand=True)
 
         pinned = pins_module.get_pinned_skills(self.skills)
         visible = pinned if pinned else self.skills[:3]
         for skill in visible:
-            row = tk.Frame(inner, bg="#1e1e2e", cursor="hand2")
+            row = tk.Frame(inner, bg="#1c2030", cursor="hand2")
             row.pack(fill="x", padx=0, pady=0)
             lbl = tk.Label(
                 row,
                 text=f"  {skill['title']}",
-                bg="#1e1e2e", fg="#cdd6f4",
-                font=("Segoe UI", 9), anchor="w",
+                bg="#1c2030", fg="#ffffff",
+                font=("Segoe UI", 11), anchor="w",
                 cursor="hand2", padx=4, pady=4,
             )
             lbl.pack(fill="x")
             cmd = lambda s=skill, r=row, l=lbl: self._run_skill(s)
             row.bind("<Button-1>", lambda e, s=skill: self._run_skill(s))
             lbl.bind("<Button-1>", lambda e, s=skill: self._run_skill(s))
-            row.bind("<Enter>", lambda e, r=row, l=lbl: (r.config(bg="#313244"), l.config(bg="#313244")))
-            row.bind("<Leave>", lambda e, r=row, l=lbl: (r.config(bg="#1e1e2e"), l.config(bg="#1e1e2e")))
+            row.bind("<Enter>", lambda e, r=row, l=lbl: (r.config(bg="#252a3c"), l.config(bg="#252a3c")))
+            row.bind("<Leave>", lambda e, r=row, l=lbl: (r.config(bg="#1c2030"), l.config(bg="#1c2030")))
 
-        tk.Frame(inner, bg="#313244", height=1).pack(fill="x", padx=4)
+        tk.Frame(inner, bg="#252a3c", height=1).pack(fill="x", padx=4)
 
         close = tk.Label(
             inner, text="  dismiss",
-            bg="#1e1e2e", fg="#45475a",
-            font=("Segoe UI", 8), anchor="w",
+            bg="#1c2030", fg="#2e3348",
+            font=("Segoe UI", 11), anchor="w",
             cursor="hand2", padx=4, pady=3,
         )
         close.pack(fill="x")
@@ -1413,15 +1536,18 @@ class SelectionToolbar:
             return
 
         # Editable field: run inline and paste back
-        _src = _get_source_app(source_hwnd)
+        _src = source_detect.get_source_info(source_hwnd)
 
         def execute():
             _t0 = time.time()
             try:
+                if not _wallet_ok(skill):
+                    return
                 result = core.run_skill(skill, text)
                 if result and not result.startswith("[Scryptian Error]"):
                     pyperclip.copy(result)
                     telemetry.send("skill_run", _build_skill_event(skill, text, time.time() - _t0, **_src, via="selection"))
+                    _charge_skill(skill)
                     time.sleep(0.12)
                     ctypes.windll.user32.SetForegroundWindow(source_hwnd)
                     time.sleep(0.06)
@@ -1625,6 +1751,9 @@ def main():
     if not _ensure_installed():
         return
     bootstrap.setup()
+
+    # Register wallet in the background (grants 221 swords on first run).
+    threading.Thread(target=wallet.ensure_wallet, daemon=True).start()
 
     print("[Scryptian] Scanning skills...")
     skills = core.scan_skills()
