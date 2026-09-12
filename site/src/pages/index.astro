@@ -1,0 +1,58 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { fetchActions, isConfigured, isFree, modeLabel, formatCount } from '../lib/actions';
+
+const actions = await fetchActions();
+const configured = isConfigured();
+---
+
+<Layout title="Scryptian Actions for any tasks on your screen">
+  <section class="catalog" id="how-it-works">
+    <div class="container">
+      {
+        !configured ? (
+          <div class="notice">
+            <p>Store is not configured yet.</p>
+            <p>
+              Add <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> to
+              <code>site/.env</code>, then rebuild.
+            </p>
+          </div>
+        ) : actions.length === 0 ? (
+          <div class="notice">
+            <p>No published actions yet.</p>
+            <p>Publish actions in the Supabase <code>actions</code> table to see them here.</p>
+          </div>
+        ) : (
+          <>
+            <div class="catalog-head">
+              <h2>All actions</h2>
+              <span class="count" id="count">{actions.length} actions</span>
+            </div>
+            <div class="grid" id="grid">
+              {actions.map((action) => (
+                <div class="card" data-title={action.title.toLowerCase()} data-author={(action.author || 'Scryptian').toLowerCase()}>
+                  <div class="card-main">
+                    <a class="card-title" href={`/actions/${action.id}/`}>{action.title}</a>
+                    <p class="by">by <a href={`/?author=${encodeURIComponent(action.author || 'Scryptian')}`}>{action.author || 'Scryptian'}</a></p>
+                    <p class="desc">{action.description}</p>
+                    <p class="stats">{formatCount(action.runs_count)} action runs · {formatCount(action.installs_count)} installs</p>
+                  </div>
+                  <div class="card-side">
+                    <div class="meta">
+                      <span class={`price ${isFree(action) ? 'free' : ''}`}>
+                        {isFree(action) ? 'Free to Use' : `${action.price} slippers`}
+                      </span>
+                      <span class="mode">{modeLabel(action)}</span>
+                    </div>
+                    <a class="card-btn" href={`/actions/${action.id}/`}>View details</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )
+      }
+    </div>
+  </section>
+</Layout>

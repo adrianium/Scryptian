@@ -1,0 +1,132 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { fetchActions, isFree, modeLabel, installUrl, formatCount, type Action } from '../../lib/actions';
+
+export async function getStaticPaths() {
+  const actions = await fetchActions();
+  return actions.map((action) => ({
+    params: { slug: action.id },
+    props: { action },
+  }));
+}
+
+const { action } = Astro.props as { action: Action };
+
+const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonical = `${site}/actions/${action.id}/`;
+const seoTitle = `${action.title} - Scryptian`;
+const seoDescription = (
+  action.long_description ||
+  action.description ||
+  `Install ${action.title} and run it on any text with a hotkey.`
+).slice(0, 160);
+
+const mainSite = 'https://scryptian.com';
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: action.title,
+  description: action.long_description || action.description,
+  applicationCategory: action.category || 'UtilitiesApplication',
+  operatingSystem: 'Windows',
+  url: canonical,
+  ...(action.demo_gif ? { image: action.demo_gif } : {}),
+  author: { '@type': 'Organization', name: action.author || 'Scryptian' },
+  offers: {
+    '@type': 'Offer',
+    price: isFree(action) ? '0' : String(action.price),
+    priceCurrency: 'SLP',
+  },
+};
+---
+
+<Layout
+  title={seoTitle}
+  description={seoDescription}
+  canonical={canonical}
+  schema={schema}
+>
+  <section class="landing">
+    <div class="container">
+      <div class="landing-head">
+        <h1>{action.title}</h1>
+        <p class="tagline">{action.description}</p>
+      </div>
+
+      <div class="landing-grid">
+        <div class="landing-main">
+          {action.demo_gif && (
+            <div class="panel demo">
+              <img src={action.demo_gif} alt={`${action.title} demo`} loading="eager" fetchpriority="high" />
+            </div>
+          )}
+
+          {action.features && action.features.length > 0 && (
+            <div class="panel">
+              <h2 class="panel-title">What this action does</h2>
+              <ul class="feature-list">
+                {action.features.map((feature) => (
+                  <li>{feature}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div class="panel prose">
+            {action.long_description ? (
+              action.long_description
+                .split(/\r?\n\s*\r?\n/)
+                .filter((paragraph) => paragraph.trim())
+                .map((paragraph) => <p>{paragraph.trim()}</p>)
+            ) : (
+              <p>
+                {action.title} runs directly from the Scryptian bar. Select text anywhere,
+                press the hotkey, and apply this action without leaving your current window.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <aside class="landing-side">
+          <div class="panel buy-box">
+            <div class="price-row">
+              <span class="price">{isFree(action) ? 'Free to Use' : `${action.price} slippers`}</span>
+              <span class="mode">{modeLabel(action)}</span>
+            </div>
+            <a class="install-btn" href={installUrl(action)}>Add To Scryptian</a>
+            <a class="install-btn secondary" href={mainSite} target="_blank" rel="noopener">Install Scryptian With This Action</a>
+            <a class="what-is" href={mainSite} target="_blank" rel="noopener">What is Scryptian?</a>
+          </div>
+
+          <div class="panel specs">
+            <div class="spec">
+              <span class="label">Mode</span>
+              <span class="value">{modeLabel(action)}</span>
+            </div>
+            <div class="spec">
+              <span class="label">Price</span>
+              <span class="value">{isFree(action) ? 'Free to Use' : `${action.price} slippers`}</span>
+            </div>
+            <div class="spec">
+              <span class="label">Runs</span>
+              <span class="value">{formatCount(action.runs_count)}</span>
+            </div>
+            <div class="spec">
+              <span class="label">Installs</span>
+              <span class="value">{formatCount(action.installs_count)}</span>
+            </div>
+            <div class="spec">
+              <span class="label">Version</span>
+              <span class="value">v{action.version}</span>
+            </div>
+            <div class="spec">
+              <span class="label">Author</span>
+              <span class="value">{action.author || 'Scryptian'}</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Layout>

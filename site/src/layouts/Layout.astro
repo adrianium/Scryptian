@@ -1,0 +1,128 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string;
+  image?: string;
+  schema?: Record<string, unknown>;
+}
+
+const {
+  title,
+  description = 'Scryptian — a marketplace of actions that transform any text on your screen.',
+  canonical,
+  image,
+  schema,
+} = Astro.props;
+
+const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonicalUrl = canonical ? new URL(canonical, site).toString() : Astro.url.toString();
+const ogImage = image ? new URL(image, site).toString() : undefined;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    {schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/">
+          <span>Scryptian</span>
+          <span class="brand-sub">Actions</span>
+        </a>
+        <div class="header-search">
+          <input id="search" type="text" placeholder="Search actions…" autocomplete="off" />
+          <button class="search-btn" type="button" aria-label="Search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </div>
+        <nav class="nav">
+          <a href="/">Actions</a>
+          <a href="/#how-it-works">How it works</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <span>© {new Date().getFullYear()} Scryptian</span>
+        <span>Scryptian. There's No Need Buy A Ton of Subscriptions.
+        Сall the Services to place where you work.</span>
+      </div>
+    </footer>
+
+    <script>
+      const searchInput = document.getElementById('search');
+      const grid = document.getElementById('grid');
+      const count = document.getElementById('count');
+      const params = new URLSearchParams(window.location.search);
+      const authorParam = (params.get('author') || '').trim().toLowerCase();
+
+      function applyFilter() {
+        if (!grid) return;
+        const q = (searchInput?.value || '').trim().toLowerCase();
+        let visible = 0;
+
+        grid.querySelectorAll('.card').forEach((card) => {
+          const matchQ = !q || (card.dataset.title || '').includes(q);
+          const matchAuthor = !authorParam || (card.dataset.author || '').includes(authorParam);
+          const match = matchQ && matchAuthor;
+          card.style.display = match ? '' : 'none';
+          if (match) visible += 1;
+        });
+
+        if (count) {
+          count.textContent = `${visible} action${visible === 1 ? '' : 's'}`;
+        }
+      }
+
+      if (searchInput) {
+        const initial = params.get('q') || '';
+        if (initial) searchInput.value = initial;
+        applyFilter();
+
+        searchInput.addEventListener('input', applyFilter);
+        searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !grid) {
+            window.location.href = `/?q=${encodeURIComponent(searchInput.value.trim())}`;
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  @import '../styles/global.css';
+</style>
