@@ -33,7 +33,7 @@ const configured = isConfigured();
               {actions.map((action) => (
                 <div class="card" data-title={action.title.toLowerCase()} data-author={(action.author || 'Scryptian').toLowerCase()}>
                   <div class="card-main">
-                    <a class="card-title" href={`/actions/${action.id}/`}>{action.title}</a>
+                    <a class="card-title" href={`/actions/${action.id}/`} data-ph-event="action_view_clicked" data-ph-props={JSON.stringify({ action_id: action.id, title: action.title })}>{action.title}</a>
                     <p class="by">by <a href={`/?author=${encodeURIComponent(action.author || 'Scryptian')}`}>{action.author || 'Scryptian'}</a></p>
                     <p class="desc">{action.description}</p>
                     <p class="stats">{formatCount(action.runs_count)} action runs · {formatCount(action.installs_count)} installs</p>
@@ -45,7 +45,7 @@ const configured = isConfigured();
                       </span>
                       <span class="mode">{modeLabel(action)}</span>
                     </div>
-                    <a class="card-btn" href={`/actions/${action.id}/`}>View details</a>
+                    <a class="card-btn" href={`/actions/${action.id}/`} data-ph-event="action_view_details_clicked" data-ph-props={JSON.stringify({ action_id: action.id, title: action.title })}>View details</a>
                   </div>
                 </div>
               ))}

@@ -120,6 +120,28 @@ const ogImage = image ? new URL(image, site).toString() : undefined;
         });
       }
     </script>
+
+    <script>
+      import posthog from 'posthog-js';
+
+      posthog.init('phc_toDCehR5v264u7Xy96zSUjQRryGJQWZxqiy8otEtuBup', {
+        api_host: 'https://us.i.posthog.com',
+        capture_pageview: true,
+        capture_pageleave: true,
+      });
+
+      document.addEventListener('click', (event) => {
+        const el = event.target.closest('[data-ph-event]');
+        if (!el) return;
+        const name = el.getAttribute('data-ph-event');
+        let props = {};
+        const raw = el.getAttribute('data-ph-props');
+        if (raw) {
+          try { props = JSON.parse(raw); } catch {}
+        }
+        posthog.capture(name, props);
+      });
+    </script>
   </body>
 </html>
 

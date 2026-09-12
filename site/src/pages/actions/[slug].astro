@@ -94,9 +94,9 @@ const schema = {
               <span class="price">{isFree(action) ? 'Free to Use' : `${action.price} slippers`}</span>
               <span class="mode">{modeLabel(action)}</span>
             </div>
-            <a class="install-btn" href={installUrl(action)}>Add To Scryptian</a>
-            <a class="install-btn secondary" href={mainSite} target="_blank" rel="noopener">Install Scryptian With This Action</a>
-            <a class="what-is" href={mainSite} target="_blank" rel="noopener">What is Scryptian?</a>
+            <a class="install-btn" href={installUrl(action)} data-ph-event="action_install_clicked" data-ph-props={JSON.stringify({ action_id: action.id, title: action.title })}>Add To Scryptian</a>
+            <a class="install-btn secondary" href={mainSite} target="_blank" rel="noopener" data-ph-event="install_scryptian_clicked" data-ph-props={JSON.stringify({ action_id: action.id })}>Install Scryptian With This Action</a>
+            <a class="what-is" href={mainSite} target="_blank" rel="noopener" data-ph-event="what_is_scryptian_clicked">What is Scryptian?</a>
           </div>
 
           <div class="panel specs">
