@@ -1,13 +1,10 @@
 # core/registry.py — Skill scanner and registry.
 #
 # Scans the skills/ folder and returns a list of skill dicts.
-# Supports two formats:
-#   - legacy: a single `<name>.py` file with `# @title:` header comments
-#   - bundle: a folder with `manifest.json` + entry module + optional `libs/`
+# Every skill is a bundle: a folder with `manifest.json` + entry module + optional `libs/`.
 
 import os
 import sys
-import re
 import importlib.util
 
 from config import APP_VERSION, BASE_DIR
@@ -35,20 +32,6 @@ def _safe_int(v):
         return int(str(v).strip())
     except (TypeError, ValueError):
         return 0
-
-
-def _parse_metadata(filepath):
-    meta = {}
-    pattern = re.compile(r"^#\s*@(\w+):\s*(.+)$")
-    with open(filepath, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line.startswith("#"):
-                break
-            match = pattern.match(line)
-            if match:
-                meta[match.group(1).lower()] = match.group(2).strip()
-    return meta
 
 
 def _load_module(name, filepath):
@@ -106,7 +89,7 @@ def _load_bundle(name, bundle_dir):
         "version": manifest.get("version", ""),
         "module": module,
         "filename": name,
-        "needs_llm": bool(manifest.get("needs_llm", True)),
+        "mode": manifest.get("mode", "cloud").strip().lower(),
         "background": bool(manifest.get("background", False)),
         "settings": manifest.get("settings", []),
         "format": "bundle",
@@ -122,32 +105,14 @@ def scan_skills():
     for entry in sorted(os.listdir(SKILLS_DIR)):
         path = os.path.join(SKILLS_DIR, entry)
 
-        if os.path.isdir(path):
-            if entry.startswith("_") or entry == "libs":
-                continue
-            if os.path.exists(os.path.join(path, "manifest.json")):
-                skill = _load_bundle(entry, path)
-                if skill:
-                    skills.append(skill)
+        if not os.path.isdir(path):
             continue
-
-        if not entry.endswith(".py") or entry.startswith("_"):
+        if entry.startswith("_") or entry == "libs":
             continue
-
-        meta = _parse_metadata(path)
-        module = _load_module(entry, path)
-        if module and hasattr(module, "run"):
-            skills.append({
-                "title": meta.get("title", entry.replace(".py", "")),
-                "description": meta.get("description", ""),
-                "author": meta.get("author", ""),
-                "author_id": meta.get("author_id", ""),
-                "price": _safe_int(meta.get("price", "0")),
-                "module": module,
-                "filename": entry,
-                "needs_llm": meta.get("needs_llm", "true").strip().lower() != "false",
-                "format": "legacy",
-            })
+        if os.path.exists(os.path.join(path, "manifest.json")):
+            skill = _load_bundle(entry, path)
+            if skill:
+                skills.append(skill)
     return skills
 
 

@@ -18,8 +18,6 @@ venv/
 first_launch_sent.txt
 pinned.json
 main_pinned.json
-*.gguf
-models/
 *.exe
 *.spec.warn
 

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import os
+import sys
 import threading
 import keyboard
 from PIL import Image, ImageTk
@@ -181,7 +182,11 @@ class StorePanel:
         )
         navigation_icon.pack(side="left", padx=(0, 4))
         try:
-            icon_path = os.path.join(os.path.dirname(SKILLS_DIR), "docs", "assets", "up-and-down.png")
+            if getattr(sys, "frozen", False):
+                assets_dir = os.path.join(sys._MEIPASS, "docs", "assets")
+            else:
+                assets_dir = os.path.join(os.path.dirname(SKILLS_DIR), "docs", "assets")
+            icon_path = os.path.join(assets_dir, "up-and-down.png")
             source = Image.open(icon_path).convert("RGBA")
             alpha = source.getchannel("A").resize((16, 16), Image.Resampling.LANCZOS)
             icon = Image.new("RGBA", (16, 16), "#2cff00")
@@ -414,28 +419,37 @@ class StorePanel:
         )
         card.pack(fill="x", padx=4, pady=3)
 
-        top = tk.Frame(card, bg="#252a3c")
-        top.pack(fill="x")
-
-        tk.Label(top, text=skill.get("title", ""),
+        tk.Label(card, text=skill.get("title", ""),
                  font=("Segoe UI", 13),
-                 bg="#252a3c", fg="#ffffff", anchor="w").pack(side="left")
-
-        price = skill.get("price", 0)
-        if price > 0:
-            price_text = f"${price:.2f}"
-            price_fg = "#a6e3a1"
-        else:
-            price_text = "Free"
-            price_fg = "#b0b0b0"
-        tk.Label(top, text=price_text,
-                 font=("Segoe UI", 11),
-                 bg="#252a3c", fg=price_fg).pack(side="right")
+                 bg="#252a3c", fg="#ffffff", anchor="w").pack(fill="x")
 
         tk.Label(card, text=skill.get("description", ""),
                  font=("Segoe UI", 11), bg="#252a3c", fg="#b0b0b0",
                  anchor="w", justify="left",
                  wraplength=int(self.root.winfo_screenwidth() * 0.45)).pack(fill="x", pady=(4, 8))
+
+        bottom = tk.Frame(card, bg="#252a3c")
+        bottom.pack(fill="x")
+
+        meta = tk.Frame(bottom, bg="#252a3c")
+        meta.pack(side="left")
+
+        mode = str(skill.get("mode", "cloud")).strip().lower()
+        mode_text = "Cloud" if mode == "cloud" else "Local"
+        mode_fg = "#00bfff"
+        tk.Label(meta, text=mode_text, font=("Segoe UI", 11, "bold"),
+                 bg="#252a3c", fg=mode_fg).pack(side="left", padx=(0, 8))
+
+        price = skill.get("price", 0)
+        if price > 0:
+            price_text = f"{price} slippers per result"
+            price_fg = "#2cff00"
+        else:
+            price_text = "Free"
+            price_fg = "#b0b0b0"
+        tk.Label(meta, text=price_text,
+                 font=("Segoe UI", 11, "bold"),
+                 bg="#252a3c", fg=price_fg).pack(side="left")
 
         installed = store.is_installed(skill, SKILLS_DIR)
         updatable = installed and store.has_update(skill, SKILLS_DIR)
@@ -446,9 +460,9 @@ class StorePanel:
         else:
             label, bg, fg, cursor = "Install", "#2cff00", "#1c2030", "hand2"
 
-        btn = tk.Label(card, text=label, font=("Segoe UI", 11),
+        btn = tk.Label(bottom, text=label, font=("Segoe UI", 11),
                        bg=bg, fg=fg, padx=14, pady=5, cursor=cursor)
-        btn.pack(anchor="e")
+        btn.pack(side="right")
         can_install = updatable or not installed
         if can_install:
             btn.bind("<Button-1>", lambda e, s=skill, b=btn: self._install(s, b))

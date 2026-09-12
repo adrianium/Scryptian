@@ -5,24 +5,29 @@ import os
 block_cipher = None
 base_dir = os.path.dirname(os.path.abspath(SPEC))
 
+_skill_bundles = [
+    (os.path.join('skills', name), os.path.join('skills', name))
+    for name in sorted(os.listdir(os.path.join(base_dir, 'skills')))
+    if os.path.isdir(os.path.join(base_dir, 'skills', name))
+    and not name.startswith('_')
+    and name != 'translate_pdf'
+]
+
 a = Analysis(
     ['main.py'],
     pathex=[base_dir],
-    binaries=[(os.path.join(os.path.dirname(__import__('llama_cpp').__file__), 'lib', '*.dll'), 'llama_cpp/lib')],
     datas=[
         ('icon.ico', '.'),
         ('config.py', '.'),
         ('bridge.py', '.'),
-        ('llm.py', '.'),
         ('telemetry.py', '.'),
         ('tray.py', '.'),
         ('autostart.py', '.'),
         ('bootstrap.py', '.'),
-        # Only top-level single-file skills are bundled.
-        # The 'translate_pdf' bundle (folder + ~22 MB libs/) is intentionally
-        # EXCLUDED from the build — it ships via the store (registry + zip) and
-        # is downloaded on demand, keeping the installer small.
-        ('skills/*.py', 'skills'),
+        # Skill bundles are bundled as folders. The 'translate_pdf' bundle
+        # (folder + ~22 MB libs/) is intentionally EXCLUDED — it ships via the
+        # store (registry + zip) and is downloaded on demand, keeping the
+        # installer small.
         ('docs/assets/scryptian-notification.wav', 'docs/assets'),
         ('docs/assets/slippers.png', 'docs/assets'),
         ('docs/assets/up-and-down.png', 'docs/assets'),
@@ -32,10 +37,9 @@ a = Analysis(
         ('skill_editor.py', '.'),
         ('skill_settings.py', '.'),
         ('.env', '.')
-    ],
+    ] + _skill_bundles,
     hiddenimports=[
         'pystray._win32',
-        'llama_cpp',
         'certifi',
         'keyboard',
         'pyperclip',

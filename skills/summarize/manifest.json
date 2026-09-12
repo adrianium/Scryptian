@@ -1,0 +1,10 @@
+{
+  "title": "Summarize",
+  "description": "Summarize text in a few sentences",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0"
+}

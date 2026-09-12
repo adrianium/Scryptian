@@ -1,6 +1,5 @@
-# bridge.py — Scryptian skill runtime: state, profile, and optional LLM access
-# Core layer: state + profile (no LLM knowledge)
-# LLM re-exported from llm.py for backward compatibility
+# bridge.py — Scryptian skill runtime: state, profile, and notifications.
+# No LLM access — each skill brings its own LLM endpoint.
 
 import os
 import json
@@ -97,8 +96,4 @@ def notify(title: str, message: str) -> None:
         pass
 
 
-# LLM access — optional, re-exported for backward compatibility
-# Skills that need LLM: import bridge and use bridge.generate()
-# Skills that don't need LLM: import only bridge (state/profile)
-from llm import generate, generate_stream, is_model_ready, is_model_in_memory, was_just_downloaded, _get_llm, set_progress_listener, set_download_start_listener
-from config import MODEL_FILE
+# LLM access removed: each skill brings its own LLM endpoint.

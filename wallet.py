@@ -1,7 +1,7 @@
-# wallet.py — Centralized "swords" wallet (Supabase).
+# wallet.py — Centralized "slippers" wallet (Supabase).
 #
 # Pay-per-outcome: a skill's manifest declares a price and an author_id.
-# On a successful outcome the runner transfers swords from the user to the
+# On a successful outcome the runner transfers slippers from the user to the
 # author (70%) and the platform (30%). The wallet is centralized in Supabase;
 # the local balance is only a cache for fast pre-checks.
 
@@ -51,7 +51,7 @@ def _as_int(value):
 
 
 def ensure_wallet():
-    """Register the user and grant the initial 221 swords if new. Returns balance or None."""
+    """Register the user and grant the initial 221 slippers if new. Returns balance or None."""
     global _balance
     if not _configured():
         return None
@@ -64,49 +64,65 @@ def ensure_wallet():
         return _balance
 
 
-def balance():
-    """Current balance (cached). Ensures the wallet exists on first call."""
-    global _balance
-    if _balance is None:
-        ensure_wallet()
-    return _balance
-
-
 def cached_balance():
     """Cached balance without triggering a network call. Returns None if unknown."""
     return _balance
 
 
-def can_afford(price):
-    """True if the user can pay `price`. Wallet unavailable → allow (no block)."""
+def refresh():
+    """Force re-fetch the balance from Supabase. Returns balance or None."""
+    global _balance
+    _balance = None
+    return ensure_wallet()
+
+
+def reserve(price):
+    """Reserve `price` before running a skill. Returns True if reserved (or free)."""
+    global _balance
     if price <= 0:
         return True
-    bal = balance()
-    if bal is None:
-        return True
-    return bal >= price
-
-
-def charge(price, author_id, skill_id):
-    """Transfer `price` from user to author (70%) + platform (30%). Returns True on success."""
-    global _balance
-    if price <= 0 or not author_id:
-        return True
     if not _configured():
-        return False
-    fee = price * COMMISSION_PCT // 100
+        return True
     try:
-        ok = _rpc("transfer_swords", {
-            "p_payer": user_id(),
-            "p_payee": author_id,
-            "p_amount": price,
-            "p_fee": fee,
-            "p_skill": skill_id,
-        })
+        ok = _rpc("reserve_slippers", {"p_user": user_id(), "p_amount": price})
         if ok is True or (isinstance(ok, list) and ok and ok[0] is True):
             if _balance is not None:
                 _balance = max(0, _balance - price)
             return True
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[Wallet] reserve failed: {e}")
     return False
+
+
+def settle(price, author_id, skill_id):
+    """Pay author (70%) + platform (30%) from a reserved amount."""
+    if price <= 0 or not author_id:
+        return
+    if not _configured():
+        return
+    fee = price * COMMISSION_PCT // 100
+    try:
+        _rpc("settle_slippers", {
+            "p_payer": user_id(),
+            "p_author": author_id,
+            "p_amount": price,
+            "p_fee": fee,
+            "p_skill": skill_id,
+        })
+    except Exception as e:
+        print(f"[Wallet] settle failed: {e}")
+
+
+def refund(price):
+    """Return a reserved amount to the user (on failure)."""
+    global _balance
+    if price <= 0:
+        return
+    if not _configured():
+        return
+    try:
+        _rpc("refund_slippers", {"p_user": user_id(), "p_amount": price})
+        if _balance is not None:
+            _balance += price
+    except Exception as e:
+        print(f"[Wallet] refund failed: {e}")

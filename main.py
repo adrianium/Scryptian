@@ -18,7 +18,7 @@ import telemetry
 import tray
 import store
 import updater
-from ui import StorePanel
+from ui import StorePanel, CurrencyPanel
 import autostart
 import queue
 import selection_watcher
@@ -33,24 +33,34 @@ import wallet
 IS_WINDOWS = sys.platform == "win32"
 
 
-def _wallet_ok(skill):
-    """Pre-check: can the user afford this skill? Returns False (and notifies) if not."""
+def _reserve_skill(skill):
+    """Reserve the skill's price before running. Returns False (and notifies) if not."""
     price = int(skill.get("price", 0) or 0)
-    if price <= 0 or wallet.can_afford(price):
+    if price <= 0:
         return True
-    bal = wallet.balance() or 0
-    bridge.notify("Not enough swords", f"Need {price}, you have {bal}.")
+    if wallet.reserve(price):
+        return True
+    bal = wallet.cached_balance() or 0
+    bridge.notify("Not enough slippers", f"Need {price}, you have {bal}.")
     return False
 
 
-def _charge_skill(skill):
-    """Charge the skill's price on a successful outcome (70% author / 30% platform)."""
+def _settle_skill(skill):
+    """Pay author (70%) + platform (30%) from the reserved amount on success."""
     price = int(skill.get("price", 0) or 0)
     author_id = skill.get("author_id", "") or ""
     if price <= 0 or not author_id:
         return
     skill_id = skill.get("id") or skill.get("filename", "").replace(".py", "")
-    wallet.charge(price, author_id, skill_id)
+    wallet.settle(price, author_id, skill_id)
+
+
+def _refund_skill(skill):
+    """Return the reserved amount to the user on failure."""
+    price = int(skill.get("price", 0) or 0)
+    if price <= 0:
+        return
+    wallet.refund(price)
 
 if IS_WINDOWS:
     import ctypes
@@ -67,7 +77,7 @@ if IS_WINDOWS:
             pass
 
 # ── Settings ──
-from config import HOTKEY, BASE_DIR, APP_VERSION, MAX_SKILL_INPUT_CHARS
+from config import HOTKEY, BASE_DIR, APP_VERSION
 from core.registry import _version_ge
 import bootstrap
 SKILLS_DIR = os.path.join(BASE_DIR, "skills")
@@ -110,7 +120,7 @@ def _build_skill_event(skill, input_text, elapsed, **extra):
         "skill_title": skill.get("title", ""),
         "skill_version": skill.get("version", ""),
         "skill_author": skill.get("author", ""),
-        "needs_llm": skill.get("needs_llm", True),
+        "mode": skill.get("mode", "cloud"),
         "input_type": input_type,
         "input_ext": ext,
         "text_len": len(input_text or ""),
@@ -139,6 +149,8 @@ class ScryptianBar:
         self.store_frame = None
         self.in_store = False
         self.store_panel = StorePanel(self)
+        self.in_currency = False
+        self.currency_panel = CurrencyPanel(self)
         self._source_hwnd = None
 
     def toggle(self):
@@ -230,7 +242,11 @@ class ScryptianBar:
         self.balance_icon.pack(side="left", padx=(0, 2), pady=(0, 1))
         self.balance_photo = None
         try:
-            icon_path = os.path.join(BASE_DIR, "docs", "assets", "slippers.png")
+            if getattr(sys, "frozen", False):
+                assets_dir = os.path.join(sys._MEIPASS, "docs", "assets")
+            else:
+                assets_dir = os.path.join(BASE_DIR, "docs", "assets")
+            icon_path = os.path.join(assets_dir, "slippers.png")
             source = Image.open(icon_path).convert("RGBA")
             alpha = source.getchannel("A").resize((26, 26), Image.Resampling.LANCZOS)
             icon = Image.new("RGBA", (26, 26), "#2cff00")
@@ -402,14 +418,15 @@ class ScryptianBar:
         self.window.bind("<FocusOut>", self._on_focus_out)
 
         # Hotkeys: chain actions (when result shown) or special actions (in menu)
+        self.window.bind("<Control-Key-0>", lambda e: self._on_hotkey(0))
         self.window.bind("<Control-Key-1>", lambda e: self._on_hotkey(1))
         self.window.bind("<Control-Key-2>", lambda e: self._on_hotkey(2))
         self.window.bind("<Control-Key-3>", lambda e: self._on_hotkey(3))
-        self.window.bind("<Control-Key-4>", lambda e: self._on_hotkey(4))
 
         self.visible = True
         self.selected_index = 0
         self.in_store = False
+        self.in_currency = False
         self.store_frame = None
         self.processing = False
         self._bar_fade_in(0.0)
@@ -593,25 +610,27 @@ class ScryptianBar:
 
         self.window.update_idletasks()
 
-        # Show the full list first, then shrink it (and enable scrolling) if it
-        # would push the window below the taskbar.
-        list_natural = self.list_inner.winfo_reqheight()
-        self.list_view.config(height=list_natural)
-
-        self.window.update_idletasks()
-        needed = self.container.winfo_reqheight()
-
         wa = self._work_area()
-        if wa:
-            max_window_height = max(wa[3] - self.window.winfo_y() - 16, 100)
-            if needed > max_window_height:
-                overflow = needed - max_window_height
-                new_list_height = max(list_natural - overflow, 80)
-                self.list_view.config(height=new_list_height)
-                self.window.update_idletasks()
-                needed = self.container.winfo_reqheight()
+        max_window_height = max(wa[3] - self.window.winfo_y() - 16, 100) if wa else None
 
-        self._resize(needed + 4)
+        if max_window_height:
+            # Fixed-height window: smaller than the full max, but still tall.
+            work_h = wa[3] - wa[1]
+            fixed_height = min(int(work_h * 0.4), max_window_height)
+            self.list_view.config(height=1)
+            self.window.update_idletasks()
+            other = self.container.winfo_reqheight()
+            list_height = max(fixed_height - other + 1, 80)
+            self.list_view.config(height=list_height)
+            self.window.update_idletasks()
+            self._resize(fixed_height)
+        else:
+            # Non-Windows fallback: natural height.
+            list_natural = self.list_inner.winfo_reqheight()
+            self.list_view.config(height=list_natural)
+            self.window.update_idletasks()
+            needed = self.container.winfo_reqheight()
+            self._resize(needed + 4)
 
         max_idx = len(self._skill_rows) - 1
         self.selected_index = max(0, min(self.selected_index, max_idx))
@@ -622,15 +641,24 @@ class ScryptianBar:
         row = tk.Frame(self.list_inner, bg="#1c2030", cursor="hand2")
         row.pack(fill="x", padx=4, pady=1)
 
+        skill_obj = self.filtered[idx] if idx < len(self.filtered) else None
+
         title_lbl = tk.Label(
             row, text=f"  {title}", font=("Segoe UI", 13),
             bg="#1c2030", fg="#ffffff", anchor="w",
         )
-        title_lbl.pack(side="left", fill="x", expand=True)
+        title_lbl.pack(side="left")
+
+        # Mode after title (grey, in parentheses)
+        if skill_obj:
+            mode = str(skill_obj.get("mode", "cloud")).strip().lower()
+            mode_text = "Cloud" if mode == "cloud" else "Local"
+            mode_lbl = tk.Label(row, text=f"({mode_text})", font=("Segoe UI", 10),
+                                bg="#1c2030", fg="#a0a0a0")
+            mode_lbl.pack(side="left", padx=(2, 0))
+            mode_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
         if pinnable:
-            skill_obj = self.filtered[idx] if idx < len(self.filtered) else None
-
             # Main-bar pin (left of star)
             mpinned = main_pins.is_pinned(title)
             pin_lbl = tk.Label(
@@ -681,11 +709,57 @@ class ScryptianBar:
                 gear_lbl.pack(side="right")
                 gear_lbl.bind("<Button-1>", lambda e, s=skill_obj: self._open_skill_settings(s))
 
+        # Price (right side, only when paid)
+        if skill_obj and skill_obj.get("price", 0) > 0:
+            icon_photo = self._slippers_icon(26)
+            if icon_photo:
+                icon_lbl = tk.Label(row, image=icon_photo, bg="#1c2030")
+            else:
+                icon_lbl = tk.Label(row, text="🩴", font=("Segoe UI Emoji", 11),
+                                    bg="#1c2030", fg="#2cff00")
+            icon_lbl.pack(side="right", padx=(2, 4))
+            icon_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
+
+            price_lbl = tk.Label(row, text=str(skill_obj.get("price", 0)),
+                                 font=("Segoe UI", 11, "bold"),
+                                 bg="#1c2030", fg="#2cff00")
+            price_lbl.pack(side="right", padx=(8, 0))
+            price_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
+
         # Click handler
         row.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
         title_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
         return row
+
+    def _tinted_icon(self, filename, size=24, color="#ffffff"):
+        """Return a cached tinted PhotoImage for a monochrome PNG, or None."""
+        key = (filename, size, color)
+        cache = getattr(self, "_tinted_icons", None)
+        if cache is None:
+            cache = {}
+            self._tinted_icons = cache
+        if key in cache:
+            return cache[key]
+        try:
+            if getattr(sys, "frozen", False):
+                assets_dir = os.path.join(sys._MEIPASS, "docs", "assets")
+            else:
+                assets_dir = os.path.join(BASE_DIR, "docs", "assets")
+            icon_path = os.path.join(assets_dir, filename)
+            source = Image.open(icon_path).convert("RGBA")
+            alpha = source.getchannel("A").resize((size, size), Image.Resampling.LANCZOS)
+            icon = Image.new("RGBA", (size, size), color)
+            icon.putalpha(alpha)
+            photo = ImageTk.PhotoImage(icon)
+            cache[key] = photo
+            return photo
+        except Exception:
+            return None
+
+    def _slippers_icon(self, size=14):
+        """Return a cached green slippers icon PhotoImage, or None."""
+        return self._tinted_icon("slippers.png", size, "#2cff00")
 
     def _render_special_actions(self):
         """Render compact special-action buttons below the skill list (chain-bar style)."""
@@ -696,24 +770,34 @@ class ScryptianBar:
         grid = tk.Frame(self.special_frame, bg="#1c2030")
         grid.pack(fill="x", padx=4, pady=(0, 0))
         self._special_widgets.append(grid)
-        for c in range(4):
+        for c in range(3):
             grid.columnconfigure(c, weight=1, uniform="special")
 
         actions = [
-            ("➕", "Add your action", "Ctrl+1", self._open_new_skill_editor, False),
-            ("📁", "Open actions folder", "Ctrl+2", self._open_skills_folder, False),
-            ("💬", "Help (Telegram)", "Ctrl+3", self._open_telegram, False),
-            ("📦", "Actions Store", "Ctrl+4", self._open_store, True),
+            ("📁", "Open actions folder", "Ctrl+1", self._open_skills_folder, False, None),
+            ("💬", "Contact Author (Telegram)", "Ctrl+2", self._open_telegram, False, "contact.png"),
+            ("📦", "Actions Store", "Ctrl+3", self._open_store, True, None),
         ]
-        for i, (icon, label, hotkey, handler, accent) in enumerate(actions):
+        for i, (icon, label, hotkey, handler, accent, icon_file) in enumerate(actions):
             fg = "#2cff00" if accent else "#ffffff"
             hover_bg = "#1a331a" if accent else "#2e3348"
-            btn = tk.Label(
-                grid, text=f"{icon}\n{label}\n[{hotkey}]", font=("Segoe UI", 10),
-                bg="#252a3c", fg=fg, cursor="hand2",
-                padx=4, pady=4, justify="center",
-            )
-            btn.grid(row=0, column=i, sticky="ew", padx=(0, 4) if i < 3 else (0, 0))
+
+            photo = self._tinted_icon(icon_file, 16, "#ffffff") if icon_file else None
+            if photo:
+                btn = tk.Label(
+                    grid, image=photo, text=f"{label}\n[{hotkey}]",
+                    compound="top", font=("Segoe UI", 10),
+                    bg="#252a3c", fg=fg, cursor="hand2",
+                    padx=4, pady=5, justify="center",
+                )
+            else:
+                btn = tk.Label(
+                    grid, text=f"{icon}\n{label}\n[{hotkey}]", font=("Segoe UI", 10),
+                    bg="#252a3c", fg=fg, cursor="hand2",
+                    padx=4, pady=4, justify="center",
+                )
+
+            btn.grid(row=0, column=i, sticky="ew", padx=(0, 4) if i < 2 else (0, 0))
             btn.bind("<Button-1>", lambda e, h=handler: h())
             btn.bind("<Enter>", lambda e, b=btn, hb=hover_bg, f=fg: b.config(bg=hb, fg=f))
             btn.bind("<Leave>", lambda e, b=btn, f=fg: b.config(bg="#252a3c", fg=f))
@@ -856,9 +940,21 @@ class ScryptianBar:
                 pass
         threading.Thread(target=_do, daemon=True).start()
 
+    def _run_command(self, query):
+        """Handle slash commands typed in the search bar."""
+        cmd = query[1:].strip().lower()
+        if cmd == "id-mine":
+            uid = wallet.user_id()
+            self.last_result = uid
+            self.last_skill_title = "id-mine"
+            self.has_result = True
+            self._show_result(uid)
+        else:
+            self._show_result(f"Unknown command: {query}")
+
     def _on_enter(self, event):
         """Runs the selected skill or copies the result."""
-        if self.in_store:
+        if self.in_store or self.in_currency:
             return
         if self.has_result:
             if self.last_result:
@@ -867,6 +963,12 @@ class ScryptianBar:
                 telemetry.send("result_copied", {"skill": getattr(self, "last_skill_title", "unknown")})
                 print("[Scryptian] Copied to clipboard.")
             self._hide()
+            return
+
+        # Slash commands (e.g. /id-mine)
+        query = "" if self._placeholder_active else self.entry.get().strip()
+        if query.startswith("/"):
+            self._run_command(query)
             return
 
         if not self.filtered:
@@ -894,7 +996,7 @@ class ScryptianBar:
             if getattr(self, "_bg_running", False):
                 self._show_result("A background task is already running.\nPlease wait for it to finish.")
                 return
-            if not _wallet_ok(skill):
+            if not _reserve_skill(skill):
                 return
             self._bg_running = True
             print(f"[Scryptian] Running (background): {skill['title']}...")
@@ -906,14 +1008,16 @@ class ScryptianBar:
                     if isinstance(result, str) and result.startswith("[Scryptian Error]"):
                         bridge.notify(skill["title"], result.replace("[Scryptian Error]", "").strip() or "Task failed.")
                         telemetry.send("skill_failed", {"name": skill["title"], "reason": "bg_error", "error": result[:200]})
+                        _refund_skill(skill)
                     else:
                         telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _bt0, **_bg_src, background=True))
                         _track_skill(skill["filename"].replace(".py", ""))
-                        _charge_skill(skill)
+                        _settle_skill(skill)
                         print(f"[Scryptian] Done (background): {skill['title']}")
                 except Exception as e:
                     print(f"[Scryptian] Background skill error: {e}")
                     bridge.notify(skill["title"], f"Task failed: {e}")
+                    _refund_skill(skill)
                 finally:
                     self._bg_running = False
 
@@ -936,64 +1040,38 @@ class ScryptianBar:
 
         def execute():
             try:
-                # Ensure model is ready (download/load if needed) — only for skills that need the LLM.
-                # Progress is delivered through the global listener registered at startup.
-                if skill.get("needs_llm", True) and not bridge.is_model_in_memory():
-                    self.root.after(0, lambda: self._show_result("Preparing AI model..."))
-                    bridge._get_llm()
-                    if bridge.was_just_downloaded():
-                        self.root.after(0, lambda: tray.show_notify_popup("Scryptian", "AI model ready. Skills are now available.", self.root))
-
-                mod = skill["module"]
-                if hasattr(mod, "prompt") or hasattr(mod, "run_stream"):
-                    full_text = ""
-                    for chunk in core.run_skill_stream(skill, input_text):
-                        full_text = chunk
-                        text_snapshot = full_text
-                        self.root.after(0, lambda t=text_snapshot: self._update_stream(t))
-                    stripped = full_text.strip()
+                if not _reserve_skill(skill):
                     self.processing = False
-                    if stripped and not stripped.startswith("[Scryptian Error]"):
-                        if self.window and self.visible:
-                            self.last_result = stripped
-                            self.last_skill_title = skill["title"]
-                            self.has_result = True
-                            self.root.after(0, lambda: self._finish_stream())
-                        else:
-                            self.pending_result = stripped
-                        telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src))
-                        _track_skill(skill["filename"].replace(".py", ""))
-                        print(f"[Scryptian] Done!")
-                    elif stripped.startswith("[Scryptian Error]"):
-                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "error", "error": stripped[:200]})
-                        self.root.after(0, lambda t=stripped: self._show_result(t))
-                    else:
-                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "empty"})
-                        self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
-                else:
-                    result = core.run_skill(skill, input_text)
-                    self.processing = False
-                    if result and not result.startswith("[Scryptian Error]"):
-                        if self.window and self.visible:
-                            self.last_result = result
-                            self.last_skill_title = skill["title"]
-                            self.has_result = True
-                            self.root.after(0, lambda: self._show_result(result))
-                        else:
-                            self.pending_result = result
-                        telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src))
-                        _track_skill(skill["filename"].replace(".py", ""))
-                        print(f"[Scryptian] Done!")
-                    elif result and result.startswith("[Scryptian Error]"):
-                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "error", "error": result[:200]})
+                    self.root.after(0, self._stop_anim)
+                    self.root.after(0, lambda: self._show_result("Not enough slippers. Top up your balance to run this action."))
+                    return
+                result = core.run_skill(skill, input_text)
+                self.processing = False
+                if result and not result.startswith("[Scryptian Error]"):
+                    if self.window and self.visible:
+                        self.last_result = result
+                        self.last_skill_title = skill["title"]
+                        self.has_result = True
                         self.root.after(0, lambda: self._show_result(result))
                     else:
-                        telemetry.send("skill_failed", {"name": skill["title"], "reason": "empty"})
-                        self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
+                        self.pending_result = result
+                    telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src))
+                    _track_skill(skill["filename"].replace(".py", ""))
+                    _settle_skill(skill)
+                    print(f"[Scryptian] Done!")
+                elif result and result.startswith("[Scryptian Error]"):
+                    telemetry.send("skill_failed", {"name": skill["title"], "reason": "error", "error": result[:200]})
+                    self.root.after(0, lambda: self._show_result(result))
+                    _refund_skill(skill)
+                else:
+                    telemetry.send("skill_failed", {"name": skill["title"], "reason": "empty"})
+                    self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
+                    _refund_skill(skill)
             except Exception as e:
                 telemetry.send("skill_failed", {"name": skill["title"], "reason": "exception", "error": str(e)[:200]})
                 err_msg = f"Error: {e}"
                 self.root.after(0, lambda msg=err_msg: self._show_result(msg))
+                _refund_skill(skill)
 
         threading.Thread(target=execute, daemon=True).start()
 
@@ -1016,93 +1094,29 @@ class ScryptianBar:
 
         def execute():
             try:
-                if not _wallet_ok(skill):
+                if not _reserve_skill(skill):
                     self.processing = False
+                    self.root.after(0, self._stop_anim)
+                    self.root.after(0, lambda: self._show_result("Not enough slippers. Top up your balance to run this skill."))
                     return
-                if skill.get("needs_llm", True) and not bridge.is_model_in_memory():
-                    self.root.after(0, lambda: self._show_result("Preparing AI model..."))
-                    bridge._get_llm()
-                    if bridge.was_just_downloaded():
-                        self.root.after(0, lambda: tray.show_notify_popup("Scryptian", "AI model ready. Skills are now available.", self.root))
-                mod = skill["module"]
-                if hasattr(mod, "prompt") or hasattr(mod, "run_stream"):
-                    full_text = ""
-                    for chunk in core.run_skill_stream(skill, input_text):
-                        full_text = chunk
-                        self.root.after(0, lambda t=full_text: self._update_stream(t))
-                    result = full_text.strip()
-                    self.processing = False
-                    if result and not result.startswith("[Scryptian Error]"):
-                        self.last_result = result
-                        self.has_result = True
-                        self.root.after(0, self._finish_stream)
-                        telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src, via="selection"))
-                        _charge_skill(skill)
-                    else:
-                        telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "error_or_empty", "error": (result or "")[:200]})
-                        self.root.after(0, lambda t=result: self._show_result(t or "Skill returned an empty result."))
+                result = core.run_skill(skill, input_text)
+                self.processing = False
+                if result and not result.startswith("[Scryptian Error]"):
+                    self.last_result = result
+                    self.has_result = True
+                    self.root.after(0, lambda: self._show_result(result))
+                    telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src, via="selection"))
+                    _settle_skill(skill)
                 else:
-                    result = core.run_skill(skill, input_text)
-                    self.processing = False
-                    if result and not result.startswith("[Scryptian Error]"):
-                        self.last_result = result
-                        self.has_result = True
-                        self.root.after(0, lambda: self._show_result(result))
-                        telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src, via="selection"))
-                        _charge_skill(skill)
-                    else:
-                        telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "error_or_empty", "error": (result or "")[:200]})
-                        self.root.after(0, lambda t=result: self._show_result(t or "Skill returned an empty result."))
+                    telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "error_or_empty", "error": (result or "")[:200]})
+                    self.root.after(0, lambda t=result: self._show_result(t or "Skill returned an empty result."))
+                    _refund_skill(skill)
             except Exception as e:
                 telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "exception", "error": str(e)[:200]})
                 self.root.after(0, lambda msg=str(e): self._show_result(f"Error: {msg}"))
+                _refund_skill(skill)
 
         threading.Thread(target=execute, daemon=True).start()
-
-    def _update_stream(self, text):
-        """Updates result box with streaming text in real-time."""
-        if not self.window:
-            return
-
-        self.entry_shell.pack_forget()
-        self.separator.pack_forget()
-        self.result_box.pack_forget()
-        self.hint_label.pack_forget()
-        self.chain_frame.pack_forget()
-
-        self.result_box.config(state="normal")
-        self.result_box.delete("1.0", tk.END)
-        self.result_box.insert("1.0", text)
-        self.result_box.config(state="disabled")
-        self.result_box.see(tk.END)
-
-        chars_per_line = 45
-        visual_lines = 0
-        for line in text.split("\n"):
-            visual_lines += max(1, (len(line) // chars_per_line) + 1)
-
-        max_lines = 25
-        clamped = min(visual_lines, max_lines)
-        clamped = max(clamped, 2)
-
-        self.separator.pack(fill="x", padx=8, pady=(4, 0))
-        self.result_box.config(height=clamped)
-        self.result_box.pack(fill="x", padx=10, pady=(4, 4))
-
-        self.window.update_idletasks()
-        needed = self.container.winfo_reqheight()
-        self._resize(needed + 4)
-
-    def _finish_stream(self):
-        """Called when streaming is complete — shows hint label and chain."""
-        self._stop_anim()
-        if not self.window:
-            return
-        self.hint_label.pack(fill="x", padx=12, pady=(0, 6))
-        self._show_chain()
-        self.window.update_idletasks()
-        needed = self.container.winfo_reqheight()
-        self._resize(needed + 4)
 
     def _show_result(self, text):
         """Shows result below the bar, dynamically expanding the window."""
@@ -1219,7 +1233,7 @@ class ScryptianBar:
         self._chain_btns.clear()
 
     def _on_hotkey(self, n):
-        """Dispatch Ctrl+1..4: chain actions when result shown, special actions in menu."""
+        """Dispatch Ctrl+0..3: chain actions when result shown, special actions in menu."""
         if self.has_result:
             chain_map = {
                 1: "Summarize",
@@ -1229,13 +1243,13 @@ class ScryptianBar:
             if n in chain_map:
                 self._run_chain(chain_map[n])
             return
-        if self.in_store:
+        if self.in_store or self.in_currency:
             return
         special_map = {
-            1: self._open_new_skill_editor,
-            2: self._open_skills_folder,
-            3: self._open_telegram,
-            4: self._open_store,
+            0: self._open_currency,
+            1: self._open_skills_folder,
+            2: self._open_telegram,
+            3: self._open_store,
         }
         if n in special_map:
             special_map[n]()
@@ -1268,12 +1282,7 @@ class ScryptianBar:
 
         def execute():
             try:
-                full_text = ""
-                for chunk in core.run_skill_stream(skill, text):
-                    full_text = chunk
-                    snapshot = full_text
-                    self.root.after(0, lambda t=snapshot: self._update_stream(t))
-                stripped = full_text.strip()
+                stripped = core.run_skill(skill, text).strip()
                 elapsed = round(time.time() - _t0, 2)
                 if stripped.startswith("[Scryptian Error]"):
                     telemetry.send("chain_failed", {
@@ -1423,6 +1432,12 @@ class ScryptianBar:
     def _close_store(self):
         self.store_panel.close()
 
+    def _open_currency(self):
+        self.currency_panel.open()
+
+    def _close_currency(self):
+        self.currency_panel.close()
+
 
 class SelectionToolbar:
     """Small floating toolbar that appears near cursor after text selection."""
@@ -1460,7 +1475,12 @@ class SelectionToolbar:
         inner.pack(fill="both", expand=True)
 
         pinned = pins_module.get_pinned_skills(self.skills)
-        visible = pinned if pinned else self.skills[:3]
+        if pinned:
+            visible = pinned
+        else:
+            default_titles = ("Summarize", "Translate to English")
+            by_title = {s["title"]: s for s in self.skills}
+            visible = [by_title[t] for t in default_titles if t in by_title]
         for skill in visible:
             row = tk.Frame(inner, bg="#1c2030", cursor="hand2")
             row.pack(fill="x", padx=0, pady=0)
@@ -1541,22 +1561,24 @@ class SelectionToolbar:
         def execute():
             _t0 = time.time()
             try:
-                if not _wallet_ok(skill):
+                if not _reserve_skill(skill):
                     return
                 result = core.run_skill(skill, text)
                 if result and not result.startswith("[Scryptian Error]"):
                     pyperclip.copy(result)
                     telemetry.send("skill_run", _build_skill_event(skill, text, time.time() - _t0, **_src, via="selection"))
-                    _charge_skill(skill)
+                    _settle_skill(skill)
                     time.sleep(0.12)
                     ctypes.windll.user32.SetForegroundWindow(source_hwnd)
                     time.sleep(0.06)
                     keyboard.send("ctrl+v")
                 else:
                     telemetry.send("skill_failed", {"name": skill["title"], "via": "selection_inline", "reason": "error_or_empty", "error": (result or "")[:200]})
+                    _refund_skill(skill)
             except Exception as e:
                 telemetry.send("skill_failed", {"name": skill["title"], "via": "selection_inline", "reason": "exception", "error": str(e)[:200]})
                 print(f"[Scryptian] Selection skill error: {e}")
+                _refund_skill(skill)
 
         threading.Thread(target=execute, daemon=True).start()
 
@@ -1752,7 +1774,7 @@ def main():
         return
     bootstrap.setup()
 
-    # Register wallet in the background (grants 221 swords on first run).
+    # Register wallet in the background (grants 221 slippers on first run).
     threading.Thread(target=wallet.ensure_wallet, daemon=True).start()
 
     print("[Scryptian] Scanning skills...")
@@ -1766,13 +1788,6 @@ def main():
         print(f"  → {s['title']}: {s['description']}")
 
     print(f"\n[Scryptian] Skills loaded: {len(skills)}")
-
-    # Check model file
-    from config import MODEL_PATH, MODEL_FILE
-    if os.path.exists(MODEL_PATH):
-        print(f"[Scryptian] Model: {MODEL_FILE}")
-    else:
-        print(f"[Scryptian] WARNING: Model not found. It will download on first skill use.")
 
     print(f"[Scryptian] Hotkey: {HOTKEY}")
     print("[Scryptian] Waiting...")
@@ -1830,27 +1845,9 @@ def main():
     bar = ScryptianBar(root, skills, toolbar=toolbar)
     toolbar.bar = bar
 
-    # ── Model progress → UI (single global listener; works for any download thread) ──
-    def _model_progress(msg):
-        def _apply():
-            if bar.window and bar.visible:
-                bar._show_result(msg)
-        root.after(0, _apply)
-
-    def _model_download_start():
-        root.after(0, lambda: tray.show_notify_popup(
-            "Scryptian",
-            "Downloading AI model (~2 GB) in the background. You'll be notified when it's ready.",
-            root,
-        ))
-
-    bridge.set_progress_listener(_model_progress)
-    bridge.set_download_start_listener(_model_download_start)
-
     sel_queue = queue.Queue()
 
     def _on_selection(text, x, y, source_hwnd):
-        threading.Thread(target=bridge._get_llm, args=(None, False), daemon=True).start()
         sel_queue.put((text, x, y, source_hwnd))
 
     def _poll_selection():
@@ -1866,11 +1863,7 @@ def main():
         selection_watcher.start(_on_selection)
         root.after(150, _poll_selection)
 
-    if os.path.exists(MODEL_PATH):
-        threading.Thread(target=bridge._get_llm, args=(None, False), daemon=True).start()
-
     def _hotkey_handler():
-        threading.Thread(target=bridge._get_llm, args=(None, False), daemon=True).start()
         bar.toggle()
 
     keyboard.add_hotkey(HOTKEY, _hotkey_handler)

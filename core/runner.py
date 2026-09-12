@@ -2,11 +2,10 @@
 #
 # Every skill invocation flows through here. The runner:
 #   1. Looks up the skill in the registry
-#   2. Ensures the LLM is ready (if needed)
-#   3. Dispatches to prompt / run_stream / run
-#   4. Checks for pipeline.json in the skill's directory — if present,
+#   2. Dispatches to run
+#   3. Checks for pipeline.json in the skill's directory — if present,
 #      chains the declared steps (output of each → input of next)
-#   5. Repeats until a terminal result (no pipeline) is reached
+#   4. Repeats until a terminal result (no pipeline) is reached
 #
 # Skills never call each other. A skill author declares a pipeline.json
 # next to manifest.json: [{"skill_id": "..."}, {"skill_id": "..."}]
@@ -14,25 +13,8 @@
 
 import json
 import os
-import re
-
-import bridge
-from config import MAX_SKILL_INPUT_CHARS
 
 from .registry import scan_skills, find_skill
-
-
-def _check_input_limit(skill, input_text):
-    if skill.get("background", False) or not skill.get("needs_llm", True):
-        return None
-    n = len(input_text or "")
-    if n <= MAX_SKILL_INPUT_CHARS:
-        return None
-    return (
-        "Text too long.\n"
-        f"Limit: {MAX_SKILL_INPUT_CHARS} characters.   Your text: {n}.\n"
-        "Please select less text and try again."
-    )
 
 
 def _read_pipeline(skill):
@@ -54,28 +36,9 @@ def _read_pipeline(skill):
 
 def _run_single(skill, input_text, settings=None):
     """Run one skill. Returns result string."""
-    limit_msg = _check_input_limit(skill, input_text)
-    if limit_msg:
-        return limit_msg
-
-    if skill.get("needs_llm", True) and not bridge.is_model_in_memory():
-        bridge._get_llm()
-
     mod = skill["module"]
     try:
-        if hasattr(mod, "prompt"):
-            full_text = ""
-            for chunk in bridge.generate_stream(mod.prompt(input_text)):
-                full_text += chunk
-            result = re.sub(r"<think>[\s\S]*?</think>", "", full_text).strip()
-        elif hasattr(mod, "run_stream"):
-            full_text = ""
-            for chunk in mod.run_stream(input_text):
-                full_text += chunk
-            result = full_text.strip()
-        else:
-            result = mod.run(input_text)
-
+        result = mod.run(input_text)
         if not result:
             return "Skill returned an empty result."
         return result
@@ -148,38 +111,5 @@ def run_skill(skill, input_text, settings=None):
                         return result
 
         return result
-
-
-def run_skill_stream(skill, input_text, settings=None):
-    """Execute a skill and yield result chunks (for streaming UI).
-
-    Pipeline chaining is not supported in streaming mode — if a
-    streaming skill writes pipeline.json it is ignored.
-    """
-    limit_msg = _check_input_limit(skill, input_text)
-    if limit_msg:
-        yield limit_msg
-        return
-
-    if skill.get("needs_llm", True) and not bridge.is_model_in_memory():
-        bridge._get_llm()
-
-    mod = skill["module"]
-    try:
-        if hasattr(mod, "prompt"):
-            full_text = ""
-            for chunk in bridge.generate_stream(mod.prompt(input_text)):
-                full_text += chunk
-                yield full_text
-        elif hasattr(mod, "run_stream"):
-            full_text = ""
-            for chunk in mod.run_stream(input_text):
-                full_text += chunk
-                yield full_text
-        else:
-            result = mod.run(input_text)
-            yield result or "Skill returned an empty result."
-    except Exception as e:
-        yield f"[Scryptian Error] {e}"
 
 

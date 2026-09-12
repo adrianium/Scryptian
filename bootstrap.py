@@ -44,9 +44,23 @@ def setup():
 
     os.makedirs(SKILLS_DIR, exist_ok=True)
 
-    # Extract fresh built-in skills, but keep custom_*.py files
+    # Remove old flat .py skills (legacy format), but keep custom_*.py files.
+    for fname in os.listdir(SKILLS_DIR):
+        if fname.endswith(".py") and not fname.startswith("custom_"):
+            try:
+                os.remove(os.path.join(SKILLS_DIR, fname))
+            except Exception:
+                pass
+
+    # Extract fresh built-in skill bundles (folders) from the .exe.
     bundled = _bundled_skills_dir()
     if bundled and os.path.isdir(bundled):
-        for fname in os.listdir(bundled):
-            if fname.endswith(".py"):
-                shutil.copy2(os.path.join(bundled, fname), os.path.join(SKILLS_DIR, fname))
+        for name in os.listdir(bundled):
+            src = os.path.join(bundled, name)
+            dst = os.path.join(SKILLS_DIR, name)
+            if os.path.isdir(src):
+                if os.path.isdir(dst):
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
+            elif name.endswith(".py"):
+                shutil.copy2(src, dst)

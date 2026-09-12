@@ -1,4 +1,3 @@
-llama-cpp-python
 pyperclip
 keyboard
 pystray

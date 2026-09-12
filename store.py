@@ -30,8 +30,8 @@ def _load_env():
 _load_env()
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
-SUPABASE_TABLE = os.environ.get("SUPABASE_SKILLS_TABLE", "skills")
-SUPABASE_BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "skills")
+SUPABASE_TABLE = os.environ.get("SUPABASE_SKILLS_TABLE", "actions")
+SUPABASE_BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "actions")
 
 
 def _ssl_ctx():
@@ -63,9 +63,7 @@ def _storage_url(path):
 
 
 def _skill_download_url(skill):
-    return skill.get("download_url") or _storage_url(
-        skill.get("storage_path") or skill.get("archive") or skill.get("filename", "")
-    )
+    return _storage_url(f"{skill.get('id', '')}.zip")
 
 
 def fetch_registry(timeout=10):
@@ -75,20 +73,17 @@ def fetch_registry(timeout=10):
     req = request.Request(url, headers=_headers())
     with request.urlopen(req, timeout=timeout, context=_ssl_ctx()) as resp:
         data = json.loads(resp.read().decode("utf-8"))
-    return data if isinstance(data, list) else data.get("skills", [])
+    return data if isinstance(data, list) else data.get("actions", [])
 
 
 def _bundle_dir_name(skill):
     """Folder name a bundle installs into."""
-    name = skill.get("filename", "")
-    return name[:-4] if name.endswith(".zip") else name
+    return skill.get("id", "")
 
 
 def is_installed(skill, skills_dir):
-    """skill is a registry dict. Handles both single-file and bundle skills."""
-    if skill.get("type") == "bundle":
-        return os.path.isdir(os.path.join(skills_dir, _bundle_dir_name(skill)))
-    return os.path.exists(os.path.join(skills_dir, skill.get("filename", "")))
+    """skill is a registry dict (bundle)."""
+    return os.path.isdir(os.path.join(skills_dir, _bundle_dir_name(skill)))
 
 
 def _version_tuple(v):
@@ -100,13 +95,7 @@ def _version_tuple(v):
 
 
 def installed_version(skill, skills_dir):
-    """Return the locally installed version of a bundle skill, or None.
-
-    Single-file skills carry no version metadata, so this only applies to
-    bundles (which have a manifest.json).
-    """
-    if skill.get("type") != "bundle":
-        return None
+    """Return the locally installed version of a bundle skill, or None."""
     manifest_path = os.path.join(skills_dir, _bundle_dir_name(skill), "manifest.json")
     try:
         with open(manifest_path, "r", encoding="utf-8") as f:
@@ -127,26 +116,15 @@ def has_update(skill, skills_dir):
 
 
 def install_skill(skill, skills_dir):
-    """Download and install a skill. Returns the installed path."""
+    """Download and install a bundle skill. Returns the installed path."""
     os.makedirs(skills_dir, exist_ok=True)
 
     _require_config()
 
-    if skill.get("type") == "bundle":
-        url = _skill_download_url(skill)
-        req = request.Request(url, headers=_headers())
-        with request.urlopen(req, timeout=30, context=_ssl_ctx()) as resp:
-            data = resp.read()
-        with zipfile.ZipFile(io.BytesIO(data)) as z:
-            z.extractall(skills_dir)
-        return os.path.join(skills_dir, _bundle_dir_name(skill))
-
-    filename = skill.get("filename", "")
     url = _skill_download_url(skill)
     req = request.Request(url, headers=_headers())
-    resp = request.urlopen(req, timeout=15, context=_ssl_ctx())
-    content = resp.read()
-    path = os.path.join(skills_dir, filename)
-    with open(path, "wb") as f:
-        f.write(content)
-    return path
+    with request.urlopen(req, timeout=30, context=_ssl_ctx()) as resp:
+        data = resp.read()
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        z.extractall(skills_dir)
+    return os.path.join(skills_dir, _bundle_dir_name(skill))
