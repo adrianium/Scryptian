@@ -109,6 +109,7 @@ def send(event: str, properties: dict = None):
             "event": event,
             "distinct_id": _get_id(),
             "properties": {
+                "source": "desktop",
                 "os": _os_info(),
                 "app_version": APP_VERSION,
                 "machine_id": _machine_id(),

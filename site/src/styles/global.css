@@ -443,13 +443,13 @@ a {
 .demo {
   padding: 0;
   overflow: hidden;
+  aspect-ratio: 16 / 9;
 }
 
 .demo img {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 420px;
+  height: 100%;
   object-fit: cover;
 }
 
