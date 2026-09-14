@@ -200,7 +200,7 @@ class ScryptianBar:
         self.window.title("Scryptian")
         self.window.overrideredirect(True)
         self.window.attributes("-toolwindow", True)
-        self.window.configure(bg="#2e3348")
+        self.window.configure(bg="#2d2d33")
 
         # ── Size and center position ──
         screen_w = self.root.winfo_screenwidth()
@@ -216,26 +216,26 @@ class ScryptianBar:
         self.window.update_idletasks()
 
         # ── Border ──
-        self.border = tk.Frame(self.window, bg="#2e3348", padx=1, pady=1)
+        self.border = tk.Frame(self.window, bg="#2d2d33", padx=1, pady=1)
         self.border.pack(fill="both", expand=True)
 
         # ── Container ──
-        self.container = tk.Frame(self.border, bg="#1c2030")
+        self.container = tk.Frame(self.border, bg="#0e0e10")
         self.container.pack(fill="both", expand=True)
 
         # ── Balance (right side) ──
-        self.balance_frame = tk.Frame(self.container, bg="#1c2030")
+        self.balance_frame = tk.Frame(self.container, bg="#0e0e10")
         self.balance_frame.pack(fill="x", padx=12, pady=(4, 0))
 
-        self.balance_content = tk.Frame(self.balance_frame, bg="#1c2030")
+        self.balance_content = tk.Frame(self.balance_frame, bg="#0e0e10")
         self.balance_content.pack(side="right")
 
         self.balance_icon = tk.Label(
             self.balance_content,
             text="🩴",
             font=("Segoe UI Emoji", 13),
-            bg="#1c2030",
-            fg="#2cff00",
+            bg="#0e0e10",
+            fg="#3b82f6",
             width=2,
             anchor="center",
         )
@@ -249,7 +249,7 @@ class ScryptianBar:
             icon_path = os.path.join(assets_dir, "slippers.png")
             source = Image.open(icon_path).convert("RGBA")
             alpha = source.getchannel("A").resize((26, 26), Image.Resampling.LANCZOS)
-            icon = Image.new("RGBA", (26, 26), "#2cff00")
+            icon = Image.new("RGBA", (26, 26), "#3b82f6")
             icon.putalpha(alpha)
             self.balance_photo = ImageTk.PhotoImage(icon)
             self.balance_icon.config(image=self.balance_photo, text="", width=26)
@@ -260,8 +260,8 @@ class ScryptianBar:
             self.balance_content,
             text="",
             font=("Segoe UI", 11),
-            bg="#1c2030",
-            fg="#2cff00",
+            bg="#0e0e10",
+            fg="#3b82f6",
             anchor="e",
         )
         self.balance_label.pack(side="left")
@@ -270,8 +270,8 @@ class ScryptianBar:
             self.balance_frame,
             text="[ Ctrl+0 ]",
             font=("Segoe UI", 10),
-            bg="#1c2030",
-            fg="#a0a0a0",
+            bg="#0e0e10",
+            fg="#adadb8",
             anchor="e",
         )
         self.balance_hotkey.pack(side="right", padx=(0, 16), pady=(3, 0))
@@ -281,21 +281,20 @@ class ScryptianBar:
         # ── Input field ──
         self.entry_shell = tk.Frame(
             self.container,
-            bg="#252a3c",
-            padx=4,
-            highlightthickness=1,
-            highlightbackground="#292e3e",
-            highlightcolor="#303548",
+            bg="#18181b",
+            padx=6,
+            pady=3,
+            highlightthickness=0,
         )
         self.entry_shell.pack(fill="x", padx=12, pady=8)
         self.entry = tk.Entry(
             self.entry_shell,
             font=("Segoe UI", 14),
-            bg="#252a3c",
-            fg="#ffffff",
-            disabledbackground="#252a3c",
-            disabledforeground="#b0b0b0",
-            insertbackground="#707080",
+            bg="#18181b",
+            fg="#efeff1",
+            disabledbackground="#18181b",
+            disabledforeground="#adadb8",
+            insertbackground="#71717a",
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
@@ -304,7 +303,7 @@ class ScryptianBar:
         self.placeholder_text = "Works with text from clipboard"
         self._placeholder_active = True
         self.entry.insert(0, self.placeholder_text)
-        self.entry.config(fg="#b0b0b0")
+        self.entry.config(fg="#adadb8")
 
         self.entry.bind("<FocusIn>", self._on_entry_focus_in)
         self.entry.bind("<FocusOut>", self._on_entry_focus_out)
@@ -318,25 +317,25 @@ class ScryptianBar:
         self.window.bind("<Escape>", lambda e: self._hide())
 
         # ── Result list (hidden until input) ──
-        self.list_frame = tk.Frame(self.container, bg="#1c2030")
+        self.list_frame = tk.Frame(self.container, bg="#0e0e10")
         self._skill_rows = []
         self._special_widgets = []
 
         # Scrollable skill list + fixed special-action bar
-        self.list_view = tk.Frame(self.list_frame, bg="#1c2030")
+        self.list_view = tk.Frame(self.list_frame, bg="#0e0e10")
         self.list_view.pack_propagate(False)
         style = ttk.Style()
         style.theme_use("clam")
         style.configure("Scryptian.Vertical.TScrollbar",
-                        background="#3a3f58", troughcolor="#1c2030",
-                        arrowcolor="#1c2030", bordercolor="#1c2030",
-                        lightcolor="#3a3f58", darkcolor="#3a3f58",
+                        background="#3f3f46", troughcolor="#0e0e10",
+                        arrowcolor="#0e0e10", bordercolor="#0e0e10",
+                        lightcolor="#3f3f46", darkcolor="#3f3f46",
                         relief="flat")
         style.map("Scryptian.Vertical.TScrollbar",
-                  background=[("active", "#2e3348")])
-        self.list_canvas = tk.Canvas(self.list_view, bg="#1c2030", highlightthickness=0, bd=0)
+                  background=[("active", "#2d2d33")])
+        self.list_canvas = tk.Canvas(self.list_view, bg="#0e0e10", highlightthickness=0, bd=0)
         self.list_scroll = ttk.Scrollbar(self.list_view, orient="vertical", command=self.list_canvas.yview, style="Scryptian.Vertical.TScrollbar")
-        self.list_inner = tk.Frame(self.list_canvas, bg="#1c2030")
+        self.list_inner = tk.Frame(self.list_canvas, bg="#0e0e10")
         self.list_canvas.configure(yscrollcommand=self.list_scroll.set)
         self._list_window = self.list_canvas.create_window((0, 0), window=self.list_inner, anchor="nw")
         self.list_inner.bind("<Configure>", lambda e: self.list_canvas.configure(scrollregion=self.list_canvas.bbox("all")))
@@ -345,61 +344,61 @@ class ScryptianBar:
         self.list_canvas.bind("<Leave>", lambda e: self.list_canvas.unbind_all("<MouseWheel>"))
         self.list_canvas.pack(side="left", fill="both", expand=True)
         self.list_scroll.pack(side="right", fill="y")
-        self.special_frame = tk.Frame(self.list_frame, bg="#1c2030")
+        self.special_frame = tk.Frame(self.list_frame, bg="#0e0e10")
         self.special_frame.pack(side="bottom", fill="x", padx=4, pady=(0, 2))
         self.list_view.pack(side="top", fill="x")
 
         # ── Response area (hidden until result) ──
-        self.separator = tk.Frame(self.container, bg="#2e3348", height=1)
+        self.separator = tk.Frame(self.container, bg="#2d2d33", height=1)
         self.result_box = tk.Text(
             self.container,
             font=("Segoe UI", 13),
-            bg="#1c2030",
-            fg="#ffffff",
+            bg="#0e0e10",
+            fg="#efeff1",
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
             wrap="word",
             state="disabled",
         )
-        self.skill_hint = tk.Frame(self.container, bg="#1c2030")
+        self.skill_hint = tk.Frame(self.container, bg="#0e0e10")
         tk.Label(
             self.skill_hint,
             text="Ctrl+Alt - hide",
             font=("Segoe UI", 11),
-            bg="#1c2030",
-            fg="#b0b0b0",
+            bg="#0e0e10",
+            fg="#adadb8",
         ).pack(side="left")
         tk.Label(
             self.skill_hint,
             text="Enter - run action",
             font=("Segoe UI", 11),
-            bg="#1c2030",
-            fg="#b0b0b0",
+            bg="#0e0e10",
+            fg="#adadb8",
         ).pack(side="right")
-        self.hint_label = tk.Frame(self.container, bg="#1c2030")
+        self.hint_label = tk.Frame(self.container, bg="#0e0e10")
         tk.Label(
             self.hint_label,
             text="Enter - copy to clipboard and close",
             font=("Segoe UI", 11),
-            bg="#1c2030",
-            fg="#b0b0b0",
+            bg="#0e0e10",
+            fg="#adadb8",
         ).pack(side="left")
         report_btn = tk.Label(
             self.hint_label,
             text="[ Report ]",
             font=("Segoe UI", 11),
-            bg="#1c2030",
-            fg="#a0a0a0",
+            bg="#0e0e10",
+            fg="#adadb8",
             cursor="hand2",
         )
         report_btn.pack(side="right")
         report_btn.bind("<Button-1>", lambda e: self._open_report_dialog())
-        report_btn.bind("<Enter>", lambda e: report_btn.config(fg="#ffffff"))
-        report_btn.bind("<Leave>", lambda e: report_btn.config(fg="#a0a0a0"))
+        report_btn.bind("<Enter>", lambda e: report_btn.config(fg="#efeff1"))
+        report_btn.bind("<Leave>", lambda e: report_btn.config(fg="#adadb8"))
 
         # Chain bar — quick actions on result
-        self.chain_frame = tk.Frame(self.container, bg="#1c2030")
+        self.chain_frame = tk.Frame(self.container, bg="#0e0e10")
         self._chain_btns = []
 
         # Processing animation
@@ -527,17 +526,17 @@ class ScryptianBar:
             self.entry.icursor(0)
 
     def _on_entry_focus_in(self, event):
-        self.entry_shell.config(highlightbackground="#303548")
+        self.entry_shell.config(bg="#1f1f23")
         if self._placeholder_active:
             self._restore_placeholder_cursor()
             self.root.after_idle(self._restore_placeholder_cursor)
 
     def _on_entry_focus_out(self, event):
-        self.entry_shell.config(highlightbackground="#292e3e")
+        self.entry_shell.config(bg="#18181b")
         if not self._placeholder_active and not self.entry.get():
             self.entry.insert(0, self.placeholder_text)
             self._placeholder_active = True
-            self.entry.config(fg="#b0b0b0")
+            self.entry.config(fg="#adadb8")
 
     def _on_entry_keypress(self, event):
         if not self._placeholder_active:
@@ -547,7 +546,7 @@ class ScryptianBar:
         if event.char:
             self.entry.delete(0, "end")
             self._placeholder_active = False
-            self.entry.config(fg="#ffffff")
+            self.entry.config(fg="#efeff1")
 
     def _on_key(self, event):
         if event.keysym in ("Return", "Escape", "Up", "Down"):
@@ -616,7 +615,7 @@ class ScryptianBar:
         if max_window_height:
             # Fixed-height window: smaller than the full max, but still tall.
             work_h = wa[3] - wa[1]
-            fixed_height = min(int(work_h * 0.4), max_window_height)
+            fixed_height = min(int(work_h * 0.55), max_window_height)
             self.list_view.config(height=1)
             self.window.update_idletasks()
             other = self.container.winfo_reqheight()
@@ -638,14 +637,14 @@ class ScryptianBar:
 
     def _make_row(self, title, desc, idx, pinnable=False, skill_id=None):
         """Creates a single skill row with title (bright) and description (dim)."""
-        row = tk.Frame(self.list_inner, bg="#1c2030", cursor="hand2")
+        row = tk.Frame(self.list_inner, bg="#0e0e10", cursor="hand2")
         row.pack(fill="x", padx=4, pady=1)
 
         skill_obj = self.filtered[idx] if idx < len(self.filtered) else None
 
         title_lbl = tk.Label(
             row, text=f"  {title}", font=("Segoe UI", 13),
-            bg="#1c2030", fg="#ffffff", anchor="w",
+            bg="#0e0e10", fg="#efeff1", anchor="w",
         )
         title_lbl.pack(side="left")
 
@@ -654,7 +653,7 @@ class ScryptianBar:
             mode = str(skill_obj.get("mode", "cloud")).strip().lower()
             mode_text = "Cloud" if mode == "cloud" else "Local"
             mode_lbl = tk.Label(row, text=f"({mode_text})", font=("Segoe UI", 10),
-                                bg="#1c2030", fg="#a0a0a0")
+                                bg="#0e0e10", fg="#adadb8")
             mode_lbl.pack(side="left", padx=(2, 0))
             mode_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
@@ -665,8 +664,8 @@ class ScryptianBar:
                 row,
                 text="\ue718" if mpinned else "\ue77a",
                 font=("Segoe MDL2 Assets", 12),
-                bg="#1c2030",
-                fg="#a6e3a1" if mpinned else "#a0a0a0",
+                bg="#0e0e10",
+                fg="#60a5fa" if mpinned else "#adadb8",
                 cursor="hand2",
                 padx=4,
             )
@@ -679,8 +678,8 @@ class ScryptianBar:
                 row,
                 text="\ue735" if pinned else "\ue734",
                 font=("Segoe MDL2 Assets", 13),
-                bg="#1c2030",
-                fg="#f9e2af" if pinned else "#a0a0a0",
+                bg="#0e0e10",
+                fg="#f9e2af" if pinned else "#adadb8",
                 cursor="hand2",
                 padx=6,
             )
@@ -692,7 +691,7 @@ class ScryptianBar:
                 edit_lbl = tk.Label(
                     row, text="\ue70f",
                     font=("Segoe MDL2 Assets", 11),
-                    bg="#1c2030", fg="#89b4fa",
+                    bg="#0e0e10", fg="#60a5fa",
                     cursor="hand2", padx=4,
                 )
                 edit_lbl.pack(side="right")
@@ -703,7 +702,7 @@ class ScryptianBar:
                 gear_lbl = tk.Label(
                     row, text="\ue713",
                     font=("Segoe MDL2 Assets", 12),
-                    bg="#1c2030", fg="#d4d4d4",
+                    bg="#0e0e10", fg="#adadb8",
                     cursor="hand2", padx=4,
                 )
                 gear_lbl.pack(side="right")
@@ -713,16 +712,16 @@ class ScryptianBar:
         if skill_obj and skill_obj.get("price", 0) > 0:
             icon_photo = self._slippers_icon(26)
             if icon_photo:
-                icon_lbl = tk.Label(row, image=icon_photo, bg="#1c2030")
+                icon_lbl = tk.Label(row, image=icon_photo, bg="#0e0e10")
             else:
                 icon_lbl = tk.Label(row, text="🩴", font=("Segoe UI Emoji", 11),
-                                    bg="#1c2030", fg="#2cff00")
+                                    bg="#0e0e10", fg="#3b82f6")
             icon_lbl.pack(side="right", padx=(2, 4))
             icon_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
             price_lbl = tk.Label(row, text=str(skill_obj.get("price", 0)),
                                  font=("Segoe UI", 11, "bold"),
-                                 bg="#1c2030", fg="#2cff00")
+                                 bg="#0e0e10", fg="#3b82f6")
             price_lbl.pack(side="right", padx=(8, 0))
             price_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
@@ -732,7 +731,7 @@ class ScryptianBar:
 
         return row
 
-    def _tinted_icon(self, filename, size=24, color="#ffffff"):
+    def _tinted_icon(self, filename, size=24, color="#efeff1"):
         """Return a cached tinted PhotoImage for a monochrome PNG, or None."""
         key = (filename, size, color)
         cache = getattr(self, "_tinted_icons", None)
@@ -759,15 +758,15 @@ class ScryptianBar:
 
     def _slippers_icon(self, size=14):
         """Return a cached green slippers icon PhotoImage, or None."""
-        return self._tinted_icon("slippers.png", size, "#2cff00")
+        return self._tinted_icon("slippers.png", size, "#3b82f6")
 
     def _render_special_actions(self):
         """Render compact special-action buttons below the skill list (chain-bar style)."""
-        sep = tk.Frame(self.special_frame, bg="#2e3348", height=1)
+        sep = tk.Frame(self.special_frame, bg="#2d2d33", height=1)
         sep.pack(fill="x", padx=4, pady=(3, 2))
         self._special_widgets.append(sep)
 
-        grid = tk.Frame(self.special_frame, bg="#1c2030")
+        grid = tk.Frame(self.special_frame, bg="#0e0e10")
         grid.pack(fill="x", padx=4, pady=(0, 0))
         self._special_widgets.append(grid)
         for c in range(3):
@@ -775,32 +774,32 @@ class ScryptianBar:
 
         actions = [
             ("📁", "Open actions folder", "Ctrl+1", self._open_skills_folder, False, None),
-            ("💬", "Contact Author (Telegram)", "Ctrl+2", self._open_telegram, False, "contact.png"),
+            ("💬", "Contact Author (Telegram)", "Ctrl+2", self._open_telegram, False, "support.png"),
             ("📦", "Actions Store", "Ctrl+3", self._open_store, True, None),
         ]
         for i, (icon, label, hotkey, handler, accent, icon_file) in enumerate(actions):
-            fg = "#2cff00" if accent else "#ffffff"
-            hover_bg = "#1a331a" if accent else "#2e3348"
+            fg = "#3b82f6" if accent else "#efeff1"
+            hover_bg = "#1e3a8a" if accent else "#2d2d33"
 
-            photo = self._tinted_icon(icon_file, 16, "#ffffff") if icon_file else None
+            photo = self._tinted_icon(icon_file, 19, "#efeff1") if icon_file else None
             if photo:
                 btn = tk.Label(
                     grid, image=photo, text=f"{label}\n[{hotkey}]",
                     compound="top", font=("Segoe UI", 10),
-                    bg="#252a3c", fg=fg, cursor="hand2",
-                    padx=4, pady=5, justify="center",
+                    bg="#18181b", fg=fg, cursor="hand2",
+                    padx=4, pady=4.29, justify="center",
                 )
             else:
                 btn = tk.Label(
                     grid, text=f"{icon}\n{label}\n[{hotkey}]", font=("Segoe UI", 10),
-                    bg="#252a3c", fg=fg, cursor="hand2",
+                    bg="#18181b", fg=fg, cursor="hand2",
                     padx=4, pady=4, justify="center",
                 )
 
             btn.grid(row=0, column=i, sticky="ew", padx=(0, 4) if i < 2 else (0, 0))
             btn.bind("<Button-1>", lambda e, h=handler: h())
             btn.bind("<Enter>", lambda e, b=btn, hb=hover_bg, f=fg: b.config(bg=hb, fg=f))
-            btn.bind("<Leave>", lambda e, b=btn, f=fg: b.config(bg="#252a3c", fg=f))
+            btn.bind("<Leave>", lambda e, b=btn, f=fg: b.config(bg="#18181b", fg=f))
 
     def _open_discord(self):
         import webbrowser
@@ -848,13 +847,13 @@ class ScryptianBar:
         """Highlights the selected row."""
         for i, row in enumerate(self._skill_rows):
             if i == self.selected_index:
-                row.config(bg="#2e3348")
+                row.config(bg="#2d2d33")
                 for child in row.winfo_children():
-                    child.config(bg="#2e3348")
+                    child.config(bg="#2d2d33")
             else:
-                row.config(bg="#1c2030")
+                row.config(bg="#0e0e10")
                 for child in row.winfo_children():
-                    child.config(bg="#1c2030")
+                    child.config(bg="#0e0e10")
 
     def _work_area(self):
         """Return (left, top, right, bottom) of the work area (screen minus taskbar)."""
@@ -1207,8 +1206,8 @@ class ScryptianBar:
                 self.chain_frame,
                 text=f"{label}\n[{hotkey}]",
                 font=("Segoe UI", 11),
-                bg="#252a3c",
-                fg="#ffffff",
+                bg="#18181b",
+                fg="#efeff1",
                 cursor="hand2",
                 padx=6,
                 pady=5,
@@ -1216,8 +1215,8 @@ class ScryptianBar:
             )
             btn.grid(row=0, column=i, sticky="ew", padx=(0, 4) if i < 2 else (0, 0))
             btn.bind("<Button-1>", lambda e, t=skill_title: self._run_chain(t))
-            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2e3348", fg="#ffffff"))
-            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#252a3c", fg="#ffffff"))
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2d2d33", fg="#efeff1"))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#18181b", fg="#efeff1"))
             self._chain_btns.append(btn)
 
         self.chain_frame.pack(fill="x", padx=10, pady=(0, 6))
@@ -1336,42 +1335,42 @@ class ScryptianBar:
         dlg.overrideredirect(True)
         dlg.attributes("-topmost", True)
         dlg.attributes("-toolwindow", True)
-        dlg.configure(bg="#1c2030")
+        dlg.configure(bg="#0e0e10")
 
-        outer = tk.Frame(dlg, bg="#2e3348", padx=1, pady=1)
+        outer = tk.Frame(dlg, bg="#2d2d33", padx=1, pady=1)
         outer.pack(fill="both", expand=True)
-        inner = tk.Frame(outer, bg="#1c2030", padx=16, pady=14)
+        inner = tk.Frame(outer, bg="#0e0e10", padx=16, pady=14)
         inner.pack(fill="both", expand=True)
 
         tk.Label(inner, text="Send feedback", font=("Segoe UI", 11, "bold"),
-                 bg="#1c2030", fg="#ffffff", anchor="w").pack(fill="x", pady=(0, 10))
+                 bg="#0e0e10", fg="#efeff1", anchor="w").pack(fill="x", pady=(0, 10))
 
         # Contact field
         tk.Label(inner, text="Contact  (optional)", font=("Segoe UI", 11),
-                 bg="#1c2030", fg="#b0b0b0", anchor="w").pack(fill="x")
+                 bg="#0e0e10", fg="#adadb8", anchor="w").pack(fill="x")
         contact_var = tk.StringVar()
         contact_entry = tk.Entry(inner, textvariable=contact_var,
-                                 font=("Segoe UI", 11), bg="#252a3c", fg="#ffffff",
-                                 insertbackground="#ffffff", relief="flat", bd=0)
+                                 font=("Segoe UI", 11), bg="#18181b", fg="#efeff1",
+                                 insertbackground="#efeff1", relief="flat", bd=0)
         contact_entry.pack(fill="x", pady=(2, 10), ipady=5)
 
         # Message field
         tk.Label(inner, text="Message", font=("Segoe UI", 11),
-                 bg="#1c2030", fg="#b0b0b0", anchor="w").pack(fill="x")
-        msg_text = tk.Text(inner, font=("Segoe UI", 11), bg="#252a3c", fg="#ffffff",
-                           insertbackground="#ffffff", relief="flat", bd=0,
+                 bg="#0e0e10", fg="#adadb8", anchor="w").pack(fill="x")
+        msg_text = tk.Text(inner, font=("Segoe UI", 11), bg="#18181b", fg="#efeff1",
+                           insertbackground="#efeff1", relief="flat", bd=0,
                            height=4, wrap="word")
         msg_text.pack(fill="x", pady=(2, 12))
 
-        btn_row = tk.Frame(inner, bg="#1c2030")
+        btn_row = tk.Frame(inner, bg="#0e0e10")
         btn_row.pack(fill="x")
 
         cancel_btn = tk.Label(btn_row, text="Cancel", font=("Segoe UI", 11),
-                              bg="#1c2030", fg="#b0b0b0", cursor="hand2")
+                              bg="#0e0e10", fg="#adadb8", cursor="hand2")
         cancel_btn.pack(side="right", padx=(8, 0))
         cancel_btn.bind("<Button-1>", lambda e: dlg.destroy())
-        cancel_btn.bind("<Enter>", lambda e: cancel_btn.config(fg="#ffffff"))
-        cancel_btn.bind("<Leave>", lambda e: cancel_btn.config(fg="#b0b0b0"))
+        cancel_btn.bind("<Enter>", lambda e: cancel_btn.config(fg="#efeff1"))
+        cancel_btn.bind("<Leave>", lambda e: cancel_btn.config(fg="#adadb8"))
 
         def _submit():
             msg = msg_text.get("1.0", "end").strip()
@@ -1387,12 +1386,12 @@ class ScryptianBar:
             self._show_result("Thanks for the feedback!")
 
         send_btn = tk.Label(btn_row, text="Send", font=("Segoe UI", 11, "bold"),
-                            bg="#cba6f7", fg="#1c2030", cursor="hand2",
+                            bg="#3b82f6", fg="#efeff1", cursor="hand2",
                             padx=14, pady=3)
         send_btn.pack(side="right")
         send_btn.bind("<Button-1>", lambda e: _submit())
-        send_btn.bind("<Enter>", lambda e: send_btn.config(bg="#d4b6f8"))
-        send_btn.bind("<Leave>", lambda e: send_btn.config(bg="#cba6f7"))
+        send_btn.bind("<Enter>", lambda e: send_btn.config(bg="#60a5fa"))
+        send_btn.bind("<Leave>", lambda e: send_btn.config(bg="#3b82f6"))
 
         dlg.update_idletasks()
         w, h = dlg.winfo_reqwidth(), dlg.winfo_reqheight()
@@ -1466,12 +1465,12 @@ class SelectionToolbar:
 
         win = tk.Toplevel(self.root)
         win.overrideredirect(True)
-        win.configure(bg="#1c2030")
+        win.configure(bg="#0e0e10")
         win.attributes("-topmost", True)
 
-        outer = tk.Frame(win, bg="#252a3c", padx=1, pady=1)
+        outer = tk.Frame(win, bg="#18181b", padx=1, pady=1)
         outer.pack(fill="both", expand=True)
-        inner = tk.Frame(outer, bg="#1c2030", padx=0, pady=2)
+        inner = tk.Frame(outer, bg="#0e0e10", padx=0, pady=2)
         inner.pack(fill="both", expand=True)
 
         pinned = pins_module.get_pinned_skills(self.skills)
@@ -1482,12 +1481,12 @@ class SelectionToolbar:
             by_title = {s["title"]: s for s in self.skills}
             visible = [by_title[t] for t in default_titles if t in by_title]
         for skill in visible:
-            row = tk.Frame(inner, bg="#1c2030", cursor="hand2")
+            row = tk.Frame(inner, bg="#0e0e10", cursor="hand2")
             row.pack(fill="x", padx=0, pady=0)
             lbl = tk.Label(
                 row,
                 text=f"  {skill['title']}",
-                bg="#1c2030", fg="#ffffff",
+                bg="#0e0e10", fg="#efeff1",
                 font=("Segoe UI", 11), anchor="w",
                 cursor="hand2", padx=4, pady=4,
             )
@@ -1495,14 +1494,14 @@ class SelectionToolbar:
             cmd = lambda s=skill, r=row, l=lbl: self._run_skill(s)
             row.bind("<Button-1>", lambda e, s=skill: self._run_skill(s))
             lbl.bind("<Button-1>", lambda e, s=skill: self._run_skill(s))
-            row.bind("<Enter>", lambda e, r=row, l=lbl: (r.config(bg="#252a3c"), l.config(bg="#252a3c")))
-            row.bind("<Leave>", lambda e, r=row, l=lbl: (r.config(bg="#1c2030"), l.config(bg="#1c2030")))
+            row.bind("<Enter>", lambda e, r=row, l=lbl: (r.config(bg="#18181b"), l.config(bg="#18181b")))
+            row.bind("<Leave>", lambda e, r=row, l=lbl: (r.config(bg="#0e0e10"), l.config(bg="#0e0e10")))
 
-        tk.Frame(inner, bg="#252a3c", height=1).pack(fill="x", padx=4)
+        tk.Frame(inner, bg="#18181b", height=1).pack(fill="x", padx=4)
 
         close = tk.Label(
             inner, text="  dismiss",
-            bg="#1c2030", fg="#2e3348",
+            bg="#0e0e10", fg="#2d2d33",
             font=("Segoe UI", 11), anchor="w",
             cursor="hand2", padx=4, pady=3,
         )

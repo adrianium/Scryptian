@@ -58,7 +58,7 @@ class CurrencyPanel:
 
         if self.frame:
             self.frame.destroy()
-        self.frame = tk.Frame(self.bar.container, bg="#1c2030")
+        self.frame = tk.Frame(self.bar.container, bg="#0e0e10")
         self.frame.pack(fill="both", expand=True, padx=12, pady=(0, 10))
 
         self._build_header()
@@ -94,7 +94,7 @@ class CurrencyPanel:
         self.bar.entry.delete(0, "end")
         self.bar.entry.insert(0, self.bar.placeholder_text)
         self.bar._placeholder_active = True
-        self.bar.entry.config(fg="#b0b0b0")
+        self.bar.entry.config(fg="#adadb8")
         self.bar.entry_shell.pack(fill="x", padx=12, pady=8)
         self.bar._update_filter("")
         self.bar.entry.focus_set()
@@ -102,42 +102,42 @@ class CurrencyPanel:
         self.bar.root.after(50, self.bar._restore_placeholder_cursor)
 
     def _build_header(self):
-        header = tk.Frame(self.frame, bg="#1c2030")
+        header = tk.Frame(self.frame, bg="#0e0e10")
         header.pack(fill="x", pady=(0, 8))
 
         tk.Label(header, text="Slippers", font=("Segoe UI", 13, "bold"),
-                 bg="#1c2030", fg="#ffffff").pack(side="left")
+                 bg="#0e0e10", fg="#efeff1").pack(side="left")
 
-        back_group = tk.Frame(header, bg="#1c2030")
+        back_group = tk.Frame(header, bg="#0e0e10")
         back_group.pack(side="right")
 
         back = tk.Label(back_group, text="← Back", font=("Segoe UI", 11),
-                        bg="#1c2030", fg="#2cff00", cursor="hand2")
+                        bg="#0e0e10", fg="#3b82f6", cursor="hand2")
         back.pack(anchor="e")
         back.bind("<Button-1>", lambda e: self.close())
-        back.bind("<Enter>", lambda e: back.config(fg="#6dff55"))
-        back.bind("<Leave>", lambda e: back.config(fg="#2cff00"))
+        back.bind("<Enter>", lambda e: back.config(fg="#60a5fa"))
+        back.bind("<Leave>", lambda e: back.config(fg="#3b82f6"))
 
         back_hint = tk.Label(back_group, text="[ Backspace ]", font=("Segoe UI", 9),
-                             bg="#1c2030", fg="#a0a0a0")
+                             bg="#0e0e10", fg="#adadb8")
         back_hint.pack(anchor="e")
 
     def _build_body(self):
-        body = tk.Frame(self.frame, bg="#1c2030")
+        body = tk.Frame(self.frame, bg="#0e0e10")
         body.pack(fill="both", expand=True)
 
-        card = tk.Frame(body, bg="#252a3c", padx=20, pady=20,
-                        highlightthickness=1, highlightbackground="#2e3348")
+        card = tk.Frame(body, bg="#18181b", padx=20, pady=20,
+                        highlightthickness=1, highlightbackground="#2d2d33")
         card.pack(fill="x", pady=(10, 16))
 
         tk.Label(card, text="Your balance", font=("Segoe UI", 11),
-                 bg="#252a3c", fg="#b0b0b0").pack(anchor="w")
+                 bg="#18181b", fg="#adadb8").pack(anchor="w")
 
-        balance_row = tk.Frame(card, bg="#252a3c")
+        balance_row = tk.Frame(card, bg="#18181b")
         balance_row.pack(anchor="w", pady=(4, 0))
 
         self.balance_icon = tk.Label(balance_row, text="🩴", font=("Segoe UI Emoji", 22),
-                                     bg="#252a3c", fg="#2cff00")
+                                     bg="#18181b", fg="#3b82f6")
         self.balance_icon.pack(side="left", padx=(0, 8))
         self.balance_photo = None
         try:
@@ -148,7 +148,7 @@ class CurrencyPanel:
             icon_path = os.path.join(assets_dir, "slippers.png")
             source = Image.open(icon_path).convert("RGBA")
             alpha = source.getchannel("A").resize((32, 32), Image.Resampling.LANCZOS)
-            icon = Image.new("RGBA", (32, 32), "#2cff00")
+            icon = Image.new("RGBA", (32, 32), "#3b82f6")
             icon.putalpha(alpha)
             self.balance_photo = ImageTk.PhotoImage(icon)
             self.balance_icon.config(image=self.balance_photo, text="", width=32)
@@ -156,28 +156,28 @@ class CurrencyPanel:
             pass
 
         self.balance_value = tk.Label(balance_row, text="—", font=("Segoe UI", 26, "bold"),
-                                      bg="#252a3c", fg="#ffffff")
+                                      bg="#18181b", fg="#efeff1")
         self.balance_value.pack(side="left")
 
         rate = tk.Label(body, text=RATE_TEXT, font=("Segoe UI", 11),
-                        bg="#1c2030", fg="#b0b0b0")
+                        bg="#0e0e10", fg="#adadb8")
         rate.pack(pady=(0, 10))
 
         
 
         self.buy_btn = tk.Label(body, text="Buy slippers - unavailable", font=("Segoe UI", 13, "bold"),
-                                bg="#2e3348", fg="#a0a0a0", padx=6, pady=12, cursor="arrow",
-                                highlightthickness=1, highlightbackground="#3a3f58")
+                                bg="#2d2d33", fg="#adadb8", padx=6, pady=12, cursor="arrow",
+                                highlightthickness=1, highlightbackground="#3f3f46")
         self.buy_btn.pack(fill="x")
 
         notice = tk.Label(body, text="Purchases are temporarily unavailable.\nContact the author via Telegram (main menu).",
                           font=("Segoe UI", 11, "bold"),
-                          bg="#252a3c", fg="#89b4fa", padx=12, pady=10, wraplength=400, justify="center",
-                          highlightthickness=1, highlightbackground="#89b4fa")
+                          bg="#18181b", fg="#60a5fa", padx=12, pady=10, wraplength=400, justify="center",
+                          highlightthickness=1, highlightbackground="#60a5fa")
         notice.pack(fill="x", pady=(10, 0))
 
         info = tk.Label(body, text=PAY_PER_OUTCOME_TEXT, font=("Segoe UI", 10),
-                        bg="#1c2030", fg="#707080", wraplength=600, justify="left")
+                        bg="#0e0e10", fg="#71717a", wraplength=600, justify="left")
         info.pack(fill="x", pady=(14, 0))
 
         self._set_balance(wallet.cached_balance())

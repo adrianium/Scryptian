@@ -54,7 +54,7 @@ class StorePanel:
 
         if self.frame:
             self.frame.destroy()
-        self.frame = tk.Frame(self.bar.container, bg="#1c2030")
+        self.frame = tk.Frame(self.bar.container, bg="#0e0e10")
         self.frame.pack(fill="both", expand=True, padx=12, pady=(0, 10))
 
         self._build_header()
@@ -113,7 +113,7 @@ class StorePanel:
         self.bar.entry.delete(0, "end")
         self.bar.entry.insert(0, self.bar.placeholder_text)
         self.bar._placeholder_active = True
-        self.bar.entry.config(fg="#b0b0b0")
+        self.bar.entry.config(fg="#adadb8")
         self.bar.entry_shell.pack(fill="x", padx=12, pady=8)
         self.bar._update_filter("")
 
@@ -136,48 +136,48 @@ class StorePanel:
     # ── header ──────────────────────────────────────────────────
 
     def _build_header(self):
-        header = tk.Frame(self.frame, bg="#1c2030")
+        header = tk.Frame(self.frame, bg="#0e0e10")
         header.pack(fill="x", pady=(0, 8))
 
         tk.Label(header, text="Scryptian Store", font=("Segoe UI", 13, "bold"),
-                 bg="#1c2030", fg="#ffffff").pack(side="left")
+                 bg="#0e0e10", fg="#efeff1").pack(side="left")
 
-        back_group = tk.Frame(header, bg="#1c2030")
+        back_group = tk.Frame(header, bg="#0e0e10")
         back_group.pack(side="right")
 
         back = tk.Label(back_group, text="← Back", font=("Segoe UI", 11),
-                        bg="#1c2030", fg="#2cff00", cursor="hand2")
+                        bg="#0e0e10", fg="#3b82f6", cursor="hand2")
         back.pack(anchor="e")
         back.bind("<Button-1>", lambda e: self.close())
-        back.bind("<Enter>", lambda e: back.config(fg="#6dff55"))
-        back.bind("<Leave>", lambda e: back.config(fg="#2cff00"))
+        back.bind("<Enter>", lambda e: back.config(fg="#60a5fa"))
+        back.bind("<Leave>", lambda e: back.config(fg="#3b82f6"))
 
         back_hint = tk.Label(back_group, text="[ Backspace ]", font=("Segoe UI", 9),
-                             bg="#1c2030", fg="#707080")
+                             bg="#0e0e10", fg="#71717a")
         back_hint.pack(anchor="e")
 
-        status_row = tk.Frame(self.frame, bg="#1c2030")
+        status_row = tk.Frame(self.frame, bg="#0e0e10")
         status_row.pack(fill="x", pady=(0, 6))
 
         self.status = tk.Label(
             status_row,
             text="Loading...",
             font=("Segoe UI", 11),
-            bg="#1c2030",
-            fg="#b0b0b0",
+            bg="#0e0e10",
+            fg="#adadb8",
             anchor="w",
         )
         self.status.pack(side="left")
 
-        navigation_hint = tk.Frame(status_row, bg="#1c2030")
+        navigation_hint = tk.Frame(status_row, bg="#0e0e10")
         navigation_hint.pack(side="right")
         self.navigation_photo = None
         navigation_icon = tk.Label(
             navigation_hint,
             text="↕",
             font=("Segoe UI Symbol", 12),
-            bg="#1c2030",
-            fg="#2cff00",
+            bg="#0e0e10",
+            fg="#3b82f6",
             width=2,
         )
         navigation_icon.pack(side="left", padx=(0, 4))
@@ -189,7 +189,7 @@ class StorePanel:
             icon_path = os.path.join(assets_dir, "up-and-down.png")
             source = Image.open(icon_path).convert("RGBA")
             alpha = source.getchannel("A").resize((16, 16), Image.Resampling.LANCZOS)
-            icon = Image.new("RGBA", (16, 16), "#2cff00")
+            icon = Image.new("RGBA", (16, 16), "#3b82f6")
             icon.putalpha(alpha)
             self.navigation_photo = ImageTk.PhotoImage(icon)
             navigation_icon.config(image=self.navigation_photo, text="", width=16)
@@ -200,27 +200,27 @@ class StorePanel:
             navigation_hint,
             text="Use arrows to navigate  •  Enter to install",
             font=("Segoe UI", 10),
-            bg="#1c2030",
-            fg="#707080",
+            bg="#0e0e10",
+            fg="#71717a",
         ).pack(side="left")
 
     # ── scrollable list ─────────────────────────────────────────
 
     def _build_list(self):
-        shell = tk.Frame(self.frame, bg="#1c2030")
+        shell = tk.Frame(self.frame, bg="#0e0e10")
         shell.pack(fill="both", expand=True)
 
         style = ttk.Style()
         style.theme_use("clam")
         style.configure("Dark.Vertical.TScrollbar",
-                        background="#252a3c", troughcolor="#1c2030",
-                        arrowcolor="#1c2030", bordercolor="#1c2030",
-                        lightcolor="#252a3c", darkcolor="#252a3c")
+                        background="#18181b", troughcolor="#0e0e10",
+                        arrowcolor="#0e0e10", bordercolor="#0e0e10",
+                        lightcolor="#18181b", darkcolor="#18181b")
         style.map("Dark.Vertical.TScrollbar",
-                  background=[("active", "#2e3348")])
+                  background=[("active", "#2d2d33")])
 
         self.canvas = tk.Canvas(
-            shell, bg="#1c2030", highlightthickness=0, bd=0,
+            shell, bg="#0e0e10", highlightthickness=0, bd=0,
         )
         scrollbar = ttk.Scrollbar(
             shell, orient="vertical", command=self.canvas.yview,
@@ -230,7 +230,7 @@ class StorePanel:
         self.canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        self.rows = tk.Frame(self.canvas, bg="#1c2030")
+        self.rows = tk.Frame(self.canvas, bg="#0e0e10")
         self._canvas_window = self.canvas.create_window(
             (0, 0), window=self.rows, anchor="nw",
         )
@@ -247,20 +247,20 @@ class StorePanel:
     # ── footer ──────────────────────────────────────────────────
 
     def _build_footer(self):
-        footer = tk.Frame(self.frame, bg="#1c2030")
+        footer = tk.Frame(self.frame, bg="#0e0e10")
         footer.pack(fill="x", pady=(12, 0))
 
         add_btn = tk.Label(
             footer,
             text="➕  Add your action here  →  Discord",
             font=("Segoe UI", 11),
-            bg="#252a3c", fg="#2cff00",
+            bg="#18181b", fg="#3b82f6",
             padx=6, pady=8, cursor="hand2",
         )
         add_btn.pack(fill="x")
         add_btn.bind("<Button-1>", lambda e: self._open_discord())
-        add_btn.bind("<Enter>", lambda e: add_btn.config(bg="#1a331a"))
-        add_btn.bind("<Leave>", lambda e: add_btn.config(bg="#252a3c"))
+        add_btn.bind("<Enter>", lambda e: add_btn.config(bg="#1e3a8a"))
+        add_btn.bind("<Leave>", lambda e: add_btn.config(bg="#18181b"))
 
     # ── animation ───────────────────────────────────────────────
 
@@ -361,7 +361,7 @@ class StorePanel:
 
         if not skills:
             tk.Label(self.rows, text="No actions available right now.",
-                     font=("Segoe UI", 11), bg="#1c2030", fg="#707080").pack(pady=20)
+                     font=("Segoe UI", 11), bg="#0e0e10", fg="#71717a").pack(pady=20)
         else:
             for skill in skills:
                 self._row(skill)
@@ -384,7 +384,7 @@ class StorePanel:
             return
         self.selected_card = max(0, min(index, len(self.cards) - 1))
         for i, (card, _, _, _) in enumerate(self.cards):
-            card.config(highlightbackground="#3d6a4c" if i == self.selected_card else "#2e3348")
+            card.config(highlightbackground="#3b82f6" if i == self.selected_card else "#2d2d33")
         self._scroll_to_card()
 
     def _scroll_to_card(self):
@@ -414,51 +414,51 @@ class StorePanel:
 
     def _row(self, skill):
         card = tk.Frame(
-            self.rows, bg="#252a3c", padx=14, pady=10, cursor="hand2",
-            highlightthickness=1, highlightbackground="#2e3348",
+            self.rows, bg="#18181b", padx=14, pady=10, cursor="hand2",
+            highlightthickness=1, highlightbackground="#2d2d33",
         )
         card.pack(fill="x", padx=4, pady=3)
 
         tk.Label(card, text=skill.get("title", ""),
                  font=("Segoe UI", 13),
-                 bg="#252a3c", fg="#ffffff", anchor="w").pack(fill="x")
+                 bg="#18181b", fg="#efeff1", anchor="w").pack(fill="x")
 
         tk.Label(card, text=skill.get("description", ""),
-                 font=("Segoe UI", 11), bg="#252a3c", fg="#b0b0b0",
+                 font=("Segoe UI", 11), bg="#18181b", fg="#adadb8",
                  anchor="w", justify="left",
                  wraplength=int(self.root.winfo_screenwidth() * 0.45)).pack(fill="x", pady=(4, 8))
 
-        bottom = tk.Frame(card, bg="#252a3c")
+        bottom = tk.Frame(card, bg="#18181b")
         bottom.pack(fill="x")
 
-        meta = tk.Frame(bottom, bg="#252a3c")
+        meta = tk.Frame(bottom, bg="#18181b")
         meta.pack(side="left")
 
         mode = str(skill.get("mode", "cloud")).strip().lower()
         mode_text = "Cloud" if mode == "cloud" else "Local"
-        mode_fg = "#00bfff"
+        mode_fg = "#60a5fa"
         tk.Label(meta, text=mode_text, font=("Segoe UI", 11, "bold"),
-                 bg="#252a3c", fg=mode_fg).pack(side="left", padx=(0, 8))
+                 bg="#18181b", fg=mode_fg).pack(side="left", padx=(0, 8))
 
         price = skill.get("price", 0)
         if price > 0:
             price_text = f"{price} slippers per result"
-            price_fg = "#2cff00"
+            price_fg = "#3b82f6"
         else:
             price_text = "Free"
-            price_fg = "#b0b0b0"
+            price_fg = "#adadb8"
         tk.Label(meta, text=price_text,
                  font=("Segoe UI", 11, "bold"),
-                 bg="#252a3c", fg=price_fg).pack(side="left")
+                 bg="#18181b", fg=price_fg).pack(side="left")
 
         installed = store.is_installed(skill, SKILLS_DIR)
         updatable = installed and store.has_update(skill, SKILLS_DIR)
         if updatable:
-            label, bg, fg, cursor = "Update", "#2cff00", "#1c2030", "hand2"
+            label, bg, fg, cursor = "Update", "#3b82f6", "#efeff1", "hand2"
         elif installed:
-            label, bg, fg, cursor = "Installed", "#2e3348", "#b0b0b0", "arrow"
+            label, bg, fg, cursor = "Installed", "#2d2d33", "#adadb8", "arrow"
         else:
-            label, bg, fg, cursor = "Install", "#2cff00", "#1c2030", "hand2"
+            label, bg, fg, cursor = "Install", "#3b82f6", "#efeff1", "hand2"
 
         btn = tk.Label(bottom, text=label, font=("Segoe UI", 11),
                        bg=bg, fg=fg, padx=14, pady=5, cursor=cursor)
@@ -475,7 +475,7 @@ class StorePanel:
     # ── install ─────────────────────────────────────────────────
 
     def _install(self, skill, btn):
-        btn.config(text="Installing...", bg="#f9e2af", fg="#1c2030", cursor="arrow")
+        btn.config(text="Installing...", bg="#f9e2af", fg="#0e0e10", cursor="arrow")
         btn.unbind("<Button-1>")
 
         def do():
@@ -492,11 +492,11 @@ class StorePanel:
             return
         try:
             if success:
-                btn.config(text="Installed", bg="#2e3348", fg="#b0b0b0", cursor="arrow")
+                btn.config(text="Installed", bg="#2d2d33", fg="#adadb8", cursor="arrow")
                 self.bar.skills = core.scan_skills()
                 telemetry.send("skill_installed", {"filename": skill.get("filename", "")})
             else:
-                btn.config(text="Retry", bg="#f38ba8", fg="#1c2030", cursor="hand2")
+                btn.config(text="Retry", bg="#f38ba8", fg="#0e0e10", cursor="hand2")
                 btn.bind("<Button-1>", lambda e, s=skill, b=btn: self._install(s, b))
                 if error:
                     self.status.config(text=f"Install failed: {error}")

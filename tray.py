@@ -58,22 +58,22 @@ def show_notify_popup(title, message, root=None, duration=5000):
         win.overrideredirect(True)
         win.attributes("-topmost", True)
         win.attributes("-alpha", 0.97)
-        win.configure(bg="#161b22")
+        win.configure(bg="#0e0e10")
 
         w = 360
         wrap = w - 28
 
         tk.Label(win, text="Scryptian",
-                 bg="#161b22", fg="#58a6ff",
+                 bg="#0e0e10", fg="#3b82f6",
                  font=("Segoe UI", 8, "bold")).place(x=14, y=10)
 
         tk.Label(win, text=title,
-                 bg="#161b22", fg="#f0f0f0",
+                 bg="#0e0e10", fg="#efeff1",
                  font=("Segoe UI", 10, "bold"),
                  wraplength=wrap, justify="left").place(x=14, y=28)
 
         msg = tk.Label(win, text=message,
-                       bg="#161b22", fg="#8b949e",
+                       bg="#0e0e10", fg="#adadb8",
                        font=("Segoe UI", 9),
                        wraplength=wrap, justify="left")
         msg.place(x=14, y=52)
@@ -128,7 +128,7 @@ def show_update_popup(version, releases_url, root=None):
         win.overrideredirect(True)
         win.attributes("-topmost", True)
         win.attributes("-alpha", 0.97)
-        win.configure(bg="#161b22")
+        win.configure(bg="#0e0e10")
 
         w, h = 300, 80
         wa = _get_work_area()
@@ -142,11 +142,11 @@ def show_update_popup(version, releases_url, root=None):
         win.geometry(f"{w}x{h}+{x}+{y}")
 
         tk.Label(win, text=f"Scryptian {version} is available",
-                 bg="#161b22", fg="#f5f5f5",
+                 bg="#0e0e10", fg="#efeff1",
                  font=("Segoe UI", 10, "bold")).place(x=12, y=10)
 
         tk.Label(win, text="Click to update →",
-                 bg="#161b22", fg="#9a9a9a",
+                 bg="#0e0e10", fg="#adadb8",
                  font=("Segoe UI", 9), cursor="hand2").place(x=12, y=34)
 
         def _open(e=None):
