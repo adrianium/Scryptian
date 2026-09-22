@@ -2,19 +2,30 @@
 
 import os
 import sys
+import json
 import threading
 import tkinter as tk
+from urllib import request
 
 from PIL import Image, ImageTk
 
 import bridge
 import keyboard
+import store
 import telemetry
 import wallet
-from config import BASE_DIR
+from config import BASE_DIR, SLIPPER_SCALE
 
-# Paste your Stripe Payment Link here (sandbox/test mode for now).
-BUY_URL = "https://buy.stripe.com/test_4gMbJ24Vm6bggZR8J57Vm00"
+# Paddle checkout worker (sandbox). Creates a transaction and returns a checkout URL.
+CHECKOUT_URL = "https://paddle-checkout.nurlannapo.workers.dev/"
+
+# price_id -> (button amount, credits text)
+PRICES = [
+    ("pri_01m357negyzc7testdea8v9t8f", "$5", "5,000 slippers"),
+    ("pri_01m35844jfbfczm49gqcx3p4zh", "$10", "11,000 slippers  (+10%)"),
+    ("pri_01m35851en1vdv2qnd60b3whtw", "$20", "23,000 slippers  (+15%)"),
+    ("pri_01m35863v0tzn69fjk1sb1v2n8", "$50", "60,000 slippers  (+20%)"),
+]
 
 RATE_TEXT = "1 dollar = 1000 slippers"
 
@@ -34,6 +45,8 @@ class CurrencyPanel:
         self._open = False
         self._backspace_hotkey = None
         self.balance_value = None
+        self.buy_status = None
+        self._orig_geo = None
 
     def open(self):
         if not self.bar.window:
@@ -51,10 +64,11 @@ class CurrencyPanel:
         self.bar.entry_shell.pack_forget()
         self.bar.entry.config(state="disabled")
         self.root.bind_all("<BackSpace>", self._on_backspace, add="+")
-        self.root.bind_all("<Return>", self._on_return, add="+")
         self._backspace_hotkey = keyboard.add_hotkey(
             "backspace", self._on_backspace_global, suppress=True,
         )
+
+        self._orig_geo = self.bar.window.geometry()
 
         if self.frame:
             self.frame.destroy()
@@ -64,6 +78,9 @@ class CurrencyPanel:
         self._build_header()
         self._build_body()
 
+        self.bar.window.update_idletasks()
+        self.bar._resize(self.bar.container.winfo_reqheight() + 4)
+
     def _on_backspace(self, event):
         self.close()
         return "break"
@@ -72,22 +89,20 @@ class CurrencyPanel:
         if self._open:
             self.root.after(0, self.close)
 
-    def _on_return(self, event):
-        self._buy()
-        return "break"
-
     def close(self):
         self._open = False
         self.bar.in_currency = False
         self.bar.processing = False
         self.root.unbind_all("<BackSpace>")
-        self.root.unbind_all("<Return>")
         if self._backspace_hotkey is not None:
             keyboard.remove_hotkey(self._backspace_hotkey)
             self._backspace_hotkey = None
         if self.frame:
             self.frame.destroy()
             self.frame = None
+        if self._orig_geo and self.bar.window:
+            self.bar.window.geometry(self._orig_geo)
+            self._orig_geo = None
         if not self.bar.window:
             return
         self.bar.entry.config(state="normal")
@@ -165,16 +180,23 @@ class CurrencyPanel:
 
         
 
-        self.buy_btn = tk.Label(body, text="Buy slippers - unavailable", font=("Manrope", 13, "bold"),
-                                bg="#2d2d33", fg="#adadb8", padx=6, pady=12, cursor="arrow",
-                                highlightthickness=1, highlightbackground="#3f3f46")
-        self.buy_btn.pack(fill="x")
+        for price_id, amount, credits in PRICES:
+            btn = tk.Label(
+                body,
+                text=f"{amount}  →  {credits}",
+                font=("Manrope", 12, "bold"),
+                bg="#18181b", fg="#efeff1",
+                padx=12, pady=10, cursor="hand2",
+                highlightthickness=1, highlightbackground="#2d2d33",
+            )
+            btn.pack(fill="x", pady=3)
+            btn.bind("<Button-1>", lambda e, pid=price_id: self._buy(pid))
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#1e3a8a"))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#18181b"))
 
-        notice = tk.Label(body, text="Purchases are temporarily unavailable.\nContact the author via Telegram (main menu).",
-                          font=("Manrope", 11, "bold"),
-                          bg="#18181b", fg="#60a5fa", padx=12, pady=10, wraplength=400, justify="center",
-                          highlightthickness=1, highlightbackground="#60a5fa")
-        notice.pack(fill="x", pady=(10, 0))
+        self.buy_status = tk.Label(body, text="", font=("Manrope", 10),
+                                   bg="#0e0e10", fg="#adadb8", wraplength=600, justify="center")
+        self.buy_status.pack(fill="x", pady=(10, 0))
 
         info = tk.Label(body, text=PAY_PER_OUTCOME_TEXT, font=("Manrope", 10),
                         bg="#0e0e10", fg="#71717a", wraplength=600, justify="left")
@@ -186,12 +208,42 @@ class CurrencyPanel:
     def _set_balance(self, bal):
         if not self._open or self.balance_value is None:
             return
-        self.balance_value.config(text=str(bal) if bal is not None else "—")
+        if bal is None:
+            self.balance_value.config(text="—")
+            return
+        # Balance is stored in micro-slippers (1 slipper = SLIPPER_SCALE).
+        if bal % SLIPPER_SCALE == 0:
+            text = str(bal // SLIPPER_SCALE)
+        else:
+            text = f"{bal / SLIPPER_SCALE:.3f}".rstrip("0").rstrip(".")
+        self.balance_value.config(text=text)
 
     def _load_balance(self):
         bal = wallet.refresh()
         if bal is not None:
             self.root.after(0, lambda: self._set_balance(bal))
 
-    def _buy(self):
-        bridge.notify("Purchases unavailable", "Contact the author via Telegram (main menu).")
+    def _buy(self, price_id):
+        user = wallet.user_id()
+        if self.buy_status is not None:
+            self.buy_status.config(text="Opening checkout…")
+
+        def do():
+            try:
+                req = request.Request(
+                    CHECKOUT_URL,
+                    data=json.dumps({"user_id": user, "price_id": price_id}).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "User-Agent": "Scryptian"},
+                )
+                with request.urlopen(req, timeout=15, context=store._ssl_ctx()) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                url = data.get("url")
+                if url:
+                    self.root.after(0, lambda u=url: os.startfile(u))
+                else:
+                    self.root.after(0, lambda: self.buy_status.config(text="No checkout link. Try again."))
+            except Exception as e:
+                msg = f"Checkout failed: {e}"
+                self.root.after(0, lambda: self.buy_status.config(text=msg))
+
+        threading.Thread(target=do, daemon=True).start()
