@@ -329,6 +329,65 @@
 
     .stat .label { color: var(--text-dim); font-size: 15px; margin-top: 4px; }
 
+    /* Pricing */
+    .pricing { background: var(--bg-soft); }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .price-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .price-card.popular { border-color: var(--accent); box-shadow: 0 12px 40px rgba(37, 99, 235, 0.12); }
+
+    .price-card .tag {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .price-card .amount { font-size: 34px; font-weight: 800; letter-spacing: -1px; }
+
+    .price-card .credits { font-size: 20px; font-weight: 700; color: var(--accent); margin: 6px 0 4px; }
+
+    .price-card .bonus { font-size: 14px; color: var(--text-dim); min-height: 21px; }
+
+    .price-card .btn { width: 100%; margin-top: 20px; }
+
+    .pricing-note {
+      margin: 28px auto 0;
+      max-width: 640px;
+      text-align: center;
+      font-size: 15px;
+      color: var(--text-dim);
+    }
+
+    .pricing-note strong { color: var(--text); }
+
+    @media (max-width: 900px) {
+      .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .pricing-grid { grid-template-columns: 1fr; }
+    }
+
     /* Final CTA */
     .cta { text-align: center; }
 
@@ -409,7 +468,7 @@
     <section class="demo">
       <div class="container">
         <div class="demo-frame">
-          <div class="demo-placeholder">Interface demo - screenshot or GIF</div>
+          <img src="ui-demo.png" alt="Scryptian interface demo" />
         </div>
       </div>
     </section>
@@ -485,6 +544,43 @@
       </div>
     </section>
 
+    <section class="pricing">
+      <div class="container">
+        <div class="section-head">
+          <h2>Simple pricing. Pay only for results.</h2>
+          <p>Slippers are prepaid credits. Top up once and pay as you go — no subscription.</p>
+        </div>
+        <div class="pricing-grid">
+          <div class="price-card">
+            <div class="amount">$5</div>
+            <div class="credits">5,000 Slippers</div>
+            <div class="bonus"></div>
+            <a class="btn btn-primary" href="#">Buy</a>
+          </div>
+          <div class="price-card popular">
+            <div class="tag">Most popular</div>
+            <div class="amount">$10</div>
+            <div class="credits">11,000 Slippers</div>
+            <div class="bonus">+10% bonus</div>
+            <a class="btn btn-primary" href="#">Buy</a>
+          </div>
+          <div class="price-card">
+            <div class="amount">$20</div>
+            <div class="credits">23,000 Slippers</div>
+            <div class="bonus">+15% bonus</div>
+            <a class="btn btn-primary" href="#">Buy</a>
+          </div>
+          <div class="price-card">
+            <div class="amount">$50</div>
+            <div class="credits">60,000 Slippers</div>
+            <div class="bonus">+20% bonus</div>
+            <a class="btn btn-primary" href="#">Buy</a>
+          </div>
+        </div>
+        <p class="pricing-note">New here? Every new account starts with <strong>2,000 free Slippers</strong> — no purchase needed.</p>
+      </div>
+    </section>
+
     <!-- <section class="marketplace">
       <div class="container">
         <h2>A growing marketplace of actions</h2>
@@ -529,6 +625,7 @@
         <a href="#how-it-works">How it works</a>
         <a href="/terms.html">Terms</a>
         <a href="/refund.html">Refund Policy</a>
+        <a href="/privacy.html">Privacy Policy</a>
         <a href="/contact.html">Contact</a>
       </div>
     </div>
