@@ -1,0 +1,15 @@
+{
+  "title": "Transcribe Audio",
+  "description": "Transcribe audio to text with speaker labels (AssemblyAI)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "second",
+  "price_per_unit": 167,
+  "input_type": [".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus", ".wma", ".aiff"],
+  "output_type": ".txt"
+}

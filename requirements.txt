@@ -3,3 +3,6 @@ keyboard
 pystray
 Pillow
 certifi
+pymediainfo
+cryptography
+pypdf

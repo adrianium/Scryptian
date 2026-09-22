@@ -1,71 +1,58 @@
-# selection_watcher.py — Shows toolbar when user presses Ctrl+C with selected text
-# Uses keyboard hook (non-suppressing) + clipboard read
+# selection_watcher.py — Shows toolbar when a file is copied to the clipboard.
+# Polls the clipboard (CF_HDROP) so it catches both Ctrl+C and right-click → Copy.
 
 import threading
 import time
+import ctypes
 import source_detect
 
 _on_selection_cb = None
-_COOLDOWN = 1.5
-_last_fire = 0.0
+_running = False
 
 
-def _on_copy():
-    """Called when Ctrl+C is pressed anywhere. Reads clipboard and fires callback."""
-    global _last_fire
+def _read_clipboard_file():
+    """Return the current clipboard file path (CF_HDROP), or None."""
+    from core.input import get_file
+    try:
+        return get_file()
+    except Exception:
+        return None
 
-    now = time.time()
-    if now - _last_fire < _COOLDOWN:
-        return
 
-    def _read_and_fire():
-        global _last_fire
+def _poll():
+    try:
+        last_seq = ctypes.windll.user32.GetClipboardSequenceNumber()
+    except Exception:
+        last_seq = 0
+    while _running:
         try:
-            import pyperclip
-            before = pyperclip.paste() or ""
+            seq = ctypes.windll.user32.GetClipboardSequenceNumber()
         except Exception:
-            before = ""
-
-        time.sleep(0.3)  # wait for app to update clipboard
-
-        try:
-            import pyperclip
-            text = pyperclip.paste() or ""
-        except Exception:
-            return
-
-        text = text.strip()
-        if not text or len(text) < 2:
-            return
-
-        _last_fire = time.time()
-
-        try:
-            import ctypes
-            pt = ctypes.wintypes.POINT()
-            ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
-            cx, cy = pt.x, pt.y
-            hwnd = source_detect.get_source_window()
-        except Exception:
-            cx, cy, hwnd = 0, 0, 0
-
-        if _on_selection_cb:
-            _on_selection_cb(text, cx, cy, hwnd)
-
-    threading.Thread(target=_read_and_fire, daemon=True).start()
+            seq = 0
+        if seq != last_seq:
+            last_seq = seq
+            path = _read_clipboard_file()
+            if path:
+                try:
+                    pt = ctypes.wintypes.POINT()
+                    ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
+                    cx, cy = pt.x, pt.y
+                    hwnd = source_detect.get_source_window()
+                except Exception:
+                    cx, cy, hwnd = 0, 0, 0
+                if _on_selection_cb:
+                    _on_selection_cb(path, cx, cy, hwnd)
+        time.sleep(0.2)
 
 
 def start(on_selection, ignore_hwnd=None):
-    """Start Ctrl+C listener. on_selection(text, x, y, hwnd) called on each copy."""
-    global _on_selection_cb
+    """Start clipboard watcher. on_selection(file_path, x, y, hwnd) on file copy."""
+    global _on_selection_cb, _running
     _on_selection_cb = on_selection
-    import keyboard
-    keyboard.add_hotkey("ctrl+c", _on_copy, suppress=False)
+    _running = True
+    threading.Thread(target=_poll, daemon=True).start()
 
 
 def stop():
-    try:
-        import keyboard
-        keyboard.remove_hotkey("ctrl+c")
-    except Exception:
-        pass
+    global _running
+    _running = False

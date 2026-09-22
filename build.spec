@@ -31,18 +31,21 @@ a = Analysis(
         ('docs/assets/scryptian-notification.wav', 'docs/assets'),
         ('docs/assets/slippers.png', 'docs/assets'),
         ('docs/assets/up-and-down.png', 'docs/assets'),
+        ('docs/assets/font', 'docs/assets/font'),
         ('selection_watcher.py', '.'),
         ('pins.py', '.'),
         ('main_pins.py', '.'),
         ('skill_editor.py', '.'),
         ('skill_settings.py', '.'),
-        ('.env', '.')
+        ('.env', '.'),
+        ('gcloud-key.json', '.')
     ] + _skill_bundles,
     hiddenimports=[
         'pystray._win32',
         'certifi',
         'keyboard',
         'pyperclip',
+        'cryptography',
         # Stdlib modules used by the store-delivered PDF skill (reportlab +
         # pdfminer.six). Those libraries are NOT analyzed by PyInstaller (they
         # ship in the skill zip), so any stdlib module they import at runtime
@@ -86,7 +89,6 @@ a = Analysis(
         'pydantic_core',
         'hf_xet',
         'huggingface_hub',
-        'cryptography',
         'grpc',
         'google',
         'boto3',

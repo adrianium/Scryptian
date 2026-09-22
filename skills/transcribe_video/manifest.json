@@ -1,0 +1,15 @@
+{
+  "title": "Transcribe Video",
+  "description": "Transcribe video to text with speaker labels (AssemblyAI)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "second",
+  "price_per_unit": 167,
+  "input_type": [".mp4", ".m4v", ".mov", ".avi", ".mkv", ".webm", ".wmv", ".mpg", ".mpeg", ".3gp", ".3g2", ".flv", ".ts", ".mts", ".m2ts"],
+  "output_type": ".txt"
+}

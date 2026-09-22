@@ -69,7 +69,7 @@ class _ClipboardTextSource:
 
 # ── Resolver ─────────────────────────────────────────────────
 
-SOURCES = [_ClipboardFileSource(), _ClipboardTextSource()]
+SOURCES = [_ClipboardFileSource()]
 
 
 def get_input():
@@ -79,3 +79,9 @@ def get_input():
         if result is not None:
             return result
     return None
+
+
+def get_file():
+    """Return the clipboard file path (CF_HDROP), or None."""
+    result = _ClipboardFileSource().fetch()
+    return result["data"] if result else None

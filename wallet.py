@@ -11,9 +11,10 @@ from urllib import request
 
 import telemetry
 import store
+from config import SLIPPER_SCALE
 
 PLATFORM_ID = "scryptian"
-INITIAL_GRANT = 221
+INITIAL_GRANT = 2000 * SLIPPER_SCALE
 COMMISSION_PCT = 30
 
 _lock = threading.Lock()

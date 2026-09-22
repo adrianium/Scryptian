@@ -139,20 +139,20 @@ class StorePanel:
         header = tk.Frame(self.frame, bg="#0e0e10")
         header.pack(fill="x", pady=(0, 8))
 
-        tk.Label(header, text="Scryptian Store", font=("Segoe UI", 13, "bold"),
+        tk.Label(header, text="Scryptian Store", font=("Manrope", 13, "bold"),
                  bg="#0e0e10", fg="#efeff1").pack(side="left")
 
         back_group = tk.Frame(header, bg="#0e0e10")
         back_group.pack(side="right")
 
-        back = tk.Label(back_group, text="← Back", font=("Segoe UI", 11),
+        back = tk.Label(back_group, text="← Back", font=("Manrope", 11),
                         bg="#0e0e10", fg="#3b82f6", cursor="hand2")
         back.pack(anchor="e")
         back.bind("<Button-1>", lambda e: self.close())
         back.bind("<Enter>", lambda e: back.config(fg="#60a5fa"))
         back.bind("<Leave>", lambda e: back.config(fg="#3b82f6"))
 
-        back_hint = tk.Label(back_group, text="[ Backspace ]", font=("Segoe UI", 9),
+        back_hint = tk.Label(back_group, text="[ Backspace ]", font=("Manrope", 9),
                              bg="#0e0e10", fg="#71717a")
         back_hint.pack(anchor="e")
 
@@ -162,7 +162,7 @@ class StorePanel:
         self.status = tk.Label(
             status_row,
             text="Loading...",
-            font=("Segoe UI", 11),
+            font=("Manrope", 11),
             bg="#0e0e10",
             fg="#adadb8",
             anchor="w",
@@ -199,7 +199,7 @@ class StorePanel:
         tk.Label(
             navigation_hint,
             text="Use arrows to navigate  •  Enter to install",
-            font=("Segoe UI", 10),
+            font=("Manrope", 10),
             bg="#0e0e10",
             fg="#71717a",
         ).pack(side="left")
@@ -253,7 +253,7 @@ class StorePanel:
         add_btn = tk.Label(
             footer,
             text="➕  Add your action here  →  Discord",
-            font=("Segoe UI", 11),
+            font=("Manrope", 11),
             bg="#18181b", fg="#3b82f6",
             padx=6, pady=8, cursor="hand2",
         )
@@ -361,7 +361,7 @@ class StorePanel:
 
         if not skills:
             tk.Label(self.rows, text="No actions available right now.",
-                     font=("Segoe UI", 11), bg="#0e0e10", fg="#71717a").pack(pady=20)
+                     font=("Manrope", 11), bg="#0e0e10", fg="#71717a").pack(pady=20)
         else:
             for skill in skills:
                 self._row(skill)
@@ -420,11 +420,11 @@ class StorePanel:
         card.pack(fill="x", padx=4, pady=3)
 
         tk.Label(card, text=skill.get("title", ""),
-                 font=("Segoe UI", 13),
+                 font=("Manrope", 13),
                  bg="#18181b", fg="#efeff1", anchor="w").pack(fill="x")
 
         tk.Label(card, text=skill.get("description", ""),
-                 font=("Segoe UI", 11), bg="#18181b", fg="#adadb8",
+                 font=("Manrope", 11), bg="#18181b", fg="#adadb8",
                  anchor="w", justify="left",
                  wraplength=int(self.root.winfo_screenwidth() * 0.45)).pack(fill="x", pady=(4, 8))
 
@@ -437,18 +437,23 @@ class StorePanel:
         mode = str(skill.get("mode", "cloud")).strip().lower()
         mode_text = "Cloud" if mode == "cloud" else "Local"
         mode_fg = "#60a5fa"
-        tk.Label(meta, text=mode_text, font=("Segoe UI", 11, "bold"),
+        tk.Label(meta, text=mode_text, font=("Manrope", 11, "bold"),
                  bg="#18181b", fg=mode_fg).pack(side="left", padx=(0, 8))
 
-        price = skill.get("price", 0)
-        if price > 0:
+        price = int(skill.get("price", 0) or 0)
+        ppu = int(skill.get("price_per_unit", 0) or 0)
+        unit = (skill.get("unit") or "").strip()
+        if ppu > 0 and unit:
+            price_text = f"{ppu} slippers / {unit}"
+            price_fg = "#3b82f6"
+        elif price > 0:
             price_text = f"{price} slippers per result"
             price_fg = "#3b82f6"
         else:
             price_text = "Free"
             price_fg = "#adadb8"
         tk.Label(meta, text=price_text,
-                 font=("Segoe UI", 11, "bold"),
+                 font=("Manrope", 11, "bold"),
                  bg="#18181b", fg=price_fg).pack(side="left")
 
         installed = store.is_installed(skill, SKILLS_DIR)
@@ -460,7 +465,7 @@ class StorePanel:
         else:
             label, bg, fg, cursor = "Install", "#3b82f6", "#efeff1", "hand2"
 
-        btn = tk.Label(bottom, text=label, font=("Segoe UI", 11),
+        btn = tk.Label(bottom, text=label, font=("Manrope", 11),
                        bg=bg, fg=fg, padx=14, pady=5, cursor=cursor)
         btn.pack(side="right")
         can_install = updatable or not installed

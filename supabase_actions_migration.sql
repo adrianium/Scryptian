@@ -8,4 +8,7 @@ alter table public.actions
   add column if not exists runs_count integer not null default 0,
   add column if not exists installs_count integer not null default 0,
   add column if not exists category text,
-  add column if not exists tags text[] not null default '{}';
+  add column if not exists tags text[] not null default '{}',
+  add column if not exists unit text,
+  add column if not exists price_per_unit integer not null default 0,
+  add column if not exists min_price integer not null default 0;

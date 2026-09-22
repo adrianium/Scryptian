@@ -1,0 +1,15 @@
+{
+  "title": "Text to Speech (Female)",
+  "description": "Convert text to natural speech (Google Chirp 3 HD)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "character",
+  "price_per_unit": 32,
+  "input_type": ".txt",
+  "output_type": ".wav"
+}

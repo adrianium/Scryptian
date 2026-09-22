@@ -9,8 +9,8 @@ BG2 = "#313244"
 FG = "#cdd6f4"
 FG_DIM = "#6c7086"
 ACCENT = "#89b4fa"
-FONT = ("Segoe UI", 10)
-FONT_SM = ("Segoe UI", 9)
+FONT = ("Manrope", 10)
+FONT_SM = ("Manrope", 9)
 
 _TEMPLATE = '''\
 # @title: {title}

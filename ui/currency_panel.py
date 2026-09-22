@@ -19,7 +19,7 @@ BUY_URL = "https://buy.stripe.com/test_4gMbJ24Vm6bggZR8J57Vm00"
 RATE_TEXT = "1 dollar = 1000 slippers"
 
 PAY_PER_OUTCOME_TEXT = (
-    "On Scryptian works Pay per Outcome model: you pay only when you get a result. "
+    "On Scryptian works Pay per Result model: you pay only when you get a result. "
     "If an action fails, you pay nothing - the developer takes the loss."
 )
 
@@ -105,20 +105,20 @@ class CurrencyPanel:
         header = tk.Frame(self.frame, bg="#0e0e10")
         header.pack(fill="x", pady=(0, 8))
 
-        tk.Label(header, text="Slippers", font=("Segoe UI", 13, "bold"),
+        tk.Label(header, text="Slippers", font=("Manrope", 13, "bold"),
                  bg="#0e0e10", fg="#efeff1").pack(side="left")
 
         back_group = tk.Frame(header, bg="#0e0e10")
         back_group.pack(side="right")
 
-        back = tk.Label(back_group, text="← Back", font=("Segoe UI", 11),
+        back = tk.Label(back_group, text="← Back", font=("Manrope", 11),
                         bg="#0e0e10", fg="#3b82f6", cursor="hand2")
         back.pack(anchor="e")
         back.bind("<Button-1>", lambda e: self.close())
         back.bind("<Enter>", lambda e: back.config(fg="#60a5fa"))
         back.bind("<Leave>", lambda e: back.config(fg="#3b82f6"))
 
-        back_hint = tk.Label(back_group, text="[ Backspace ]", font=("Segoe UI", 9),
+        back_hint = tk.Label(back_group, text="[ Backspace ]", font=("Manrope", 9),
                              bg="#0e0e10", fg="#adadb8")
         back_hint.pack(anchor="e")
 
@@ -130,7 +130,7 @@ class CurrencyPanel:
                         highlightthickness=1, highlightbackground="#2d2d33")
         card.pack(fill="x", pady=(10, 16))
 
-        tk.Label(card, text="Your balance", font=("Segoe UI", 11),
+        tk.Label(card, text="Your balance", font=("Manrope", 11),
                  bg="#18181b", fg="#adadb8").pack(anchor="w")
 
         balance_row = tk.Frame(card, bg="#18181b")
@@ -155,28 +155,28 @@ class CurrencyPanel:
         except Exception:
             pass
 
-        self.balance_value = tk.Label(balance_row, text="—", font=("Segoe UI", 26, "bold"),
+        self.balance_value = tk.Label(balance_row, text="—", font=("Manrope", 26, "bold"),
                                       bg="#18181b", fg="#efeff1")
         self.balance_value.pack(side="left")
 
-        rate = tk.Label(body, text=RATE_TEXT, font=("Segoe UI", 11),
+        rate = tk.Label(body, text=RATE_TEXT, font=("Manrope", 11),
                         bg="#0e0e10", fg="#adadb8")
         rate.pack(pady=(0, 10))
 
         
 
-        self.buy_btn = tk.Label(body, text="Buy slippers - unavailable", font=("Segoe UI", 13, "bold"),
+        self.buy_btn = tk.Label(body, text="Buy slippers - unavailable", font=("Manrope", 13, "bold"),
                                 bg="#2d2d33", fg="#adadb8", padx=6, pady=12, cursor="arrow",
                                 highlightthickness=1, highlightbackground="#3f3f46")
         self.buy_btn.pack(fill="x")
 
         notice = tk.Label(body, text="Purchases are temporarily unavailable.\nContact the author via Telegram (main menu).",
-                          font=("Segoe UI", 11, "bold"),
+                          font=("Manrope", 11, "bold"),
                           bg="#18181b", fg="#60a5fa", padx=12, pady=10, wraplength=400, justify="center",
                           highlightthickness=1, highlightbackground="#60a5fa")
         notice.pack(fill="x", pady=(10, 0))
 
-        info = tk.Label(body, text=PAY_PER_OUTCOME_TEXT, font=("Segoe UI", 10),
+        info = tk.Label(body, text=PAY_PER_OUTCOME_TEXT, font=("Manrope", 10),
                         bg="#0e0e10", fg="#71717a", wraplength=600, justify="left")
         info.pack(fill="x", pady=(14, 0))
 

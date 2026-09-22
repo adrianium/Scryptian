@@ -34,6 +34,14 @@ def _safe_int(v):
         return 0
 
 
+def _ext_list(v):
+    if isinstance(v, list):
+        return [str(x).strip().lower() for x in v if str(x).strip()]
+    if isinstance(v, str) and v.strip():
+        return [v.strip().lower()]
+    return []
+
+
 def _load_module(name, filepath):
     try:
         spec = importlib.util.spec_from_file_location(name.replace(".py", ""), filepath)
@@ -86,12 +94,16 @@ def _load_bundle(name, bundle_dir):
         "author": manifest.get("author", ""),
         "author_id": manifest.get("author_id", ""),
         "price": _safe_int(manifest.get("price", 0)),
+        "unit": manifest.get("unit", ""),
+        "price_per_unit": _safe_int(manifest.get("price_per_unit", 0)),
         "version": manifest.get("version", ""),
         "module": module,
         "filename": name,
         "mode": manifest.get("mode", "cloud").strip().lower(),
         "background": bool(manifest.get("background", False)),
         "settings": manifest.get("settings", []),
+        "input_type": _ext_list(manifest.get("input_type", "")),
+        "output_type": _ext_list(manifest.get("output_type", "")),
         "format": "bundle",
         "_dir": bundle_dir,
     }

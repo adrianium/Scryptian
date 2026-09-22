@@ -1,0 +1,15 @@
+{
+  "title": "Translate PDF to English",
+  "description": "Translate a PDF document to English (Google Cloud Translation)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "page",
+  "price_per_unit": 85000,
+  "input_type": ".pdf",
+  "output_type": ".pdf"
+}

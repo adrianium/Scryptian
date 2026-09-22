@@ -13,6 +13,9 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(BASE_DIR, exist_ok=True)
 
+# ── Currency: 1 slipper = 1000 atomic units (micro-slippers) ──
+SLIPPER_SCALE = 1000
+
 # ── Hotkey ──
 HOTKEY = "ctrl+alt"
 

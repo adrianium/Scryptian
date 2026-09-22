@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact - Scryptian</title>
+  <meta name="description" content="Contact Scryptian support." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #0e0e10;
+      --text-dim: #5b5b66;
+      --accent: #2563eb;
+      --border: #e7e8ec;
+      --maxw: 760px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Manrope", "Segoe UI", system-ui, sans-serif;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+    .site-header { border-bottom: 1px solid var(--border); }
+    .site-header .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 18px; text-transform: uppercase; color: var(--text); letter-spacing: 0.02em; }
+    .brand .brand-sub { color: var(--accent); }
+    main { padding: 48px 0 72px; }
+    h1 { font-size: 34px; letter-spacing: -1px; margin: 0 0 8px; }
+    .updated { color: var(--text-dim); font-size: 14px; margin: 0 0 32px; }
+    h2 { font-size: 20px; margin: 32px 0 10px; letter-spacing: -0.3px; }
+    p { margin: 0 0 14px; }
+    .site-footer { border-top: 1px solid var(--border); padding: 28px 0; color: var(--text-dim); font-size: 14px; }
+    .site-footer .container { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .site-footer .links { display: flex; gap: 20px; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/"><span>Scryptian</span><span class="brand-sub">.</span></a>
+      <a href="/">Back to home</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <h1>Contact</h1>
+      <p class="updated">We're here to help.</p>
+
+      <h2>Support</h2>
+      <p>Email: <a href="mailto:support@scryptian.com">support@scryptian.com</a></p>
+      <p>Phone: +7 708 726 50 54</p>
+
+      <h2>Business</h2>
+      <p>Scryptian</p>
+
+      <h2>Merchant of Record</h2>
+      <p>Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Paddle provides all customer service inquiries and handles returns.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>&copy; 2026 Scryptian</span>
+      <div class="links">
+        <a href="/terms.html">Terms</a>
+        <a href="/refund.html">Refund Policy</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

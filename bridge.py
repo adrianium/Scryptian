@@ -72,12 +72,14 @@ def set_root(root) -> None:
     _root_ref = root
 
 
-def notify(title: str, message: str) -> None:
+def notify(title: str, message: str, action=None) -> None:
     """Show a Scryptian notification. Safe to call from any skill or thread.
 
     Uses the custom in-app popup (bottom-right, branded, with sound) when the UI
     is available, marshalling onto the Tk main thread. Falls back to a native
     tray notification if the UI root is not registered.
+
+    action (optional): {"label": "Open file", "hotkey": "alt+e", "callback": callable}
 
     Skills should use this for long-running progress (start/finish) feedback.
     """
@@ -85,7 +87,7 @@ def notify(title: str, message: str) -> None:
     if _root_ref is not None:
         try:
             _root_ref.after(
-                0, lambda: tray.show_notify_popup(title, message, _root_ref)
+                0, lambda: tray.show_notify_popup(title, message, _root_ref, action=action)
             )
             return
         except Exception:

@@ -25,8 +25,8 @@ BG2 = "#313244"
 FG = "#cdd6f4"
 FG_DIM = "#6c7086"
 ACCENT = "#89b4fa"
-FONT = ("Segoe UI", 10)
-FONT_SM = ("Segoe UI", 9)
+FONT = ("Manrope", 10)
+FONT_SM = ("Manrope", 9)
 
 
 def _skill_id(skill):
@@ -66,7 +66,7 @@ def open_settings(root, skill, on_saved=None):
     dlg.grab_set()
 
     tk.Label(dlg, text=f"\u2699  {skill.get('title', 'Action')} settings",
-             bg=BG, fg=FG, font=("Segoe UI", 12, "bold"), anchor="w").pack(
+             bg=BG, fg=FG, font=("Manrope", 12, "bold"), anchor="w").pack(
         fill="x", padx=12, pady=(12, 4))
 
     vars_by_key = {}       # key -> tk.StringVar (holds the value, not the label)

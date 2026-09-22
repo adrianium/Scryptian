@@ -5,6 +5,7 @@ __pycache__/
 dist/
 build/
 .env
+gcloud-key.json
 .venv/
 venv/
 *.log
