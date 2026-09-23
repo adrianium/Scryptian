@@ -41,11 +41,10 @@
 
   <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
   <script>
-    // Sandbox environment (change to "production" for live).
-    Paddle.Environment.set("sandbox");
+    Paddle.Environment.set("production");
 
     Paddle.Initialize({
-      token: "test_2f5a8da5c78b2c64601566353b8",
+      token: "live_42e7e633616b9a967a1975b6cf9",
       eventCallback: function (event) {
         if (event.name === "checkout.completed") {
           document.getElementById("spinner").style.display = "none";

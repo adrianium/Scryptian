@@ -5,7 +5,7 @@
 //
 // Setup:
 //   1. Deploy this Worker.
-//   2. Add secret: PADDLE_API_KEY (sandbox: pdl_sdbx_...)
+//   2. Add secret: PADDLE_API_KEY (live: pdl_live_...)
 //   3. Update PRICES below with each price_id you add in Paddle.
 //
 // Required API key permission: transaction.write
@@ -17,20 +17,13 @@ const SLIPPER_SCALE = 1000;
 // Map Paddle price IDs to the number of slippers they grant.
 // Paddle prices have no "slippers" field, so we keep the mapping here.
 const PRICES = {
-  "pri_01m357negyzc7testdea8v9t8f": 5000,
-  "pri_01m35844jfbfczm49gqcx3p4zh": 11000,
-  "pri_01m35851en1vdv2qnd60b3whtw": 23000,
-  "pri_01m35863v0tzn69fjk1sb1v2n8": 60000
-  
-  
-  
-  // $5  -> 5,000 slippers
-  // "pri_...": 11000,                       // $10 -> 11,000 slippers
-  // "pri_...": 23000,                       // $20 -> 23,000 slippers
-  // "pri_...": 60000,                       // $50 -> 60,000 slippers
+  "pri_01m35eacd1ak226p80qe74c5es": 5000,  // $5  -> 5,000 slippers
+  "pri_01m35eb4mhvs36qksw814rt1fg": 11000, // $10 -> 11,000 slippers
+  "pri_01m35ec7qtnxt3xpxy4w6zvnaq": 23000, // $20 -> 23,000 slippers
+  "pri_01m35edejvhf8dk5tpvtrzxk2n": 60000, // $50 -> 60,000 slippers
 };
 
-const PADDLE_API_URL = "https://sandbox-api.paddle.com";
+const PADDLE_API_URL = "https://api.paddle.com"; // production (sandbox: https://sandbox-api.paddle.com)
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {

@@ -21,10 +21,10 @@ CHECKOUT_URL = "https://paddle-checkout.nurlannapo.workers.dev/"
 
 # price_id -> (button amount, credits text)
 PRICES = [
-    ("pri_01m357negyzc7testdea8v9t8f", "$5", "5,000 slippers"),
-    ("pri_01m35844jfbfczm49gqcx3p4zh", "$10", "11,000 slippers  (+10%)"),
-    ("pri_01m35851en1vdv2qnd60b3whtw", "$20", "23,000 slippers  (+15%)"),
-    ("pri_01m35863v0tzn69fjk1sb1v2n8", "$50", "60,000 slippers  (+20%)"),
+    ("pri_01m35eacd1ak226p80qe74c5es", "$5", "5,000 slippers"),
+    ("pri_01m35eb4mhvs36qksw814rt1fg", "$10", "11,000 slippers  (+10%)"),
+    ("pri_01m35ec7qtnxt3xpxy4w6zvnaq", "$20", "23,000 slippers  (+15%)"),
+    ("pri_01m35edejvhf8dk5tpvtrzxk2n", "$50", "60,000 slippers  (+20%)"),
 ]
 
 RATE_TEXT = "1 dollar = 1000 slippers"
