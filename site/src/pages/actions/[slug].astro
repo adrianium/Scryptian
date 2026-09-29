@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { fetchActions, isFree, modeLabel, installUrl, formatCount, type Action } from '../../lib/actions';
+import PriceCalculator from '../../components/PriceCalculator.astro';
+import { fetchActions, isFree, modeLabel, installUrl, formatCount, formatPrice, type Action } from '../../lib/actions';
 
 export async function getStaticPaths() {
   const actions = await fetchActions();
@@ -23,6 +24,8 @@ const seoDescription = (
 
 const mainSite = 'https://scryptian.com';
 
+const slipperPrice = (action.price > 0 ? action.price : action.price_per_unit || 0) / 1000;
+
 const schema = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
@@ -35,7 +38,7 @@ const schema = {
   author: { '@type': 'Organization', name: action.author || 'Scryptian' },
   offers: {
     '@type': 'Offer',
-    price: isFree(action) ? '0' : String(action.price),
+    price: isFree(action) ? '0' : String(slipperPrice),
     priceCurrency: 'SLP',
   },
 };
@@ -52,13 +55,20 @@ const schema = {
       <div class="landing-head">
         <h1>{action.title}</h1>
         <p class="tagline">{action.description}</p>
+        {action.tags && action.tags.length > 0 && (
+          <div class="tag-list">
+            {action.tags.map((tag) => (
+              <span class="tag">{tag}</span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div class="landing-grid">
         <div class="landing-main">
           {action.demo_gif && (
             <div class="panel demo">
-              <img src={action.demo_gif} alt={`${action.title} demo`} loading="eager" fetchpriority="high" />
+              <img src={action.demo_gif} alt={action.description} loading="eager" fetchpriority="high" />
             </div>
           )}
 
@@ -91,11 +101,20 @@ const schema = {
         <aside class="landing-side">
           <div class="panel buy-box">
             <div class="price-row">
-              <span class="price">{isFree(action) ? 'Free to Use' : `${action.price} slippers`}</span>
+              <span class="price">{isFree(action) ? 'Free to Use' : formatPrice(action)}</span>
               <span class="mode">{modeLabel(action)}</span>
             </div>
+
+            <PriceCalculator price={action.price} pricePerUnit={action.price_per_unit} unit={action.unit} isFree={isFree(action)} />
+
+            {/* Old download buttons (kept for future reference)
             <a class="install-btn" href={installUrl(action)} data-ph-event="action_install_clicked" data-ph-props={JSON.stringify({ action_id: action.id, title: action.title })}>Add To Scryptian</a>
             <a class="install-btn secondary" href={mainSite} target="_blank" rel="noopener" data-ph-event="install_scryptian_clicked" data-ph-props={JSON.stringify({ action_id: action.id })}>Install Scryptian With This Action</a>
+            */}
+
+            <a class="install-btn" href="#">Download for Windows</a>
+            <p class="bonus-hint">↳ 2,000 free Slippers (~$2) included</p>
+
             <a class="what-is" href={mainSite} target="_blank" rel="noopener" data-ph-event="what_is_scryptian_clicked">What is Scryptian?</a>
           </div>
 
@@ -106,7 +125,7 @@ const schema = {
             </div>
             <div class="spec">
               <span class="label">Price</span>
-              <span class="value">{isFree(action) ? 'Free to Use' : `${action.price} slippers`}</span>
+              <span class="value">{isFree(action) ? 'Free to Use' : formatPrice(action)}</span>
             </div>
             <div class="spec">
               <span class="label">Runs</span>

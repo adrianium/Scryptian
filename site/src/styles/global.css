@@ -72,6 +72,10 @@ a {
   flex-shrink: 0;
 }
 
+.brand:hover {
+  text-decoration: underline;
+}
+
 .brand .brand-sub {
   color: var(--accent);
 }
@@ -401,6 +405,90 @@ a {
   color: var(--accent-hover);
 }
 
+/* Price calculator */
+.price-calc {
+  display: grid;
+  gap: 8px;
+}
+
+.pc-file {
+  display: block;
+  cursor: pointer;
+}
+
+.pc-file-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1.5px dashed var(--accent);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--accent-soft);
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pc-file-label svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.pc-file:hover .pc-file-label {
+  background: rgba(37, 99, 235, 0.35);
+  border-color: var(--accent-hover);
+}
+
+.pc-input {
+  display: none;
+}
+
+.pc-result {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+}
+
+/* Download bonus hint */
+.bonus-hint {
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* Tags */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.tag {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.tag::before {
+  content: '#';
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.card-tags .tag {
+  font-size: 13px;
+}
+
 /* Specs */
 .specs {
   display: grid;
@@ -444,6 +532,7 @@ a {
   padding: 0;
   overflow: hidden;
   aspect-ratio: 16 / 9;
+  background: var(--surface-2);
 }
 
 .demo img {

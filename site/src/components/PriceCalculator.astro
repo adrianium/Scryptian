@@ -1,0 +1,135 @@
+---
+interface Props {
+  price: number;
+  pricePerUnit: number;
+  unit: string | null;
+  isFree: boolean;
+}
+const { price = 0, pricePerUnit = 0, unit = '', isFree = false } = Astro.props;
+const u = (unit || '').trim();
+const isPerUnit = u !== '' && pricePerUnit > 0;
+const fmt = (micro: number) => {
+  if (micro % 1000 === 0) return String(micro / 1000);
+  return (micro / 1000).toFixed(2).replace(/\.?0+$/, '');
+};
+const usd = (micro: number) => {
+  const d = micro / 1000000;
+  if (d >= 0.001) return '$' + d.toFixed(3).replace(/\.?0+$/, '');
+  return '<$0.001';
+};
+const initial = isFree
+  ? 'Free'
+  : isPerUnit
+    ? `from ${fmt(pricePerUnit)} slippers / ${u} (~${usd(pricePerUnit)})`
+    : `${fmt(price)} slippers (~${usd(price)})`;
+---
+
+<div class="price-calc" data-price={price} data-ppu={pricePerUnit} data-unit={u}>
+  {isPerUnit && (
+    <label class="pc-file">
+      <span class="pc-file-label">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        Add your file to see the exact price
+      </span>
+      <input type="file" class="pc-input" />
+    </label>
+  )}
+  <p class="pc-result">{initial}</p>
+</div>
+
+<script is:inline>
+  (function () {
+    var SLIPPER_SCALE = 1000;
+    var root = document.querySelector('.price-calc');
+    if (!root) return;
+    var price = Number(root.getAttribute('data-price') || 0);
+    var ppu = Number(root.getAttribute('data-ppu') || 0);
+    var unit = root.getAttribute('data-unit') || '';
+    var input = root.querySelector('.pc-input');
+    var result = root.querySelector('.pc-result');
+
+    function fmt(micro) {
+      if (micro % SLIPPER_SCALE === 0) return String(micro / SLIPPER_SCALE);
+      return (micro / SLIPPER_SCALE).toFixed(2).replace(/\.?0+$/, '');
+    }
+
+    function usd(micro) {
+      var d = micro / 1000000;
+      if (d >= 0.001) return '$' + d.toFixed(3).replace(/\.?0+$/, '');
+      return '<$0.001';
+    }
+
+    function show(micro) {
+      result.textContent = micro <= 0 ? 'Free' : fmt(micro) + ' slippers (~' + usd(micro) + ')';
+    }
+
+    function readMedia(file, kind) {
+      var url = URL.createObjectURL(file);
+      var el = document.createElement(kind);
+      el.preload = 'metadata';
+      el.src = url;
+      return new Promise(function (resolve, reject) {
+        el.onloadedmetadata = function () {
+          var r = {
+            duration: el.duration || 0,
+            width: el.videoWidth || 0,
+            height: el.videoHeight || 0,
+          };
+          URL.revokeObjectURL(url);
+          resolve(r);
+        };
+        el.onerror = function () {
+          URL.revokeObjectURL(url);
+          reject(new Error('media load failed'));
+        };
+      });
+    }
+
+    function loadPdfjs() {
+      if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.onload = function () { resolve(window.pdfjsLib); };
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    async function handle(file) {
+      try {
+        if (unit === 'character') {
+          var text = await file.text();
+          show(Math.ceil(text.length * ppu));
+        } else if (unit === 'page') {
+          var lib = await loadPdfjs();
+          var data = await file.arrayBuffer();
+          var pdf = await lib.getDocument({ data: data }).promise;
+          show(Math.ceil(pdf.numPages * ppu));
+        } else if (unit === 'minute' || unit === 'second') {
+          var kind = (file.type || '').indexOf('video') === 0 ? 'video' : 'audio';
+          var meta = await readMedia(file, kind);
+          var qty = unit === 'minute' ? meta.duration / 60 : meta.duration;
+          show(Math.ceil(qty * ppu));
+        } else if (unit === 'megapixel') {
+          var v = await readMedia(file, 'video');
+          var scale = 2;
+          var fps = 30;
+          var mp = (v.width * scale * v.height * scale * (v.duration * fps)) / 1000000;
+          show(Math.ceil(mp * ppu));
+        }
+      } catch (e) {
+        result.textContent = 'Could not read this file';
+      }
+    }
+
+    if (input) {
+      input.addEventListener('change', function () {
+        var file = input.files && input.files[0];
+        if (!file) return;
+        result.textContent = 'Calculating…';
+        handle(file);
+      });
+    }
+  })();
+</script>

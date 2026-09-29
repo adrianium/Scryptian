@@ -7,6 +7,8 @@ export interface Action {
   author: string;
   author_id: string | null;
   price: number;
+  unit: string | null;
+  price_per_unit: number;
   mode: string;
   entry: string;
   version: string;
@@ -56,7 +58,33 @@ export async function fetchActions(): Promise<Action[]> {
 }
 
 export function isFree(action: Action): boolean {
-  return !action.price || action.price <= 0;
+  return (!action.price || action.price <= 0) && (!action.price_per_unit || action.price_per_unit <= 0);
+}
+
+const SLIPPER_SCALE = 1000;
+
+function formatSlippers(micro: number): string {
+  if (micro % SLIPPER_SCALE === 0) return String(micro / SLIPPER_SCALE);
+  return (micro / SLIPPER_SCALE).toFixed(2).replace(/\.?0+$/, '');
+}
+
+function usd(micro: number): string {
+  const d = micro / 1000000;
+  if (d >= 0.001) return '$' + d.toFixed(3).replace(/\.?0+$/, '');
+  return '<$0.001';
+}
+
+export function formatPrice(action: Action): string {
+  const ppu = Number(action.price_per_unit || 0);
+  const unit = (action.unit || '').trim();
+  if (ppu > 0 && unit) {
+    return `${formatSlippers(ppu)} slippers / ${unit} (~${usd(ppu)})`;
+  }
+  const price = Number(action.price || 0);
+  if (price > 0) {
+    return `${formatSlippers(price)} slippers (~${usd(price)})`;
+  }
+  return 'Free';
 }
 
 export function modeLabel(action: Action): string {

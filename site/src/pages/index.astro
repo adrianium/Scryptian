@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { fetchActions, isConfigured, isFree, modeLabel, formatCount } from '../lib/actions';
+import { fetchActions, isConfigured, isFree, modeLabel, formatCount, formatPrice } from '../lib/actions';
 
 const actions = await fetchActions();
 const configured = isConfigured();
@@ -37,11 +37,18 @@ const configured = isConfigured();
                     <p class="by">by <a href={`/?author=${encodeURIComponent(action.author || 'Scryptian')}`}>{action.author || 'Scryptian'}</a></p>
                     <p class="desc">{action.description}</p>
                     <p class="stats">{formatCount(action.runs_count)} action runs · {formatCount(action.installs_count)} installs</p>
+                    {action.tags && action.tags.length > 0 && (
+                      <div class="card-tags">
+                        {action.tags.slice(0, 3).map((tag) => (
+                          <span class="tag">{tag}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div class="card-side">
                     <div class="meta">
                       <span class={`price ${isFree(action) ? 'free' : ''}`}>
-                        {isFree(action) ? 'Free to Use' : `${action.price} slippers`}
+                        {isFree(action) ? 'Free to Use' : formatPrice(action)}
                       </span>
                       <span class="mode">{modeLabel(action)}</span>
                     </div>

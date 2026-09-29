@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { fetchActions } from '../lib/actions';
 
 export const GET: APIRoute = async ({ site }) => {
-  const base = (site?.toString() || 'https://scryptian.com').replace(/\/$/, '');
+  const base = (site?.toString() || 'https://actionstore.scryptian.com').replace(/\/$/, '');
   const actions = await fetchActions();
 
   const urls = [
