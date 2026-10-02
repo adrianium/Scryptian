@@ -79,7 +79,7 @@ def notify(title: str, message: str, action=None) -> None:
     is available, marshalling onto the Tk main thread. Falls back to a native
     tray notification if the UI root is not registered.
 
-    action (optional): {"label": "Open file", "hotkey": "alt+e", "callback": callable}
+    action (optional): {"label": "Open file", "hotkey": "alt+q", "callback": callable}
 
     Skills should use this for long-running progress (start/finish) feedback.
     """

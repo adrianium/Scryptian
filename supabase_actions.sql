@@ -11,7 +11,6 @@ create table if not exists public.actions (
   price integer not null default 0,
   unit text,
   price_per_unit integer not null default 0,
-  min_price integer not null default 0,
   mode text not null default 'cloud',
   entry text not null,
   version text not null default '1.0.0',

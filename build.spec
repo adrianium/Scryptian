@@ -2,8 +2,15 @@
 
 import os
 
+import pymediainfo
+from PyInstaller.utils.hooks import collect_submodules
+
 block_cipher = None
 base_dir = os.path.dirname(os.path.abspath(SPEC))
+
+# MediaInfo.dll ships inside the pymediainfo package and must be bundled for
+# file-metadata reading (video/audio duration, resolution, PDF page count).
+_media_dll = os.path.join(os.path.dirname(pymediainfo.__file__), 'MediaInfo.dll')
 
 _skill_bundles = [
     (os.path.join('skills', name), os.path.join('skills', name))
@@ -16,6 +23,7 @@ _skill_bundles = [
 a = Analysis(
     ['main.py'],
     pathex=[base_dir],
+    binaries=[(_media_dll, '.')],
     datas=[
         ('icon.ico', '.'),
         ('config.py', '.'),
@@ -31,6 +39,7 @@ a = Analysis(
         ('docs/assets/scryptian-notification.wav', 'docs/assets'),
         ('docs/assets/slippers.png', 'docs/assets'),
         ('docs/assets/up-and-down.png', 'docs/assets'),
+        ('docs/assets/support.png', 'docs/assets'),
         ('docs/assets/font', 'docs/assets/font'),
         ('selection_watcher.py', '.'),
         ('pins.py', '.'),
@@ -45,7 +54,11 @@ a = Analysis(
         'certifi',
         'keyboard',
         'pyperclip',
-        'cryptography',
+        *collect_submodules('cryptography'),
+        # Dynamic imports inside skills (file-metadata reading) — not detected
+        # by PyInstaller's static analysis, so force-include them here.
+        'pymediainfo',
+        'pypdf',
         # Stdlib modules used by the store-delivered PDF skill (reportlab +
         # pdfminer.six). Those libraries are NOT analyzed by PyInstaller (they
         # ship in the skill zip), so any stdlib module they import at runtime

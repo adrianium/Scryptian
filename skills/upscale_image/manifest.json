@@ -1,0 +1,13 @@
+{
+  "title": "Upscale Image",
+  "description": "Upscale an image 4x with AI (Real-ESRGAN, optional face enhance)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 10000,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "input_type": [".png", ".jpg", ".jpeg", ".webp", ".bmp"],
+  "output_type": ".png"
+}

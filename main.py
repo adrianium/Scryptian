@@ -763,11 +763,21 @@ class ScryptianBar:
         self._special_widgets = []
 
         if not self.filtered:
-            self.list_frame.pack_forget()
-            self.skill_hint.pack_forget()
+            # No actions installed: keep the bottom action bar (store, support,
+            # wish box) reachable and give the window a minimal height instead
+            # of collapsing it entirely.
+            self.list_view.pack_forget()
+            self.price_hint.pack_forget()
+            self._render_special_actions()
+            self.list_frame.pack(fill="x", padx=6, pady=(0, 2))
+            self.skill_hint.pack(fill="x", padx=12, pady=(0, 6))
             self.window.update_idletasks()
             self._resize(self.container.winfo_reqheight() + 4)
             return
+
+        # Restore the list area (hidden above when there were no actions).
+        self.price_hint.pack(side="top", fill="x", padx=4, pady=(4, 0))
+        self.list_view.pack(side="top", fill="x")
 
         for i, p in enumerate(self.filtered):
             skill_id = p.get("filename", "").replace(".py", "")
@@ -1273,7 +1283,7 @@ class ScryptianBar:
                             f"Saved to {out_path}",
                             action={
                                 "label": "Open file",
-                                "hotkey": "alt+e",
+                                "hotkey": "alt+q",
                                 "callback": lambda p=out_path: tray.open_in_explorer(p),
                             },
                         )

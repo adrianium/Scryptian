@@ -24,7 +24,7 @@ def _get_id():
     return uid
 
 
-APP_VERSION = "0.7.1"
+APP_VERSION = "0.1.0"
 
 
 def _os_info():

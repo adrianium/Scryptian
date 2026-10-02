@@ -1,8 +1,5 @@
 Scryptian - Privacy Notice
 --------------------------
 
-Scryptian collects anonymous usage stats (which skills are used, error
-reports) to fix bugs and improve the app. No personal data, no account.
-
-Source code is open and auditable:
-https://github.com/adrianium/Scryptian
+Scryptian collects anonymous usage stats (which actions are used, error
+reports) to fix bugs and improve the app.

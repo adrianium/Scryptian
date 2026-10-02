@@ -8,6 +8,7 @@ from PIL import Image, ImageTk
 import store
 import telemetry
 import core
+from config import SLIPPER_SCALE
 from core.registry import SKILLS_DIR
 
 
@@ -444,10 +445,10 @@ class StorePanel:
         ppu = int(skill.get("price_per_unit", 0) or 0)
         unit = (skill.get("unit") or "").strip()
         if ppu > 0 and unit:
-            price_text = f"{ppu} slippers / {unit}"
+            price_text = f"{ppu / SLIPPER_SCALE:g} slippers / {unit}"
             price_fg = "#3b82f6"
         elif price > 0:
-            price_text = f"{price} slippers per result"
+            price_text = f"{price / SLIPPER_SCALE:g} slippers per result"
             price_fg = "#3b82f6"
         else:
             price_text = "Free"

@@ -47,7 +47,14 @@ def _load_env():
 
 
 def _key_path():
-    return os.environ.get("GOOGLE_KEY_PATH", "").strip() or os.path.join(_ROOT, "gcloud-key.json")
+    env_path = os.environ.get("GOOGLE_KEY_PATH", "").strip()
+    if env_path:
+        return env_path
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        bundled = os.path.join(sys._MEIPASS, "gcloud-key.json")
+        if os.path.exists(bundled):
+            return bundled
+    return os.path.join(_ROOT, "gcloud-key.json")
 
 
 def _b64url(data):

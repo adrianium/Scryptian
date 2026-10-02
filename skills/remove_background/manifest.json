@@ -1,0 +1,13 @@
+{
+  "title": "Remove Background",
+  "description": "Remove the background from an image (AI cutout, transparent PNG)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 5000,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "input_type": [".png", ".jpg", ".jpeg", ".webp", ".bmp"],
+  "output_type": ".png"
+}

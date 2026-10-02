@@ -81,7 +81,7 @@ def open_in_explorer(path):
 def show_notify_popup(title, message, root=None, duration=5000, action=None):
     """Show a custom in-app notification popup in bottom-right corner.
 
-    action (optional): {"label": "Open file", "hotkey": "alt+e", "callback": callable}
+    action (optional): {"label": "Open file", "hotkey": "alt+q", "callback": callable}
     """
     import tkinter as tk
     import keyboard

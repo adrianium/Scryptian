@@ -29,6 +29,8 @@ PRICES = [
 
 RATE_TEXT = "1 dollar = 1000 slippers"
 
+REFRESH_INTERVAL_MS = 10000  # poll balance every 10s while the panel is open
+
 PAY_PER_OUTCOME_TEXT = (
     "On Scryptian works Pay per Result model: you pay only when you get a result. "
     "If an action fails, you pay nothing - the developer takes the loss."
@@ -47,6 +49,7 @@ class CurrencyPanel:
         self.balance_value = None
         self.buy_status = None
         self._orig_geo = None
+        self._refresh_job = None
 
     def open(self):
         if not self.bar.window:
@@ -80,6 +83,7 @@ class CurrencyPanel:
 
         self.bar.window.update_idletasks()
         self.bar._resize(self.bar.container.winfo_reqheight() + 4)
+        self._start_refresh()
 
     def _on_backspace(self, event):
         self.close()
@@ -91,6 +95,7 @@ class CurrencyPanel:
 
     def close(self):
         self._open = False
+        self._stop_refresh()
         self.bar.in_currency = False
         self.bar.processing = False
         self.root.unbind_all("<BackSpace>")
@@ -190,7 +195,7 @@ class CurrencyPanel:
                 highlightthickness=1, highlightbackground="#2d2d33",
             )
             btn.pack(fill="x", pady=3)
-            btn.bind("<Button-1>", lambda e, pid=price_id: self._buy(pid))
+            btn.bind("<Button-1>", lambda e, pid=price_id, amt=amount: self._buy(pid, amt))
             btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#1e3a8a"))
             btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#18181b"))
 
@@ -223,8 +228,28 @@ class CurrencyPanel:
         if bal is not None:
             self.root.after(0, lambda: self._set_balance(bal))
 
-    def _buy(self, price_id):
+    def _start_refresh(self):
+        self._stop_refresh()
+        self._refresh_job = self.root.after(REFRESH_INTERVAL_MS, self._auto_refresh)
+
+    def _stop_refresh(self):
+        if self._refresh_job is not None:
+            try:
+                self.root.after_cancel(self._refresh_job)
+            except Exception:
+                pass
+            self._refresh_job = None
+
+    def _auto_refresh(self):
+        self._refresh_job = None
+        if not self._open:
+            return
+        threading.Thread(target=self._load_balance, daemon=True).start()
+        self._refresh_job = self.root.after(REFRESH_INTERVAL_MS, self._auto_refresh)
+
+    def _buy(self, price_id, amount=""):
         user = wallet.user_id()
+        telemetry.send("buy_clicked", {"price_id": price_id, "amount": amount})
         if self.buy_status is not None:
             self.buy_status.config(text="Opening checkout…")
 
@@ -239,10 +264,13 @@ class CurrencyPanel:
                     data = json.loads(resp.read().decode("utf-8"))
                 url = data.get("url")
                 if url:
+                    telemetry.send("checkout_opened", {"price_id": price_id})
                     self.root.after(0, lambda u=url: os.startfile(u))
                 else:
+                    telemetry.send("checkout_failed", {"price_id": price_id, "reason": "no_url"})
                     self.root.after(0, lambda: self.buy_status.config(text="No checkout link. Try again."))
             except Exception as e:
+                telemetry.send("checkout_failed", {"price_id": price_id, "reason": "error"})
                 msg = f"Checkout failed: {e}"
                 self.root.after(0, lambda: self.buy_status.config(text=msg))
 

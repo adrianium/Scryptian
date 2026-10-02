@@ -1,0 +1,15 @@
+{
+  "title": "Compress Video (Light)",
+  "description": "Compress a video with minimal quality loss (near-lossless, larger file)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "minute",
+  "price_per_unit": 18000,
+  "input_type": [".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".wmv", ".flv", ".mpeg", ".mpg", ".ts", ".3gp"],
+  "output_type": ".mp4"
+}

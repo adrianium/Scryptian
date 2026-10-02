@@ -1,0 +1,15 @@
+{
+  "title": "Upscale Video",
+  "description": "Upscale a video 2x with AI (sharper, higher resolution)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "megapixel",
+  "price_per_unit": 920,
+  "input_type": [".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".wmv", ".flv", ".mpeg", ".mpg", ".ts", ".3gp"],
+  "output_type": ".mp4"
+}

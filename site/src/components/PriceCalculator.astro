@@ -34,7 +34,7 @@ const initial = isFree
       <input type="file" class="pc-input" />
     </label>
   )}
-  <p class="pc-result">{initial}</p>
+  <p class="pc-result" hidden>{initial}</p>
 </div>
 
 <script is:inline>
@@ -60,6 +60,7 @@ const initial = isFree
     }
 
     function show(micro) {
+      result.hidden = false;
       result.textContent = micro <= 0 ? 'Free' : fmt(micro) + ' slippers (~' + usd(micro) + ')';
     }
 
@@ -119,6 +120,7 @@ const initial = isFree
           show(Math.ceil(mp * ppu));
         }
       } catch (e) {
+        result.hidden = false;
         result.textContent = 'Could not read this file';
       }
     }
@@ -127,6 +129,7 @@ const initial = isFree
       input.addEventListener('change', function () {
         var file = input.files && input.files[0];
         if (!file) return;
+        result.hidden = false;
         result.textContent = 'Calculating…';
         handle(file);
       });

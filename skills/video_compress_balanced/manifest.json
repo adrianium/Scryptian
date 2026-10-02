@@ -1,0 +1,15 @@
+{
+  "title": "Compress Video (Balanced)",
+  "description": "Compress a video to a smaller MP4 (good balance of size and quality)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "minute",
+  "price_per_unit": 18000,
+  "input_type": [".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".wmv", ".flv", ".mpeg", ".mpg", ".ts", ".3gp"],
+  "output_type": ".mp4"
+}

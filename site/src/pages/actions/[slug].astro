@@ -66,11 +66,15 @@ const schema = {
 
       <div class="landing-grid">
         <div class="landing-main">
-          {action.demo_gif && (
-            <div class="panel demo">
+          <div class="panel demo">
+            {action.demo_gif ? (
               <img src={action.demo_gif} alt={action.description} loading="eager" fetchpriority="high" />
-            </div>
-          )}
+            ) : (
+              <div class="demo-placeholder">
+                <span>Demo coming soon</span>
+              </div>
+            )}
+          </div>
 
           {action.features && action.features.length > 0 && (
             <div class="panel">
@@ -112,8 +116,8 @@ const schema = {
             <a class="install-btn secondary" href={mainSite} target="_blank" rel="noopener" data-ph-event="install_scryptian_clicked" data-ph-props={JSON.stringify({ action_id: action.id })}>Install Scryptian With This Action</a>
             */}
 
-            <a class="install-btn" href="#">Download for Windows</a>
-            <p class="bonus-hint">↳ 2,000 free Slippers (~$2) included</p>
+            <a class="install-btn" href="https://github.com/adrianium/Scryptian/releases/download/v0.1.0/Scryptian_Setup.exe">Download for Windows</a>
+            <p class="bonus-hint">~30 MB · 2,000 free Slippers (~$2) included</p>
 
             <a class="what-is" href={mainSite} target="_blank" rel="noopener" data-ph-event="what_is_scryptian_clicked">What is Scryptian?</a>
           </div>
@@ -146,6 +150,49 @@ const schema = {
           </div>
         </aside>
       </div>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <div class="container">
+      <h2 class="how-title">How it works</h2>
+      <ol class="how-steps">
+        <li class="how-step">
+          <span class="how-num">1</span>
+          <div>
+            <h3>Download</h3>
+            <p>Free app for Windows.</p>
+          </div>
+        </li>
+        <li class="how-step">
+          <span class="how-num">2</span>
+          <div>
+            <h3>Copy a file</h3>
+            <p>Select any file</p>
+          </div>
+        </li>
+        <li class="how-step">
+          <span class="how-num">3</span>
+          <div>
+            <h3>Press Ctrl+Alt</h3>
+            <p>The bar opens over your file.</p>
+          </div>
+        </li>
+        <li class="how-step">
+          <span class="how-num">4</span>
+          <div>
+            <h3>Pick this action</h3>
+            <p>Done. Pay only for the result.</p>
+          </div>
+        </li>
+        <li class="how-step">
+          <span class="how-num">5</span>
+          <div>
+            <h3>Result file</h3>
+            <p>Result files appears in the same place where original.</p>
+          </div>
+        </li>
+      </ol>
     </div>
   </section>
 </Layout>
