@@ -388,6 +388,36 @@
       .pricing-grid { grid-template-columns: 1fr; }
     }
 
+    /* Popular actions */
+    .actions-teaser { background: var(--bg-soft); }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .action-link {
+      display: block;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+
+    .action-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .actions-teaser .center { text-align: center; }
+
     /* Final CTA */
     .cta { text-align: center; }
 
@@ -430,6 +460,7 @@
       .steps { grid-template-columns: 1fr; }
       .feature { grid-template-columns: 1fr; gap: 28px; }
       .stats { grid-template-columns: 1fr; gap: 32px; }
+      .action-grid { grid-template-columns: 1fr; }
       .nav { display: none; }
     }
   </style>
@@ -578,6 +609,33 @@
           </div>
         </div>
         <p class="pricing-note">New here? Every new account starts with <strong>2,000 free Slippers</strong> — no purchase needed.</p>
+      </div>
+    </section>
+
+    <section class="actions-teaser" id="actions">
+      <div class="container">
+        <div class="section-head">
+          <h2>Popular actions</h2>
+          <p>One hotkey, any file, any service. Try these first.</p>
+          <p>Services doesn't have file size or count limits<p>
+        </div>
+        <div class="action-grid">
+          <!-- <a class="action-link" href="https://actionstore.scryptian.com/actions/video_compress_balanced/">Compress Video</a>
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/video_compress_light/">Compress Video (Light)</a>
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/video_compress_strong/">Compress Video (Strong)</a> -->
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/remove_background/">Remove Background</a>
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/upscale_image/">Upscale Image</a>
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/video_upscale/">Upscale Video</a>
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/transcribe_audio/">Transcribe Audio</a>
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/transcribe_video/">Transcribe Video</a>
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/text_to_speech_female/">Text to Speech (Female)</a>
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/text_to_speech_male/">Text to Speech (Male)</a>
+          <!-- <a class="action-link" href="https://actionstore.scryptian.com/actions/translate_pdf_to_english/">Translate PDF</a> -->
+          <a class="action-link" href="https://actionstore.scryptian.com/actions/translate_pdf_to_english_deepl/">Translate PDF (DeepL)</a>
+        </div>
+        <div class="center">
+          <a class="btn btn-ghost" href="https://actionstore.scryptian.com/">Browse all actions</a>
+        </div>
       </div>
     </section>
 
