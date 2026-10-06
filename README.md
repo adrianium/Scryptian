@@ -1,25 +1,25 @@
 Scryptian
 
-https://actionstore.scryptian.com/actions/video_compress_balanced/
+[Video Compress](https://actionstore.scryptian.com/actions/video_compress_balanced/)
 
-https://actionstore.scryptian.com/actions/video_compress_light/
+[Video Compress (light)](https://actionstore.scryptian.com/actions/video_compress_light/)
 
-https://actionstore.scryptian.com/actions/video_compress_strong/
+[Video Compress (strong)](https://actionstore.scryptian.com/actions/video_compress_strong/)
 
-https://actionstore.scryptian.com/actions/remove_background/
+[Remove backround](https://actionstore.scryptian.com/actions/remove_background/)
 
-https://actionstore.scryptian.com/actions/text_to_speech_female/
+[Text to speech (female)](https://actionstore.scryptian.com/actions/text_to_speech_female/)
 
-https://actionstore.scryptian.com/actions/text_to_speech_male/
+[Text to speech (Male)](https://actionstore.scryptian.com/actions/text_to_speech_male/)
 
-https://actionstore.scryptian.com/actions/transcribe_audio/
+[Transcribe Audio](https://actionstore.scryptian.com/actions/transcribe_audio/)
 
-https://actionstore.scryptian.com/actions/transcribe_video/
+[Transcribe Video](https://actionstore.scryptian.com/actions/transcribe_video/)
 
-https://actionstore.scryptian.com/actions/translate_pdf_to_english_deepl/
+[Translate PDF to English (DeepL)](https://actionstore.scryptian.com/actions/translate_pdf_to_english_deepl/)
 
-https://actionstore.scryptian.com/actions/translate_pdf_to_english/
+[Translate PDF to English (Google)](https://actionstore.scryptian.com/actions/translate_pdf_to_english/)
 
-https://actionstore.scryptian.com/actions/upscale_image/
+[AI Upscale Image](https://actionstore.scryptian.com/actions/upscale_image/)
 
-https://actionstore.scryptian.com/actions/video_upscale/
+[AI Upscale Video](https://actionstore.scryptian.com/actions/video_upscale/)
