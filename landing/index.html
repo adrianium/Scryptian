@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scryptian - Any service. One wallet. One hotkey. Pay per result.</title>
-  <meta name="description" content="Select any text on your screen, press a hotkey, and transform it instantly — translate, summarize, fact-check, and more. No app switching." />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-family='Arial' font-size='18' font-weight='700' fill='%23fff' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E" />
+  <meta name="description" content="Select any text on your screen, press a hotkey, and transform files instantly — translate, summarize, upscale, and more. No app switching." />
+  <!-- <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-family='Arial' font-size='18' font-weight='700' fill='%23fff' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E" /> -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -183,6 +184,545 @@
       color: var(--text-dim);
       font-size: 15px;
     }
+
+    /* GIF slot + static photo demo */
+    .gif-slot {
+      max-width: 900px;
+      margin: 0 auto;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .gif-slot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .demo-photo { padding: 40px 0 0; }
+    .demo-photo-frame {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+    }
+    .demo-photo-frame img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .how-try { margin-top: 32px; text-align: center; }
+
+    /* Interactive demo */
+    .demo-frame {
+      position: relative;
+      min-height: 560px;
+      background:
+        radial-gradient(1200px 620px at 82% -12%, rgba(56, 189, 248, 0.5), transparent 60%),
+        radial-gradient(900px 520px at -8% 112%, rgba(129, 140, 248, 0.55), transparent 55%),
+        linear-gradient(160deg, #0b1d4d 0%, #1d4ed8 55%, #2563eb 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      user-select: none;
+    }
+
+    .desktop-icons {
+      position: absolute;
+      inset: 0;
+    }
+
+    .desktop-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 96px;
+      padding: 10px 4px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: #fff;
+      position: absolute;
+    }
+    .desktop-icon.pos-tl { top: 20px; left: 20px; }
+    .desktop-icon.pos-tr { top: 20px; right: 20px; }
+    .desktop-icon.pos-bl { bottom: 64px; left: 20px; }
+    .desktop-icon.pos-br { bottom: 64px; right: 20px; }
+    .desktop-icon.pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .desktop-icon.res-tl { top: 20px; left: 132px; }
+    .desktop-icon.res-tr { top: 20px; right: 132px; }
+    .desktop-icon.res-bl { bottom: 64px; left: 132px; }
+    .desktop-icon.res-br { bottom: 64px; right: 132px; }
+    .desktop-icon.result { outline: 1px dashed rgba(52, 211, 153, 0.6); outline-offset: 3px; }
+    .desktop-icon .thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      display: grid;
+      place-items: center;
+    }
+    .desktop-icon .thumb img,
+    .desktop-icon .thumb video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .desktop-icon .pdf-badge {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      background: #ef4444;
+      border-radius: 4px;
+      padding: 3px 6px;
+      letter-spacing: 0.5px;
+    }
+    .desktop-icon .txt-badge {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      background: #475569;
+      border-radius: 4px;
+      padding: 3px 6px;
+      letter-spacing: 0.5px;
+    }
+    .desktop-icon .audio-badge {
+      font-size: 22px;
+      color: #60a5fa;
+    }
+    .desktop-icon .desktop-icon-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      word-break: break-all;
+    }
+    .desktop-icon.selected {
+      background: rgba(255, 255, 255, 0.22);
+      outline: 1px solid rgba(255, 255, 255, 0.55);
+      outline-offset: -1px;
+    }
+
+    /* Mock Scryptian bar — mirrors the real app */
+    .scryptian-bar {
+      position: absolute;
+      left: 50%;
+      bottom: 56px;
+      transform: translate(-50%, 120%);
+      width: min(460px, calc(100% - 32px));
+      background: #18181b;
+      color: #efeff1;
+      border: 1px solid #2d2d33;
+      border-radius: 14px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 6;
+    }
+    .scryptian-bar.open { transform: translate(-50%, 0); }
+
+    .bar-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 2px 4px 10px;
+    }
+    .bar-file {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      min-width: 0;
+    }
+    .bar-file .bar-file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #efeff1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bar-file .bar-file-meta {
+      font-size: 11px;
+      color: #60a5fa;
+      white-space: nowrap;
+    }
+    .bar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .bar-balance {
+      font-size: 13px;
+      font-weight: 700;
+      color: #3b82f6;
+    }
+    .bar-hotkey {
+      font-size: 10px;
+      color: #adadb8;
+    }
+
+    .bar-input {
+      background: #1f1f23;
+      border-radius: 7px;
+      padding: 7px 10px;
+      font-size: 13px;
+      color: #efeff1;
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bar-price-hint {
+      background: #1f1f23;
+      border-radius: 7px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #3b82f6;
+      margin-bottom: 8px;
+    }
+
+    .bar-actions {
+      display: grid;
+      gap: 4px;
+      max-height: 190px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .bar-action.disabled { cursor: default; opacity: 0.55; }
+    .bar-action.disabled:hover { background: #18181b; }
+    .bar-action.disabled .action-title { color: #adadb8; }
+    .bar-action.disabled .action-price { color: #71717a; }
+
+    .bar-action {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #18181b;
+      border-radius: 7px;
+      padding: 7px 10px;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+    .bar-action:hover { background: #2d2d33; }
+    .bar-action .action-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #efeff1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bar-action .action-price {
+      font-size: 11px;
+      font-weight: 700;
+      color: #60a5fa;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .bar-status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #adadb8;
+      min-height: 16px;
+      text-align: center;
+    }
+    .bar-status.done { color: #34d399; }
+
+    .bar-result {
+      display: none;
+      margin-top: 10px;
+    }
+    .bar-result.show { display: block; }
+
+    .res-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      justify-items: center;
+    }
+    .res-card {
+      display: grid;
+      gap: 4px;
+      justify-items: center;
+      font-size: 11px;
+      color: #adadb8;
+    }
+    .res-thumb {
+      width: 92px;
+      height: 92px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #2d2d33;
+      background: #1f1f23;
+      display: grid;
+      place-items: center;
+    }
+    .res-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .res-thumb .pdf-badge {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      background: #ef4444;
+      border-radius: 4px;
+      padding: 3px 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .res-text {
+      background: #1f1f23;
+      border: 1px solid #2d2d33;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #d4d4d8;
+      max-height: 120px;
+      overflow: auto;
+    }
+
+    .bar-result audio {
+      width: 100%;
+      height: 36px;
+    }
+
+    .bar-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #3f3f46;
+      border-top-color: #60a5fa;
+      border-radius: 50%;
+      animation: scryptian-spin 0.7s linear infinite;
+      vertical-align: -2px;
+      margin-right: 7px;
+    }
+    @keyframes scryptian-spin { to { transform: rotate(360deg); } }
+
+    .bar-special {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .bar-special-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      cursor: pointer;
+      padding: 5px 2px;
+      border-radius: 7px;
+      background: #1f1f23;
+      transition: background 0.12s ease;
+    }
+    .bar-special-btn:hover { background: #2d2d33; }
+    .bar-special-btn .s-icon {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      color: #d4d4d8;
+    }
+    .bar-special-btn .s-icon svg { width: 15px; height: 15px; }
+    .bar-special-btn .s-label { font-size: 9px; color: #efeff1; }
+    .bar-special-btn .s-hotkey { font-size: 8px; color: #71717a; }
+    .bar-special-btn.accent { background: #1e3a8a; }
+    .bar-special-btn.accent .s-icon { color: #fff; }
+    .bar-special-btn.accent:hover { background: #2563eb; }
+
+    .bar-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding: 0 4px;
+      font-size: 10px;
+      color: #adadb8;
+    }
+
+    .bar-balance .balance-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      vertical-align: -3px;
+      margin-right: 1px;
+      background-color: #3b82f6;
+      -webkit-mask: url('examples/slippers.png') center / contain no-repeat;
+      mask: url('examples/slippers.png') center / contain no-repeat;
+    }
+
+    .result-file {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #1f1f23;
+      border: 1px solid #2d2d33;
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+    }
+    .result-file:hover { background: #2d2d33; }
+    .result-file .rf-icon { font-size: 17px; }
+    .result-file .rf-name { font-size: 13px; color: #efeff1; font-weight: 600; }
+    .result-file .rf-open { margin-left: auto; font-size: 11px; color: #60a5fa; }
+
+    .os-window {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(calc(-50% + var(--ox, 0px)), calc(-50% + var(--ox, 0px)));
+      width: min(460px, calc(100% - 40px));
+      background: #18181b;
+      border: 1px solid #2d2d33;
+      border-radius: 10px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+      z-index: 9;
+      display: none;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .os-window.show { display: block; opacity: 1; }
+    .os-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 38px;
+      padding: 0 10px 0 14px;
+      background: #1f1f23;
+      border-bottom: 1px solid #2d2d33;
+    }
+    .os-title { font-size: 12px; color: #d4d4d8; font-weight: 600; }
+    .os-close {
+      cursor: pointer;
+      color: #71717a;
+      font-size: 15px;
+      line-height: 1;
+      padding: 4px;
+    }
+    .os-close:hover { color: #efeff1; }
+    .os-content { padding: 12px; }
+    .os-content img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 6px; display: block; }
+    .os-content video { width: 100%; max-height: 400px; object-fit: contain; border-radius: 6px; display: block; }
+    .os-content iframe { width: 100%; height: 360px; border: none; background: #fff; border-radius: 6px; }
+    .os-content .os-text { color: #d4d4d8; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+    .os-content audio { width: 100%; }
+    .os-content .os-openlink {
+      display: inline-block;
+      margin-top: 10px;
+      color: #60a5fa;
+      font-size: 13px;
+      text-decoration: underline;
+    }
+
+    /* Taskbar */
+    .taskbar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      background: rgba(10, 10, 14, 0.9);
+      backdrop-filter: blur(8px);
+      color: #efeff1;
+      z-index: 4;
+    }
+    .taskbar-start {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .taskbar-start:hover { background: rgba(255, 255, 255, 0.12); }
+    .taskbar-pinned {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .taskbar-icon {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .taskbar-icon:hover { background: rgba(255, 255, 255, 0.12); }
+    .taskbar-clock {
+      margin-left: auto;
+      font-size: 12px;
+      color: #d4d4d8;
+    }
+
+    .demo-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 60px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(10, 10, 14, 0.92);
+      color: #efeff1;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 5;
+      white-space: nowrap;
+      transition: opacity 0.2s ease;
+    }
+    .demo-hint.hidden { opacity: 0; pointer-events: none; }
+    .demo-hint kbd {
+      background: #2d2d33;
+      border: 1px solid #3f3f46;
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .demo-hint b { color: #93c5fd; font-weight: 700; }
+    .demo-copy-btn {
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      height: 30px;
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+    }
+    .demo-copy-btn:hover { background: var(--accent-hover); }
 
     /* Sections */
     section { padding: 90px 0; }
@@ -496,13 +1036,23 @@
       </div>
     </section>
 
-    <section class="demo">
+    <section class="demo-gif">
       <div class="container">
-        <div class="demo-frame">
+        <div class="gif-slot" id="gif-slot">
+          <img src="upscale_image.gif" alt="Scryptian work demo" />
+        </div>
+      </div>
+    </section>
+
+    <section class="demo-photo">
+      <div class="container">
+        <div class="demo-photo-frame">
           <img src="ui-demo.png" alt="Scryptian interface demo" />
         </div>
       </div>
     </section>
+
+    
 
     <section class="how" id="how-it-works">
       <div class="container">
@@ -528,8 +1078,318 @@
             <p>Pick an action and forget. New file will be save where the original one.</p>
           </div>
         </div>
+        <div class="how-try">
+          <a class="btn btn-ghost" href="#try">Try it live</a>
+        </div>
       </div>
     </section>
+
+<section class="demo" id="try">
+      <div class="container">
+        <div class="demo-frame">
+          <div class="desktop-icons">
+            <div class="desktop-icon pos-tl selected" data-file="photo.jpg" data-kind="image">
+              <div class="thumb"><img src="examples/example.jpeg" alt="photo.jpg" /></div>
+              <span class="desktop-icon-label">photo.jpg</span>
+            </div>
+            <div class="desktop-icon pos-tr" data-file="video.mp4" data-kind="video">
+              <div class="thumb"><video src="examples/example.mp4" muted playsinline preload="metadata"></video></div>
+              <span class="desktop-icon-label">video.mp4</span>
+            </div>
+            <div class="desktop-icon pos-bl" data-file="document.pdf" data-kind="pdf">
+              <div class="thumb"><span class="pdf-badge">PDF</span></div>
+              <span class="desktop-icon-label">document.pdf</span>
+            </div>
+            <div class="desktop-icon pos-br" data-file="DIALOGUE.txt" data-kind="text">
+              <div class="thumb"><span class="txt-badge">TXT</span></div>
+              <span class="desktop-icon-label">DIALOGUE.txt</span>
+            </div>
+            <div class="desktop-icon pos-center" data-file="tutorial.txt" data-kind="text">
+              <div class="thumb"><span class="txt-badge">TXT</span></div>
+              <span class="desktop-icon-label">tutorial.txt</span>
+            </div>
+          </div>
+
+          <div class="demo-hint" id="demo-hint">
+            <span id="hint-text">Select a file</span>
+          </div>
+
+          <div class="scryptian-bar" id="scryptian-bar">
+            <div class="bar-top">
+              <div class="bar-file">
+                <span class="bar-file-name" id="bar-file-name">photo.jpg</span>
+                <span class="bar-file-meta" id="bar-file-meta">51 KB</span>
+              </div>
+              <div class="bar-right">
+                <span class="bar-balance"><span class="balance-icon"></span><span id="balance">2,000</span></span>
+                <span class="bar-hotkey">[ Ctrl+0 ]</span>
+              </div>
+            </div>
+
+            <div class="bar-input" id="bar-input">photo.jpg</div>
+
+            <div class="bar-price-hint">Copy a file to see its exact price</div>
+
+            <div class="bar-actions" id="bar-actions"></div>
+
+            <div class="bar-status" id="bar-status"></div>
+            <div class="bar-result" id="bar-result"></div>
+
+            <div class="bar-special">
+              <div class="bar-special-btn"><span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10c.7.7 1 1.5 1 2h6c0-.5.3-1.3 1-2a6 6 0 0 0-4-10z"/></svg></span><span class="s-label">Wish Service Box</span><span class="s-hotkey">[Ctrl+1]</span></div>
+              <div class="bar-special-btn"><span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13a9 9 0 0 1 18 0"/><rect x="2" y="13" width="4" height="6" rx="1.5"/><rect x="18" y="13" width="4" height="6" rx="1.5"/><path d="M20 19a3 3 0 0 1-3 3h-3"/></svg></span><span class="s-label">I have a problem</span><span class="s-hotkey">[Ctrl+2]</span></div>
+              <div class="bar-special-btn accent"><span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span><span class="s-label">Actions Store</span><span class="s-hotkey">[Ctrl+3]</span></div>
+            </div>
+
+            <div class="bar-footer">
+              <span>Ctrl+Alt - hide</span>
+              <span>Enter - run action</span>
+            </div>
+          </div>
+
+          <div class="taskbar">
+            <span class="taskbar-start"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="6.5" height="6.5" rx="0.5" fill="#3b82f6"/><rect x="8.5" y="1" width="6.5" height="6.5" rx="0.5" fill="#3b82f6"/><rect x="1" y="8.5" width="6.5" height="6.5" rx="0.5" fill="#3b82f6"/><rect x="8.5" y="8.5" width="6.5" height="6.5" rx="0.5" fill="#3b82f6"/></svg></span>
+            <div class="taskbar-pinned">
+              <span class="taskbar-icon" title="Files"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" fill="#f59e0b"/></svg></span>
+              <span class="taskbar-icon" title="Browser"><svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#2563eb"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" stroke="#fff" stroke-width="1.4" fill="none"/></svg></span>
+              <span class="taskbar-icon" title="Terminal"><svg width="20" height="20" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="#18181b" stroke="#52525b"/><path d="M6 9l3 3-3 3M12 15h6" stroke="#e4e4e7" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <span class="taskbar-clock" id="taskbar-clock"></span>
+          </div>
+
+          </div>
+      </div>
+    </section>
+
+    <script>
+      (function () {
+        var bar = document.getElementById('scryptian-bar');
+        var balanceEl = document.getElementById('balance');
+        var barFile = document.getElementById('bar-file-name');
+        var barFileMeta = document.getElementById('bar-file-meta');
+        var barInput = document.getElementById('bar-input');
+        var actionsEl = document.getElementById('bar-actions');
+        var status = document.getElementById('bar-status');
+        var resultEl = document.getElementById('bar-result');
+        var clockEl = document.getElementById('taskbar-clock');
+        var hintEl = document.getElementById('demo-hint');
+        var hintText = document.getElementById('hint-text');
+        var icons = document.querySelectorAll('.desktop-icon');
+        var balance = 2000;
+        var selectedFile = 'photo.jpg';
+        var selectedKind = 'image';
+        var step = 'select';
+
+        var FILE_SIZES = {
+          'photo.jpg': '51 KB',
+          'video.mp4': '1.4 MB',
+          'document.pdf': '197 KB',
+          'DIALOGUE.txt': '3.6 KB',
+          'tutorial.txt': '1.2 KB'
+        };
+
+        var TRANSCRIPT = "Speaker A: I don't actually know if Christian Bale did say this, but the quote is, if you have a problem with me, text me. And if you don't have my number, you don't know me well enough to have a problem with me. That is so good.";
+
+        var DIALOGUE_TEXT = "Speaker A: Speaker A.\nSpeaker B: Tell you basically what this is about is when I was watching Harvey Mackay at one of Harv Ecker's things, he said he just finished the Boston Marathon and the guy is 76. I went, Holy crap, that is amazing.\n\nSpeaker A: Speaker A.\nSpeaker B: What I would do is I basically introduce you. Then you can add anything that you think is important to that introduction.";
+
+        var TUTORIAL_TEXT = "Tutorial — how Scryptian works\n\n1. Select a file on the desktop\n2. Press Ctrl+C to copy it\n3. Press Ctrl+Alt to open Scryptian\n4. Pick an action\n5. The result appears next to the original file";
+
+        var FILE_VIEWS = {
+          'photo.jpg': '<img src="examples/example.jpeg">',
+          'video.mp4': '<video src="examples/example.mp4" controls autoplay></video>',
+          'document.pdf': '<iframe src="examples/example.pdf"></iframe>',
+          'DIALOGUE.txt': '<div class="os-text">' + DIALOGUE_TEXT + '</div>',
+          'tutorial.txt': '<div class="os-text">' + TUTORIAL_TEXT + '</div>'
+        };
+
+        var SKILLS = [
+          { action: 'pdf-deepl', kind: 'pdf', name: 'Translate PDF (DeepL)', desc: 'To English', price: 85, type: 'pdf', file: 'example_en.pdf' },
+          { action: 'transcribe-video', kind: 'video', name: 'Transcribe Video', desc: 'To text', price: 12, type: 'text', file: 'example_transcript.txt', content: TRANSCRIPT },
+          { action: 'upscale-photo', kind: 'image', name: 'Upscale Photo', desc: '2x sharper', price: 10, type: 'image', file: 'example_upscaled.png' },
+          { action: 'tts-female', kind: 'text', name: 'Text to Audio (Female)', desc: 'Natural voice', price: 8, type: 'audio', file: 'DIALOGUE_tts_female.wav' },
+          { action: 'tts-male', kind: 'text', name: 'Text to Audio (Male)', desc: 'Natural voice', price: 8, type: 'audio', file: 'DIALOGUE_tts_male.wav' }
+        ];
+
+        function updateClock() {
+          var d = new Date();
+          var h = d.getHours(), m = d.getMinutes();
+          clockEl.textContent = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+        }
+
+        function setHint(text) {
+          hintText.innerHTML = text;
+          hintEl.classList.remove('hidden');
+        }
+
+        function renderActions() {
+          actionsEl.innerHTML = '';
+          SKILLS.forEach(function (s) {
+            var supported = (s.kind === selectedKind);
+            var div = document.createElement('div');
+            div.className = 'bar-action' + (supported ? '' : ' disabled');
+            div.setAttribute('data-action', s.action);
+            div.setAttribute('data-price', s.price);
+            div.setAttribute('data-name', s.name);
+            div.innerHTML =
+              '<span class="action-title"></span>' +
+              '<span class="action-price"></span>';
+            div.querySelector('.action-title').textContent = s.name;
+            div.querySelector('.action-price').textContent = supported ? (s.price + ' slippers') : 'file type not supported';
+            actionsEl.appendChild(div);
+          });
+        }
+
+        function resetBar() {
+          actionsEl.style.display = '';
+          status.textContent = '';
+          status.className = 'bar-status';
+          resultEl.classList.remove('show');
+          resultEl.innerHTML = '';
+        }
+
+        function openBar() {
+          barFile.textContent = selectedFile;
+          barFileMeta.textContent = FILE_SIZES[selectedFile] || '';
+          barInput.textContent = selectedFile;
+          renderActions();
+          resetBar();
+          bar.classList.add('open');
+          hintEl.classList.add('hidden');
+          if (window.posthog) window.posthog.capture('demo_open_bar');
+        }
+
+        function closeBar() {
+          bar.classList.remove('open');
+          setTimeout(function () {
+            resetBar();
+            if (step === 'copied') setHint('Press <kbd>Ctrl</kbd> + <kbd>Alt</kbd> to open Scryptian', false);
+            else if (step === 'copy') setHint('Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to copy <b>' + selectedFile + '</b>', true);
+            else setHint('Select a file', false);
+          }, 350);
+        }
+
+        function selectFile(icon) {
+          icons.forEach(function (i) { i.classList.remove('selected'); });
+          icon.classList.add('selected');
+          selectedFile = icon.getAttribute('data-file');
+          selectedKind = icon.getAttribute('data-kind');
+          step = 'copy';
+          setHint('Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to copy <b>' + selectedFile + '</b>', true);
+          if (window.posthog) window.posthog.capture('demo_select_file', { file: selectedFile });
+          if (bar.classList.contains('open')) {
+            barFile.textContent = selectedFile;
+            barFileMeta.textContent = FILE_SIZES[selectedFile] || '';
+            barInput.textContent = selectedFile;
+            renderActions();
+            resetBar();
+          }
+        }
+
+        function doCopy() {
+          if (step !== 'copy') return;
+          step = 'copied';
+          setHint('Copied! Now press <kbd>Ctrl</kbd> + <kbd>Alt</kbd>', false);
+          if (window.posthog) window.posthog.capture('demo_copy_file');
+        }
+
+        icons.forEach(function (icon) {
+          icon.addEventListener('click', function () { selectFile(icon); });
+          icon.addEventListener('dblclick', function () {
+            var name = icon.getAttribute('data-file');
+            openOsWindow(name, FILE_VIEWS[name] || '');
+          });
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.ctrlKey && !e.altKey && !e.shiftKey && (e.key === 'c' || e.key === 'C')) {
+            if (!bar.classList.contains('open') && step === 'copy') {
+              e.preventDefault();
+              doCopy();
+            }
+            return;
+          }
+          if (e.ctrlKey && e.altKey) {
+            e.preventDefault();
+            if (bar.classList.contains('open')) closeBar();
+            else openBar();
+          }
+          if (e.key === 'Escape') closeBar();
+        });
+
+        document.addEventListener('mousedown', function (e) {
+          if (bar.classList.contains('open') && !bar.contains(e.target)) {
+            closeBar();
+          }
+        });
+
+        var winCount = 0;
+        function openOsWindow(title, html) {
+          winCount++;
+          if (window.posthog) window.posthog.capture('demo_open_file', { file: title });
+          var frame = document.querySelector('.demo-frame');
+          var win = document.createElement('div');
+          win.className = 'os-window';
+          win.style.setProperty('--ox', (((winCount - 1) % 6) * 18) + 'px');
+          win.innerHTML =
+            '<div class="os-titlebar"><span class="os-title"></span><span class="os-close" title="Close">✕</span></div>' +
+            '<div class="os-content"></div>';
+          win.querySelector('.os-title').textContent = title;
+          win.querySelector('.os-content').innerHTML = html;
+          win.querySelector('.os-close').addEventListener('click', function () { win.remove(); });
+          frame.appendChild(win);
+          requestAnimationFrame(function () { win.classList.add('show'); });
+        }
+
+        function resultHtml(skill) {
+          if (skill.type === 'image') return '<img src="examples/' + skill.file + '">';
+          if (skill.type === 'audio') return '<audio controls autoplay src="examples/' + skill.file + '"></audio>';
+          if (skill.type === 'text') return '<div class="os-text">' + skill.content + '</div>';
+          if (skill.type === 'pdf') return '<iframe src="examples/' + skill.file + '"></iframe>' +
+            '<a class="os-openlink" href="examples/' + skill.file + '" target="_blank" rel="noopener">Open in new tab</a>';
+          return '';
+        }
+
+        var RESULT_POS = { image: 'res-tl', video: 'res-tr', pdf: 'res-bl', text: 'res-br' };
+        function addResultIcon(skill) {
+          var frame = document.querySelector('.demo-frame');
+          var icon = document.createElement('div');
+          icon.className = 'desktop-icon result ' + (RESULT_POS[skill.kind] || '');
+          var badge;
+          if (skill.type === 'pdf') badge = '<span class="pdf-badge">PDF</span>';
+          else if (skill.type === 'text') badge = '<span class="txt-badge">TXT</span>';
+          else if (skill.type === 'image') badge = '<img src="examples/example_upscaled.png" alt="">';
+          else badge = '<span class="audio-badge">♫</span>';
+          icon.innerHTML = '<div class="thumb">' + badge + '</div><span class="desktop-icon-label">' + skill.file + '</span>';
+          icon.addEventListener('dblclick', function () { openOsWindow(skill.file, resultHtml(skill)); });
+          frame.appendChild(icon);
+        }
+
+        actionsEl.addEventListener('click', function (e) {
+          var el = e.target.closest('.bar-action');
+          if (!el || el.classList.contains('disabled')) return;
+          var name = el.getAttribute('data-name');
+          var price = parseInt(el.getAttribute('data-price'), 10) || 0;
+          var action = el.getAttribute('data-action');
+          if (window.posthog) window.posthog.capture('demo_run_action', { action: name });
+
+          actionsEl.style.display = 'none';
+          status.className = 'bar-status';
+          status.innerHTML = '<span class="bar-spinner"></span>Running ' + name + '…';
+
+          setTimeout(function () {
+            var skill = null;
+            for (var i = 0; i < SKILLS.length; i++) if (SKILLS[i].action === action) { skill = SKILLS[i]; break; }
+            balance -= price;
+            balanceEl.textContent = balance.toLocaleString('en-US');
+            if (skill) addResultIcon(skill);
+            status.className = 'bar-status done';
+            status.innerHTML = '✅ ' + (skill ? skill.name : 'Done') + ' · ' + price + ' slippers deducted';
+          }, 1300);
+        });
+
+        updateClock();
+        setInterval(updateClock, 30000);
+      })();
+    </script>
 
     <section id="features">
       <div class="container">
