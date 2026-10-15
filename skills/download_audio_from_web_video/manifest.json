@@ -1,0 +1,15 @@
+{
+  "title": "Download Audio from Web Video",
+  "description": "Download a web video's audio as MP3 (free)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "",
+  "price_per_unit": 0,
+  "input_type": [],
+  "output_type": ".mp3"
+}

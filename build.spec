@@ -17,7 +17,7 @@ _skill_bundles = [
     for name in sorted(os.listdir(os.path.join(base_dir, 'skills')))
     if os.path.isdir(os.path.join(base_dir, 'skills', name))
     and not name.startswith('_')
-    and name != 'translate_pdf'
+    and name not in ('translate_pdf', 'video_compress')
 ]
 
 a = Analysis(

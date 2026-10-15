@@ -1,0 +1,91 @@
+# Compress PDF — local Ghostscript (free, no cloud cost). Downsamples images.
+
+import os
+import subprocess
+import sys
+import urllib.request
+import zipfile
+
+_GHOSTSCRIPT_URL = "https://qvihfoeouvfveacexcol.supabase.co/storage/v1/object/public/actions/ghostscript.zip"
+_GS_DIR_NAME = "_ghostscript"
+_PDFSETTINGS = "/ebook"
+
+
+def _ensure_gs():
+    """Return gswin64c.exe path, downloading & extracting Ghostscript on first use."""
+    skill_dir = os.path.dirname(os.path.abspath(__file__))
+    skills_root = os.path.dirname(skill_dir)
+    gs_dir = os.path.join(skills_root, _GS_DIR_NAME)
+    gs_exe = os.path.join(gs_dir, "bin", "gswin64c.exe")
+
+    if os.path.exists(gs_exe):
+        return gs_exe
+
+    try:
+        os.makedirs(gs_dir, exist_ok=True)
+        tmp_zip = os.path.join(gs_dir, "_gs.zip")
+        req = urllib.request.Request(_GHOSTSCRIPT_URL, headers={"User-Agent": "Scryptian"})
+        with urllib.request.urlopen(req, timeout=600) as resp, open(tmp_zip, "wb") as f:
+            f.write(resp.read())
+        with zipfile.ZipFile(tmp_zip) as z:
+            z.extractall(gs_dir)
+        if os.path.exists(tmp_zip):
+            os.remove(tmp_zip)
+        if os.path.exists(gs_exe):
+            return gs_exe
+    except Exception:
+        pass
+    return "gs"
+
+
+def measure(file_path):
+    """Return the number of pages (informational preview)."""
+    try:
+        from pypdf import PdfReader
+        with open(file_path, "rb") as f:
+            return len(PdfReader(f).pages)
+    except Exception:
+        pass
+    return None
+
+
+def run(text):
+    """text: path to a PDF to compress (Ghostscript pdfwrite /ebook)."""
+    file_path = (text or "").strip().strip('"')
+    if not file_path or not os.path.isfile(file_path):
+        return "[Scryptian Error] File not found."
+    if os.path.splitext(file_path)[1].lower() != ".pdf":
+        return "[Scryptian Error] This skill accepts PDF files only."
+
+    base, _ = os.path.splitext(file_path)
+    out_path = f"{base}_compressed.pdf"
+    counter = 2
+    while os.path.exists(out_path):
+        out_path = f"{base}_compressed_{counter}.pdf"
+        counter += 1
+
+    cmd = [
+        _ensure_gs(),
+        "-sDEVICE=pdfwrite",
+        "-dPDFSETTINGS=" + _PDFSETTINGS,
+        "-dNOPAUSE",
+        "-dBATCH",
+        "-sOutputFile=" + out_path,
+        file_path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", timeout=14400)
+    except FileNotFoundError:
+        return "[Scryptian Error] Ghostscript not found. Place it in skills/_ghostscript/."
+    except Exception as e:
+        return f"[Scryptian Error] {e}"
+    if result.returncode != 0:
+        err = (result.stderr or result.stdout or "").strip()[-400:]
+        return f"[Scryptian Error] Ghostscript failed: {err}"
+    if os.path.getsize(out_path) >= os.path.getsize(file_path):
+        try:
+            os.remove(out_path)
+        except Exception:
+            pass
+        return "[Scryptian Error] PDF is already optimized (no size reduction possible)."
+    return f"[Scryptian File] {out_path}"

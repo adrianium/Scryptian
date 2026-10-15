@@ -4,12 +4,12 @@
   "author": "Scryptian",
   "author_id": "",
   "price": 0,
-  "mode": "cloud",
+  "mode": "local",
   "entry": "skill.py",
   "version": "1.0.0",
   "background": true,
-  "unit": "minute",
-  "price_per_unit": 18000,
+  "unit": "second",
+  "price_per_unit": 0,
   "input_type": [".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".wmv", ".flv", ".mpeg", ".mpg", ".ts", ".3gp"],
   "output_type": ".mp4"
 }

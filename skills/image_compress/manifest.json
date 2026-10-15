@@ -1,0 +1,15 @@
+{
+  "title": "Compress Image",
+  "description": "Compress an image to a smaller JPEG (free & local)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "local",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": false,
+  "unit": "",
+  "price_per_unit": 0,
+  "input_type": [".png", ".jpg", ".jpeg", ".webp", ".bmp"],
+  "output_type": ".jpg"
+}

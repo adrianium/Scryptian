@@ -133,6 +133,34 @@ def _file_supported(skill, file_path):
     return ext in types
 
 
+def _io_label(skill):
+    """Return a short 'input → output' label for a skill (e.g. 'PDF → JPG')."""
+    itypes = skill.get("input_type") or []
+    _out = skill.get("output_type")
+    if isinstance(_out, (list, tuple)):
+        otype = (_out[0] if _out else "")
+    else:
+        otype = _out or ""
+    otype = otype.lstrip(".").strip().upper()
+
+    if not itypes:
+        inp = "Link"
+    elif ".pdf" in itypes:
+        inp = "PDF"
+    elif any(e in itypes for e in (".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".wmv", ".flv", ".ts")):
+        inp = "Video"
+    elif any(e in itypes for e in (".jpg", ".jpeg", ".png", ".webp", ".bmp")):
+        inp = "Image"
+    elif ".txt" in itypes:
+        inp = "Text"
+    elif any(e in itypes for e in (".wav", ".mp3", ".m4a", ".aac")):
+        inp = "Audio"
+    else:
+        inp = "/".join(sorted({e.lstrip(".").upper() for e in itypes}))[:12]
+
+    return f"{inp} → {otype}" if otype else inp
+
+
 def _reserve_skill(skill, price=None):
     """Reserve the skill's price before running. Returns False (and notifies) if not."""
     if price is None:
@@ -726,20 +754,35 @@ class ScryptianBar:
         """Renders the dropdown list."""
         if not self.window:
             return
-        # Resolve the current file (if any) for live per-file pricing.
+        # Resolve the current file/URL (if any) for live per-file pricing.
         try:
             _inp = core.get_input()
-            _file = _inp["data"] if _inp and _inp.get("type") == "file" else ""
+            _file = ""
+            _url = ""
+            if _inp and _inp.get("type") == "file":
+                _file = _inp["data"]
+            elif _inp and _inp.get("type") == "text":
+                _data = (_inp.get("data") or "").strip()
+                if _data.lower().startswith(("http://", "https://")):
+                    _url = _data
             # Reset a file that was already shown before the last hide.
             if _file and self._clip_seq_at_hide is not None and _clip_seq() == self._clip_seq_at_hide:
                 _file = ""
             self._preview_file = _file
+            self._preview_url = _url
         except Exception:
             self._preview_file = ""
+            self._preview_url = ""
         # Format file info (name + metadata) for both preview labels.
         self._preview_duration = None
         self._preview_unit = ""
-        if self._preview_file:
+        if self._preview_url:
+            name = self._preview_url
+            if len(name) > 48:
+                name = name[:45] + "..."
+            self.file_info_name_top.config(text=name, fg="#adadb8")
+            self.file_info_dur_top.config(text="")
+        elif self._preview_file:
             self._preview_duration, self._preview_unit = _measure_file(self.skills, self._preview_file)
         if self._preview_file:
             name = os.path.basename(self._preview_file)
@@ -751,7 +794,7 @@ class ScryptianBar:
             dur_text = _format_measure(dur, self._preview_unit) if dur is not None else ""
             self.file_info_name_top.config(text=name, fg="#adadb8")
             self.file_info_dur_top.config(text=dur_text)
-        else:
+        elif not self._preview_url:
             self.file_info_name_top.config(text="file not selected", fg="#3b82f6")
             self.file_info_dur_top.config(text="")
         # Clear old rows
@@ -832,6 +875,15 @@ class ScryptianBar:
         )
         title_lbl.pack(side="left")
 
+        # Input → output hint (e.g. "PDF → JPG")
+        if skill_obj:
+            io_text = _io_label(skill_obj)
+            if io_text:
+                io_lbl = tk.Label(row, text=f"· {io_text}", font=("Manrope", 10),
+                                  bg="#18181b", fg="#6b6b76", anchor="w")
+                io_lbl.pack(side="left", padx=(3, 0))
+                io_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
+
         # Mode after title (grey, in parentheses)
         # if skill_obj:
         #     mode = str(skill_obj.get("mode", "cloud")).strip().lower()
@@ -842,33 +894,32 @@ class ScryptianBar:
         #     mode_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
 
         if pinnable:
-            # Main-bar pin (left of star)
-            mpinned = main_pins.is_pinned(title)
-            pin_lbl = tk.Label(
-                row,
-                text="\ue718" if mpinned else "\ue77a",
-                font=("Segoe MDL2 Assets", 12),
-                bg="#18181b",
-                fg="#60a5fa" if mpinned else "#adadb8",
-                cursor="hand2",
-                padx=4,
-            )
-            pin_lbl.pack(side="right")
-            pin_lbl.bind("<Button-1>", lambda e, t=title: self._toggle_main_pin(t))
-
-            # Star always rightmost
-            pinned = pins_module.is_pinned(title)
-            star_lbl = tk.Label(
-                row,
-                text="\ue735" if pinned else "\ue734",
-                font=("Segoe MDL2 Assets", 13),
-                bg="#18181b",
-                fg="#f9e2af" if pinned else "#adadb8",
-                cursor="hand2",
-                padx=6,
-            )
-            star_lbl.pack(side="right")
-            star_lbl.bind("<Button-1>", lambda e, t=title: self._toggle_pin(t))
+            # Main-bar pin + star hidden for now.
+            # mpinned = main_pins.is_pinned(title)
+            # pin_lbl = tk.Label(
+            #     row,
+            #     text="\ue718" if mpinned else "\ue77a",
+            #     font=("Segoe MDL2 Assets", 12),
+            #     bg="#18181b",
+            #     fg="#60a5fa" if mpinned else "#adadb8",
+            #     cursor="hand2",
+            #     padx=4,
+            # )
+            # pin_lbl.pack(side="right")
+            # pin_lbl.bind("<Button-1>", lambda e, t=title: self._toggle_main_pin(t))
+            #
+            # pinned = pins_module.is_pinned(title)
+            # star_lbl = tk.Label(
+            #     row,
+            #     text="\ue735" if pinned else "\ue734",
+            #     font=("Segoe MDL2 Assets", 13),
+            #     bg="#18181b",
+            #     fg="#f9e2af" if pinned else "#adadb8",
+            #     cursor="hand2",
+            #     padx=6,
+            # )
+            # star_lbl.pack(side="right")
+            # star_lbl.bind("<Button-1>", lambda e, t=title: self._toggle_pin(t))
 
             # Edit button for custom skills (left of star)
             if skill_obj and skill_obj.get("filename", "").startswith("custom_"):
@@ -1862,28 +1913,41 @@ class SelectionToolbar:
         self._destroy_window()
 
         file_path = self._input_text or ""
-        name = os.path.basename(file_path)
+        is_url = file_path.lower().startswith(("http://", "https://"))
+        name = file_path if is_url else os.path.basename(file_path)
         if len(name) > 48:
-            ext = os.path.splitext(name)[1]
-            head = 48 - len(ext) - 3
-            name = name[:max(head, 4)] + "..." + ext
+            if is_url:
+                name = name[:45] + "..."
+            else:
+                ext = os.path.splitext(name)[1]
+                head = 48 - len(ext) - 3
+                name = name[:max(head, 4)] + "..." + ext
 
-        # Skills to show: pinned first, else default Transcribe Audio.
-        pinned = pins_module.get_pinned_skills(self.skills)
-        if pinned:
-            visible = pinned
+        # Skills to show: URL skills for links, else skills matching the file type.
+        if is_url:
+            visible = [s for s in self.skills if not (s.get("input_type") or [])]
         else:
-            visible = []
-            for s in self.skills:
-                if s.get("title") == "Transcribe Audio":
-                    visible = [s]
-                    break
-            if not visible:
-                for s in self.skills:
-                    m = s.get("module")
-                    if m and callable(getattr(m, "measure", None)):
-                        visible = [s]
-                        break
+            _ext = os.path.splitext(file_path)[1].lower() if file_path else ""
+            visible = [s for s in self.skills if _ext and _ext in (s.get("input_type") or [])]
+            # Pinned / default Transcribe Audio (commented out — show matching type instead).
+            # pinned = pins_module.get_pinned_skills(self.skills)
+            # if pinned:
+            #     visible = pinned
+            # else:
+            #     visible = []
+            #     for s in self.skills:
+            #         if s.get("title") == "Transcribe Audio":
+            #             visible = [s]
+            #             break
+            #     if not visible:
+            #         for s in self.skills:
+            #             m = s.get("module")
+            #             if m and callable(getattr(m, "measure", None)):
+            #                 visible = [s]
+            #                 break
+
+        # Limit the mini bar to two skills max.
+        visible = visible[:2]
 
         # Metadata from the skill matching this file type.
         dur, unit = _measure_file(self.skills, file_path)
@@ -1949,12 +2013,12 @@ class SelectionToolbar:
         tk.Frame(inner, bg="#2d2d33", height=1).pack(fill="x", padx=4, pady=(2, 0))
 
         close = tk.Label(
-            inner, text="  Open full bar",
-            bg="#18181b", fg="#71717a",
-            font=("Manrope", 11), anchor="w",
-            cursor="hand2", padx=4, pady=3,
+            inner, text="Open full bar",
+            bg="#2536eb", fg="#ffffff",
+            font=("Manrope", 11, "bold"), anchor="center",
+            cursor="hand2", padx=4, pady=6,
         )
-        close.pack(fill="x")
+        close.pack(fill="x", padx=6, pady=(4, 6))
         close.bind("<Button-1>", lambda e: self._open_full_bar())
 
         win.bind("<Up>", self._select_mini_prev)

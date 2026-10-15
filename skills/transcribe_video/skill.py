@@ -114,7 +114,7 @@ def measure(file_path):
         import subprocess
         out = subprocess.run(
             ["mediainfo", "--Output=JSON", file_path],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True, encoding="utf-8", errors="replace", timeout=30,
         )
         data = json.loads(out.stdout)
         for t in data.get("media", {}).get("track", []):

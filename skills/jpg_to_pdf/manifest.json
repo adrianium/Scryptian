@@ -1,0 +1,15 @@
+{
+  "title": "JPG to PDF",
+  "description": "Convert an image to a PDF document (free & local)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "local",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": false,
+  "unit": "",
+  "price_per_unit": 0,
+  "input_type": [".jpg", ".jpeg", ".png", ".webp", ".bmp"],
+  "output_type": ".pdf"
+}

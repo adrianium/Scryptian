@@ -10,13 +10,22 @@ _on_selection_cb = None
 _running = False
 
 
-def _read_clipboard_file():
-    """Return the current clipboard file path (CF_HDROP), or None."""
-    from core.input import get_file
+def _read_clipboard_input():
+    """Return the clipboard file path (CF_HDROP) or a URL (text), else None."""
+    from core.input import get_input
     try:
-        return get_file()
+        result = get_input()
     except Exception:
         return None
+    if not result:
+        return None
+    if result.get("type") == "file":
+        return result.get("data")
+    if result.get("type") == "text":
+        data = (result.get("data") or "").strip()
+        if data.lower().startswith(("http://", "https://")):
+            return data
+    return None
 
 
 def _poll():
@@ -31,7 +40,7 @@ def _poll():
             seq = 0
         if seq != last_seq:
             last_seq = seq
-            path = _read_clipboard_file()
+            path = _read_clipboard_input()
             if path:
                 try:
                     pt = ctypes.wintypes.POINT()

@@ -1,0 +1,15 @@
+{
+  "title": "Compress PDF",
+  "description": "Compress a PDF to a smaller file (free & local)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "local",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "page",
+  "price_per_unit": 0,
+  "input_type": [".pdf"],
+  "output_type": ".pdf"
+}

@@ -1,0 +1,15 @@
+{
+  "title": "Remove Background (Video)",
+  "description": "Remove the background from a video (RVM, AI video matting)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "megapixel",
+  "price_per_unit": 200,
+  "input_type": [".mp4", ".mov", ".webm", ".mkv", ".m4v", ".avi"],
+  "output_type": ".mp4"
+}

@@ -69,7 +69,7 @@ class _ClipboardTextSource:
 
 # ── Resolver ─────────────────────────────────────────────────
 
-SOURCES = [_ClipboardFileSource()]
+SOURCES = [_ClipboardFileSource(), _ClipboardTextSource()]
 
 
 def get_input():
