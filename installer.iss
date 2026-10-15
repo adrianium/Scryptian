@@ -109,7 +109,7 @@ begin
   if CurUninstallStep = usPostUninstall then
   begin
     AppDataDir := ExpandConstant('{localappdata}\Scryptian');
-    if MsgBox('Remove all data including downloaded AI model?' + #13#10 + AppDataDir, mbConfirmation, MB_YESNO) = IDYES then
+    if MsgBox('Remove all data including actions?' + #13#10 + AppDataDir, mbConfirmation, MB_YESNO) = IDYES then
       DelTree(AppDataDir, True, True, True);
   end;
 end;

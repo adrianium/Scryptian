@@ -159,6 +159,16 @@
       color: var(--text-dim);
     }
 
+    .hero .hint a.vt {
+      color: #16a34a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .hero .hint a.vt:hover {
+      text-decoration: underline;
+    }
+
     /* Demo */
     .demo { padding: 0 0 90px; }
 
@@ -1024,7 +1034,8 @@
   <main>
     <section class="hero">
       <div class="container">
-        <h1>Any service.<br /><span class="accent"> One wallet.</span> <span class="accent">One hotkey.</span> Pay per result.</h1>
+        <h1>Use services without browser.<br /><span class="accent">One hotkey.</span> Any service.</h1>
+        <!-- <h1>Any service.<br /><span class="accent"> One wallet.</span> <span class="accent">One hotkey.</span> Pay per result.</h1> -->
         <p class="sub">
           Copy any file on your screen, press Ctrl+Alt, and transform it instantly with any service. No app switching.
         </p>
@@ -1032,7 +1043,7 @@
           <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/Scryptian/releases/download/v0.1.0/Scryptian_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"hero"}'>Download for Windows</a>
           <a class="btn btn-ghost btn-lg" href="https://actionstore.scryptian.com/" data-ph-event="browse_actions_clicked">Browse actions</a>
         </div>
-        <p class="hint">Free to download · Windows</p>
+        <p class="hint">Free to download · Windows · <a class="vt" href="https://www.virustotal.com/gui/file/bc6599df53535a60da2372e7bf78c476350e62f82d1e439e68a7e7415fffe533?nocache=1" target="_blank" rel="noopener" data-ph-event="virustotal_clicked">✓ Scanned by VirusTotal</a></p>
       </div>
     </section>
 
