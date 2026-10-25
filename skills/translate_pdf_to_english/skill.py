@@ -11,6 +11,19 @@ from urllib import request
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
+try:
+    import telemetry as _telemetry
+except Exception:
+    _telemetry = None
+
+
+def _report(detail):
+    if _telemetry is not None:
+        try:
+            _telemetry.report_skill_error("translate_pdf_to_english", detail)
+        except Exception:
+            pass
+
 _ENDPOINT = "https://translation.googleapis.com/v3/projects/{project}/locations/global:translateDocument"
 _TARGET_LANG = "en"
 _MIME_PDF = "application/pdf"
@@ -157,15 +170,17 @@ def run(text):
     """text: path to a PDF file to translate to English (Google Cloud Translation)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] File not found."
+        return "[Scryptian Error] Couldn't find this file. Copy it again and try."
     if os.path.splitext(file_path)[1].lower() != ".pdf":
-        return "[Scryptian Error] This skill accepts PDF files only."
+        return "[Scryptian Error] Please copy a PDF file."
     project_id = _project_id()
     if not project_id:
-        return "[Scryptian Error] Google project ID not set (GOOGLE_PROJECT_ID in .env or in the key file)."
+        _report("google project id not set")
+        return "[Scryptian Error] This action isn't set up yet. We're on it."
     token, err = _access_token()
     if err:
-        return f"[Scryptian Error] {err}"
+        _report(err)
+        return "[Scryptian Error] This action isn't set up yet. We're on it."
     base, _ = os.path.splitext(file_path)
     out_path = f"{base}_en.pdf"
     counter = 2
@@ -199,7 +214,8 @@ def run(text):
         doc = data.get("documentTranslation") or {}
         outputs = doc.get("byteStreamOutputs") or []
         if not outputs:
-            return "[Scryptian Error] Google returned no translated document."
+            _report("google returned no translated document")
+            return "[Scryptian Error] Couldn't translate this PDF. We're on it."
         with open(out_path, "wb") as f:
             f.write(base64.b64decode(outputs[0]))
         return f"[Scryptian File] {out_path}"
@@ -208,6 +224,8 @@ def run(text):
             detail = e.read().decode("utf-8", "replace")
         except Exception:
             detail = ""
-        return f"[Scryptian Error] {e.code} {detail[:300]}"
+        _report(f"HTTP {e.code} {detail[:300]}")
+        return "[Scryptian Error] Couldn't translate this PDF. We're on it."
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Something went wrong. We're on it."

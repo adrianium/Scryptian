@@ -6,9 +6,22 @@ import re
 import urllib.error
 import urllib.request
 
+try:
+    import telemetry as _telemetry
+except Exception:
+    _telemetry = None
+
 _API = "https://gendownload.com/api/extract"
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 _TARGET_QUALITY = 1080
+
+
+def _report(detail):
+    if _telemetry is not None:
+        try:
+            _telemetry.report_skill_error("download_video_from_web", detail)
+        except Exception:
+            pass
 
 
 def _extract(url):
@@ -46,7 +59,7 @@ def run(text):
     """text: a YouTube URL to download as MP4."""
     url = (text or "").strip().strip('"')
     if not url.lower().startswith(("http://", "https://")):
-        return "[Scryptian Error] Copy a YouTube link first (http/https URL)."
+        return "[Scryptian Error] Copy a video link first."
 
     out_dir = os.path.join(os.path.expanduser("~"), "Downloads", "Scryptian")
     os.makedirs(out_dir, exist_ok=True)
@@ -54,15 +67,18 @@ def run(text):
     try:
         data = _extract(url)
     except urllib.error.HTTPError as e:
-        return f"[Scryptian Error] Download service error: HTTP {e.code}"
+        _report(f"HTTP {e.code}")
+        return "[Scryptian Error] Couldn't download this link. Please copy a direct video link (not a playlist)."
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Couldn't download this link. We're on it."
 
     title = data.get("title") or "video"
     formats = data.get("formats") or []
     fmt = _pick_video_format(formats)
     if not fmt:
-        return "[Scryptian Error] No video format available."
+        _report("no video format")
+        return "[Scryptian Error] Couldn't download this link. We're on it."
 
     safe = re.sub(r'[\\/:*?"<>|]', "_", title).strip() or "video"
     ext = (fmt.get("ext") or "mp4").lower()
@@ -76,4 +92,5 @@ def run(text):
         _download(fmt["url"], out_path)
         return f"[Scryptian File] {out_path}"
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Couldn't save this file. We're on it."

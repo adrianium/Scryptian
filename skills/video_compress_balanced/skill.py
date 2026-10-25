@@ -5,6 +5,19 @@ import subprocess
 import sys
 import urllib.request
 
+try:
+    import telemetry as _telemetry
+except Exception:
+    _telemetry = None
+
+
+def _report(detail):
+    if _telemetry is not None:
+        try:
+            _telemetry.report_skill_error("video_compress_balanced", detail)
+        except Exception:
+            pass
+
 _VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".wmv", ".flv", ".mpeg", ".mpg", ".ts", ".3gp"}
 _CRF = "28"
 _PRESET = "medium"
@@ -55,10 +68,10 @@ def measure(file_path):
 def run(text):
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Video file not found."
+        return "[Scryptian Error] Couldn't find this video. Copy it again and try."
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in _VIDEO_EXTS:
-        return "[Scryptian Error] Unsupported video format."
+        return "[Scryptian Error] This video type isn't supported."
 
     base, _ = os.path.splitext(file_path)
     out_path = f"{base}_compressed_balanced.mp4"
@@ -76,12 +89,15 @@ def run(text):
         out_path,
     ]
     try:
-        result = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", timeout=14400)
+        result = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", timeout=14400, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except FileNotFoundError:
-        return "[Scryptian Error] ffmpeg not found. Place ffmpeg.exe in skills/_ffmpeg/ or install ffmpeg."
+        _report("ffmpeg not found")
+        return "[Scryptian Error] This action isn't set up yet. We're on it."
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Something went wrong. We're on it."
     if result.returncode != 0:
         err = (result.stderr or "").strip()[-400:]
-        return f"[Scryptian Error] ffmpeg failed: {err}"
+        _report(f"ffmpeg failed: {err}")
+        return "[Scryptian Error] Couldn't convert this video. We're on it."
     return f"[Scryptian File] {out_path}"

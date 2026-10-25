@@ -38,6 +38,9 @@ a = Analysis(
         # installer small.
         ('docs/assets/scryptian-notification.wav', 'docs/assets'),
         ('docs/assets/slippers.png', 'docs/assets'),
+        ('docs/assets/search.png', 'docs/assets'),
+        ('docs/assets/wish.png', 'docs/assets'),
+        ('docs/assets/store.png', 'docs/assets'),
         ('docs/assets/up-and-down.png', 'docs/assets'),
         ('docs/assets/support.png', 'docs/assets'),
         ('docs/assets/font', 'docs/assets/font'),

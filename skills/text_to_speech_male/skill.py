@@ -10,6 +10,19 @@ from urllib import request
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
+try:
+    import telemetry as _telemetry
+except Exception:
+    _telemetry = None
+
+
+def _report(detail):
+    if _telemetry is not None:
+        try:
+            _telemetry.report_skill_error("text_to_speech_male", detail)
+        except Exception:
+            pass
+
 _ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize"
 _SCOPE = "https://www.googleapis.com/auth/cloud-platform"
 _TOKEN_URI = "https://oauth2.googleapis.com/token"
@@ -131,14 +144,15 @@ def run(text):
     """text: path to a .txt file to convert to speech (Google Chirp 3 HD)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] File not found. Copy a .txt file first."
+        return "[Scryptian Error] Copy a .txt file first."
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read().strip()
     except Exception as e:
-        return f"[Scryptian Error] Could not read file: {e}"
+        _report(str(e))
+        return "[Scryptian Error] Couldn't read this file. We're on it."
     if not content:
-        return "[Scryptian Error] File is empty."
+        return "[Scryptian Error] This file is empty."
     out_dir = os.path.dirname(file_path)
     base_name = os.path.splitext(os.path.basename(file_path))[0]
     out_path = os.path.join(out_dir, f"{base_name}_tts_male.wav")
@@ -148,7 +162,8 @@ def run(text):
         counter += 1
     token, err = _access_token()
     if err:
-        return f"[Scryptian Error] {err}"
+        _report(err)
+        return "[Scryptian Error] This action isn't set up yet. We're on it."
     _load_env()
     voice = os.environ.get("GOOGLE_TTS_VOICE", "").strip() or _DEFAULT_VOICE
     lang = os.environ.get("GOOGLE_TTS_LANG", "").strip() or _DEFAULT_LANG
@@ -172,7 +187,8 @@ def run(text):
             data = json.loads(resp.read().decode("utf-8"))
         audio_b64 = data.get("audioContent", "")
         if not audio_b64:
-            return "[Scryptian Error] Google returned no audio."
+            _report("google returned no audio")
+            return "[Scryptian Error] Couldn't create this audio. We're on it."
         with open(out_path, "wb") as f:
             f.write(base64.b64decode(audio_b64))
         return f"[Scryptian File] {out_path}"
@@ -181,6 +197,8 @@ def run(text):
             detail = e.read().decode("utf-8", "replace")
         except Exception:
             detail = ""
-        return f"[Scryptian Error] {e.code} {detail[:300]}"
+        _report(f"HTTP {e.code} {detail[:300]}")
+        return "[Scryptian Error] Couldn't create this audio. We're on it."
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Something went wrong. We're on it."

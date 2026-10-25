@@ -135,3 +135,11 @@ def send(event: str, properties: dict = None):
                 time.sleep(5)  # Retry after 5s (network may not be ready)
 
     threading.Thread(target=_post, daemon=True).start()
+
+
+def report_skill_error(skill: str, detail: str):
+    """Report a raw (technical) skill error to PostHog for debugging.
+
+    The user-facing message is kept friendly; this carries the real cause.
+    """
+    send("skill_error", {"skill": skill, "detail": (str(detail) or "")[:500]})

@@ -10,6 +10,19 @@ import time
 import urllib.error
 from urllib import request
 
+try:
+    import telemetry as _telemetry
+except Exception:
+    _telemetry = None
+
+
+def _report(detail):
+    if _telemetry is not None:
+        try:
+            _telemetry.report_skill_error("remove_background_video", detail)
+        except Exception:
+            pass
+
 _MODEL = "arielreplicate/robust_video_matting"
 _MODEL_VERSION = "73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac"
 _PREDICT_URL = f"https://api.replicate.com/v1/models/{_MODEL}/versions/{_MODEL_VERSION}/predictions"
@@ -157,12 +170,13 @@ def run(text):
     """text: path to a video to remove the background from (Replicate RVM)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Video file not found."
+        return "[Scryptian Error] Couldn't find this video. Copy it again and try."
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in _VIDEO_MIME:
-        return "[Scryptian Error] Unsupported video format."
+        return "[Scryptian Error] This video type isn't supported."
     if not _api_key():
-        return "[Scryptian Error] Replicate token not set (REPLICATE_API_TOKEN in .env)."
+        _report("replicate token not set")
+        return "[Scryptian Error] This action isn't set up yet. We're on it."
 
     base, _ = os.path.splitext(file_path)
     out_path = f"{base}_green_screen.mp4"
@@ -175,12 +189,15 @@ def run(text):
         pred = _submit(_data_uri(file_path))
         pred_id = pred.get("id")
         if not pred_id:
-            return "[Scryptian Error] Replicate returned no prediction id."
+            _report("no prediction id")
+            return "[Scryptian Error] Couldn't process this video. We're on it."
         output_url, err = _poll(pred_id)
         if err:
-            return f"[Scryptian Error] {err}"
+            _report(err)
+            return "[Scryptian Error] Couldn't process this video. We're on it."
         if not output_url:
-            return "[Scryptian Error] Replicate returned no output."
+            _report("no output")
+            return "[Scryptian Error] Couldn't process this video. We're on it."
         _download(output_url, out_path)
         return f"[Scryptian File] {out_path}"
     except urllib.error.HTTPError as e:
@@ -188,6 +205,8 @@ def run(text):
             detail = e.read().decode("utf-8", "replace")
         except Exception:
             detail = ""
-        return f"[Scryptian Error] {e.code} {detail[:300]}"
+        _report(f"HTTP {e.code} {detail[:300]}")
+        return "[Scryptian Error] Couldn't process this video. We're on it."
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Something went wrong. We're on it."

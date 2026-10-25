@@ -106,22 +106,22 @@ def show_notify_popup(title, message, root=None, duration=5000, action=None):
         win.overrideredirect(True)
         win.attributes("-topmost", True)
         win.attributes("-alpha", 0.97)
-        win.configure(bg="#0e0e10")
+        win.configure(bg="#1a1a1e")
 
         w = 360
         wrap = w - 28
 
         tk.Label(win, text="Scryptian",
-                 bg="#0e0e10", fg="#3b82f6",
+                 bg="#1a1a1e", fg="#3b82f6",
                  font=("Manrope", 8, "bold")).place(x=14, y=10)
 
         tk.Label(win, text=title,
-                 bg="#0e0e10", fg="#efeff1",
+                 bg="#1a1a1e", fg="#f4f4f6",
                  font=("Manrope", 10, "bold"),
                  wraplength=wrap, justify="left").place(x=14, y=28)
 
         msg = tk.Label(win, text=message,
-                       bg="#0e0e10", fg="#adadb8",
+                       bg="#1a1a1e", fg="#9c9ca7",
                        font=("Manrope", 9),
                        wraplength=wrap, justify="left")
         msg.place(x=14, y=52)
@@ -144,7 +144,7 @@ def show_notify_popup(title, message, root=None, duration=5000, action=None):
             display = hotkey.replace("+", " + ").upper()
             hint_text = f"[{display}] {label}" if display else label
             tk.Label(win, text=hint_text,
-                     bg="#0e0e10", fg="#3b82f6",
+                     bg="#1a1a1e", fg="#3b82f6",
                      font=("Manrope", 9, "bold")).place(x=14, y=52 + msg_h + 6)
             action_h = 22
 
@@ -213,7 +213,7 @@ def show_update_popup(version, releases_url, root=None):
         win.overrideredirect(True)
         win.attributes("-topmost", True)
         win.attributes("-alpha", 0.97)
-        win.configure(bg="#0e0e10")
+        win.configure(bg="#1a1a1e")
 
         w, h = 300, 80
         wa = _get_work_area()
@@ -227,11 +227,11 @@ def show_update_popup(version, releases_url, root=None):
         win.geometry(f"{w}x{h}+{x}+{y}")
 
         tk.Label(win, text=f"Scryptian {version} is available",
-                 bg="#0e0e10", fg="#efeff1",
+                 bg="#1a1a1e", fg="#f4f4f6",
                  font=("Manrope", 10, "bold")).place(x=12, y=10)
 
         tk.Label(win, text="Click to update →",
-                 bg="#0e0e10", fg="#adadb8",
+                 bg="#1a1a1e", fg="#9c9ca7",
                  font=("Manrope", 9), cursor="hand2").place(x=12, y=34)
 
         def _open(e=None):

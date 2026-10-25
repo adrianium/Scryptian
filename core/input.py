@@ -8,12 +8,8 @@
 #   # → {"type": "text", "data": "hello world"}
 #   # → None
 
-import sys
 import pyperclip
-
-IS_WINDOWS = sys.platform == "win32"
-if IS_WINDOWS:
-    import ctypes
+import ctypes
 
 
 # ── Sources ──────────────────────────────────────────────────
@@ -22,8 +18,6 @@ class _ClipboardFileSource:
     """Files copied in Explorer (CF_HDROP)."""
 
     def fetch(self):
-        if not IS_WINDOWS:
-            return None
         try:
             user32 = ctypes.windll.user32
             shell32 = ctypes.windll.shell32

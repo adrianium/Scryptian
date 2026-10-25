@@ -6,6 +6,19 @@ import sys
 import urllib.request
 import zipfile
 
+try:
+    import telemetry as _telemetry
+except Exception:
+    _telemetry = None
+
+
+def _report(detail):
+    if _telemetry is not None:
+        try:
+            _telemetry.report_skill_error("pdf_to_jpg", detail)
+        except Exception:
+            pass
+
 _GHOSTSCRIPT_URL = "https://qvihfoeouvfveacexcol.supabase.co/storage/v1/object/public/actions/ghostscript.zip"
 _GS_DIR_NAME = "_ghostscript"
 _DPI = "300"
@@ -54,9 +67,9 @@ def run(text):
     """text: path to a PDF; renders each page to a JPG in its own folder."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] File not found."
+        return "[Scryptian Error] Couldn't find this file. Copy it again and try."
     if os.path.splitext(file_path)[1].lower() != ".pdf":
-        return "[Scryptian Error] This skill accepts PDF files only."
+        return "[Scryptian Error] Please copy a PDF file."
 
     base, _ = os.path.splitext(file_path)
     out_dir = f"{base}_pages"
@@ -78,16 +91,20 @@ def run(text):
         file_path,
     ]
     try:
-        result = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", timeout=14400)
+        result = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", timeout=14400, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except FileNotFoundError:
-        return "[Scryptian Error] Ghostscript not found. Place it in skills/_ghostscript/."
+        _report("ghostscript not found")
+        return "[Scryptian Error] This action isn't set up yet. We're on it."
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Something went wrong. We're on it."
     if result.returncode != 0:
         err = (result.stderr or result.stdout or "").strip()[-400:]
-        return f"[Scryptian Error] Ghostscript failed: {err}"
+        _report(f"ghostscript failed: {err}")
+        return "[Scryptian Error] Couldn't convert this PDF. We're on it."
 
     first = os.path.join(out_dir, "page_1.jpg")
     if os.path.exists(first):
         return f"[Scryptian File] {first}"
-    return "[Scryptian Error] No pages rendered."
+    _report("no pages rendered")
+    return "[Scryptian Error] Couldn't convert this PDF. We're on it."

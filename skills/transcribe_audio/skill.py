@@ -5,6 +5,19 @@ import time
 import urllib.error
 from urllib import request
 
+try:
+    import telemetry as _telemetry
+except Exception:
+    _telemetry = None
+
+
+def _report(detail):
+    if _telemetry is not None:
+        try:
+            _telemetry.report_skill_error("transcribe_audio", detail)
+        except Exception:
+            pass
+
 _UPLOAD_URL = "https://api.assemblyai.com/v2/upload"
 _TRANSCRIPT_URL = "https://api.assemblyai.com/v2/transcript"
 _MAX_POLL_SECONDS = 900
@@ -115,6 +128,7 @@ def measure(file_path):
         out = subprocess.run(
             ["mediainfo", "--Output=JSON", file_path],
             capture_output=True, encoding="utf-8", errors="replace", timeout=30,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
         data = json.loads(out.stdout)
         for t in data.get("media", {}).get("track", []):
@@ -131,18 +145,21 @@ def run(text):
     """
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Audio file not found."
+        return "[Scryptian Error] Couldn't find this audio. Copy it again and try."
     if not _api_key():
-        return "[Scryptian Error] AssemblyAI key not set (ASSEMBLYAI_KEY in .env)."
+        _report("assemblyai key not set")
+        return "[Scryptian Error] This action isn't set up yet. We're on it."
     try:
         upload_url = _upload(file_path)
         transcript_id = _submit(upload_url)
         data = _poll(transcript_id)
         if data.get("status") == "error":
-            return f"[Scryptian Error] {data.get('error', 'Transcription failed.')}"
+            _report(data.get("error", "transcription failed"))
+            return "[Scryptian Error] Couldn't transcribe this file. We're on it."
         result = _format(data)
         if not result:
-            return "[Scryptian Error] Empty transcript."
+            _report("empty transcript")
+            return "[Scryptian Error] Couldn't transcribe this file. We're on it."
         base, _ = os.path.splitext(file_path)
         out_path = f"{base}_transcript.txt"
         counter = 2
@@ -153,6 +170,8 @@ def run(text):
             f.write(result)
         return f"[Scryptian File] {out_path}"
     except urllib.error.HTTPError as e:
-        return f"[Scryptian Error] {e}"
+        _report(f"HTTP {e.code}")
+        return "[Scryptian Error] Couldn't transcribe this file. We're on it."
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Something went wrong. We're on it."

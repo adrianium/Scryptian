@@ -123,23 +123,33 @@
 
     /* Hero */
     .hero {
-      padding: 120px 0 80px;
+      padding: 28px 0 80px;
       text-align: center;
     }
 
     .hero h1 {
-      margin: 0 auto 24px;
+      margin: 0 auto 20px;
       max-width: 900px;
-      font-size: clamp(40px, 7vw, 76px);
-      line-height: 1.05;
-      letter-spacing: -2.5px;
+      font-size: clamp(28px, 4.5vw, 52px);
+      line-height: 1.1;
+      letter-spacing: -1.5px;
       font-weight: 800;
     }
 
     .hero h1 .accent { color: var(--accent); }
 
+    .hero-demo {
+      display: block;
+      margin: 0 auto 32px;
+      max-width: 560px;
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10);
+    }
+
     .hero .sub {
-      margin: 0 auto 40px;
+      margin: 0 auto 28px;
       max-width: 640px;
       font-size: 20px;
       line-height: 1.5;
@@ -225,17 +235,64 @@
     .how-try { margin-top: 32px; text-align: center; }
 
     /* Interactive demo */
+    .demo-head {
+      text-align: center;
+      padding: 44px 24px 36px;
+      background: #0f1d42;
+      border-radius: 20px 20px 0 0;
+      margin-bottom: 0;
+    }
+
+    .demo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .demo-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: demo-pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes demo-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .demo-head h2 {
+      margin: 14px 0 6px;
+      font-size: clamp(24px, 3.4vw, 36px);
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .demo-head p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 15px;
+    }
+
     .demo-frame {
       position: relative;
       min-height: 560px;
       background:
-        radial-gradient(1200px 620px at 82% -12%, rgba(56, 189, 248, 0.5), transparent 60%),
-        radial-gradient(900px 520px at -8% 112%, rgba(129, 140, 248, 0.55), transparent 55%),
-        linear-gradient(160deg, #0b1d4d 0%, #1d4ed8 55%, #2563eb 100%);
+        radial-gradient(1000px 520px at 50% -12%, rgba(59, 130, 246, 0.16), transparent 60%),
+        linear-gradient(180deg, #0f1d42 0%, #12254f 100%);
       border: 1px solid var(--border);
-      border-radius: 20px;
+      border-radius: 0 0 20px 20px;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 24px 60px rgba(15, 29, 66, 0.20);
       user-select: none;
     }
 
@@ -303,7 +360,7 @@
     }
     .desktop-icon .audio-badge {
       font-size: 22px;
-      color: #60a5fa;
+      color: #3b82f6;
     }
     .desktop-icon .desktop-icon-label {
       font-size: 12px;
@@ -325,9 +382,9 @@
       bottom: 56px;
       transform: translate(-50%, 120%);
       width: min(460px, calc(100% - 32px));
-      background: #18181b;
-      color: #efeff1;
-      border: 1px solid #2d2d33;
+      background: #1a1a1e;
+      color: #f4f4f6;
+      border: 1px solid #2b2b32;
       border-radius: 14px;
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
       padding: 10px;
@@ -352,14 +409,14 @@
     .bar-file .bar-file-name {
       font-size: 13px;
       font-weight: 600;
-      color: #efeff1;
+      color: #f4f4f6;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .bar-file .bar-file-meta {
       font-size: 11px;
-      color: #60a5fa;
+      color: #3b82f6;
       white-space: nowrap;
     }
     .bar-right {
@@ -375,29 +432,19 @@
     }
     .bar-hotkey {
       font-size: 10px;
-      color: #adadb8;
+      color: #9c9ca7;
     }
 
     .bar-input {
-      background: #1f1f23;
+      background: #24242b;
       border-radius: 7px;
       padding: 7px 10px;
       font-size: 13px;
-      color: #efeff1;
+      color: #f4f4f6;
       margin-bottom: 8px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-
-    .bar-price-hint {
-      background: #1f1f23;
-      border-radius: 7px;
-      padding: 5px 10px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #3b82f6;
-      margin-bottom: 8px;
     }
 
     .bar-actions {
@@ -408,26 +455,26 @@
       padding-right: 2px;
     }
     .bar-action.disabled { cursor: default; opacity: 0.55; }
-    .bar-action.disabled:hover { background: #18181b; }
-    .bar-action.disabled .action-title { color: #adadb8; }
-    .bar-action.disabled .action-price { color: #71717a; }
+    .bar-action.disabled:hover { background: #1a1a1e; }
+    .bar-action.disabled .action-title { color: #9c9ca7; }
+    .bar-action.disabled .action-price { color: #6e6e7a; }
 
     .bar-action {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      background: #18181b;
+      background: #1a1a1e;
       border-radius: 7px;
       padding: 7px 10px;
       cursor: pointer;
       transition: background 0.12s ease;
     }
-    .bar-action:hover { background: #2d2d33; }
+    .bar-action:hover { background: #2b2b32; }
     .bar-action .action-title {
       font-size: 13px;
       font-weight: 600;
-      color: #efeff1;
+      color: #f4f4f6;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -436,7 +483,7 @@
     .bar-action .action-price {
       font-size: 11px;
       font-weight: 700;
-      color: #60a5fa;
+      color: #3b82f6;
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -444,7 +491,7 @@
     .bar-status {
       margin-top: 8px;
       font-size: 12px;
-      color: #adadb8;
+      color: #9c9ca7;
       min-height: 16px;
       text-align: center;
     }
@@ -467,15 +514,15 @@
       gap: 4px;
       justify-items: center;
       font-size: 11px;
-      color: #adadb8;
+      color: #9c9ca7;
     }
     .res-thumb {
       width: 92px;
       height: 92px;
       border-radius: 8px;
       overflow: hidden;
-      border: 1px solid #2d2d33;
-      background: #1f1f23;
+      border: 1px solid #2b2b32;
+      background: #24242b;
       display: grid;
       place-items: center;
     }
@@ -496,8 +543,8 @@
     }
 
     .res-text {
-      background: #1f1f23;
-      border: 1px solid #2d2d33;
+      background: #24242b;
+      border: 1px solid #2b2b32;
       border-radius: 8px;
       padding: 10px 12px;
       font-size: 12px;
@@ -517,55 +564,13 @@
       width: 14px;
       height: 14px;
       border: 2px solid #3f3f46;
-      border-top-color: #60a5fa;
+      border-top-color: #3b82f6;
       border-radius: 50%;
       animation: scryptian-spin 0.7s linear infinite;
       vertical-align: -2px;
       margin-right: 7px;
     }
     @keyframes scryptian-spin { to { transform: rotate(360deg); } }
-
-    .bar-special {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-      margin-top: 8px;
-    }
-    .bar-special-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1px;
-      cursor: pointer;
-      padding: 5px 2px;
-      border-radius: 7px;
-      background: #1f1f23;
-      transition: background 0.12s ease;
-    }
-    .bar-special-btn:hover { background: #2d2d33; }
-    .bar-special-btn .s-icon {
-      display: grid;
-      place-items: center;
-      width: 18px;
-      height: 18px;
-      color: #d4d4d8;
-    }
-    .bar-special-btn .s-icon svg { width: 15px; height: 15px; }
-    .bar-special-btn .s-label { font-size: 9px; color: #efeff1; }
-    .bar-special-btn .s-hotkey { font-size: 8px; color: #71717a; }
-    .bar-special-btn.accent { background: #1e3a8a; }
-    .bar-special-btn.accent .s-icon { color: #fff; }
-    .bar-special-btn.accent:hover { background: #2563eb; }
-
-    .bar-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 8px;
-      padding: 0 4px;
-      font-size: 10px;
-      color: #adadb8;
-    }
 
     .bar-balance .balance-icon {
       display: inline-block;
@@ -582,16 +587,16 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      background: #1f1f23;
-      border: 1px solid #2d2d33;
+      background: #24242b;
+      border: 1px solid #2b2b32;
       border-radius: 8px;
       padding: 9px 12px;
       cursor: pointer;
     }
-    .result-file:hover { background: #2d2d33; }
+    .result-file:hover { background: #2b2b32; }
     .result-file .rf-icon { font-size: 17px; }
-    .result-file .rf-name { font-size: 13px; color: #efeff1; font-weight: 600; }
-    .result-file .rf-open { margin-left: auto; font-size: 11px; color: #60a5fa; }
+    .result-file .rf-name { font-size: 13px; color: #f4f4f6; font-weight: 600; }
+    .result-file .rf-open { margin-left: auto; font-size: 11px; color: #3b82f6; }
 
     .os-window {
       position: absolute;
@@ -599,8 +604,8 @@
       left: 50%;
       transform: translate(calc(-50% + var(--ox, 0px)), calc(-50% + var(--ox, 0px)));
       width: min(460px, calc(100% - 40px));
-      background: #18181b;
-      border: 1px solid #2d2d33;
+      background: #1a1a1e;
+      border: 1px solid #2b2b32;
       border-radius: 10px;
       box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
       z-index: 9;
@@ -616,18 +621,18 @@
       justify-content: space-between;
       height: 38px;
       padding: 0 10px 0 14px;
-      background: #1f1f23;
-      border-bottom: 1px solid #2d2d33;
+      background: #24242b;
+      border-bottom: 1px solid #2b2b32;
     }
     .os-title { font-size: 12px; color: #d4d4d8; font-weight: 600; }
     .os-close {
       cursor: pointer;
-      color: #71717a;
+      color: #6e6e7a;
       font-size: 15px;
       line-height: 1;
       padding: 4px;
     }
-    .os-close:hover { color: #efeff1; }
+    .os-close:hover { color: #f4f4f6; }
     .os-content { padding: 12px; }
     .os-content img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 6px; display: block; }
     .os-content video { width: 100%; max-height: 400px; object-fit: contain; border-radius: 6px; display: block; }
@@ -637,7 +642,7 @@
     .os-content .os-openlink {
       display: inline-block;
       margin-top: 10px;
-      color: #60a5fa;
+      color: #3b82f6;
       font-size: 13px;
       text-decoration: underline;
     }
@@ -655,33 +660,9 @@
       padding: 0 12px;
       background: rgba(10, 10, 14, 0.9);
       backdrop-filter: blur(8px);
-      color: #efeff1;
+      color: #f4f4f6;
       z-index: 4;
     }
-    .taskbar-start {
-      display: grid;
-      place-items: center;
-      width: 34px;
-      height: 34px;
-      border-radius: 6px;
-      font-size: 20px;
-      cursor: pointer;
-    }
-    .taskbar-start:hover { background: rgba(255, 255, 255, 0.12); }
-    .taskbar-pinned {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .taskbar-icon {
-      display: grid;
-      place-items: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .taskbar-icon:hover { background: rgba(255, 255, 255, 0.12); }
     .taskbar-clock {
       margin-left: auto;
       font-size: 12px;
@@ -697,7 +678,7 @@
       align-items: center;
       gap: 10px;
       background: rgba(10, 10, 14, 0.92);
-      color: #efeff1;
+      color: #f4f4f6;
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 999px;
       padding: 10px 16px;
@@ -709,7 +690,7 @@
     }
     .demo-hint.hidden { opacity: 0; pointer-events: none; }
     .demo-hint kbd {
-      background: #2d2d33;
+      background: #2b2b32;
       border: 1px solid #3f3f46;
       border-bottom-width: 2px;
       border-radius: 6px;
@@ -1023,8 +1004,8 @@
         <span class="brand-sub">.</span>
       </a>
       <nav class="nav">
-        <a href="#how-it-works">How it works</a>
-        <a href="#features">Features</a>
+        <!-- <a href="#how-it-works">How it works</a> -->
+        <!-- <a href="#features">Features</a> -->
         <a href="https://actionstore.scryptian.com/">Actions</a>
       </nav>
       <a class="btn btn-primary" href="https://github.com/adrianium/Scryptian/releases/download/v0.1.0/Scryptian_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"header"}'>Download</a>
@@ -1034,6 +1015,7 @@
   <main>
     <section class="hero">
       <div class="container">
+        <img class="hero-demo" src="main-demo.gif" alt="Scryptian in action" />
         <h1>Use services without browser.<br /><span class="accent">One hotkey.</span> Any service.</h1>
         <!-- <h1>Any service.<br /><span class="accent"> One wallet.</span> <span class="accent">One hotkey.</span> Pay per result.</h1> -->
         <p class="sub">
@@ -1047,13 +1029,13 @@
       </div>
     </section>
 
-    <section class="demo-gif">
+    <!-- <section class="demo-gif">
       <div class="container">
         <div class="gif-slot" id="gif-slot">
           <img src="upscale_image.gif" alt="Scryptian work demo" />
         </div>
       </div>
-    </section>
+    </section> -->
 
     <section class="demo-photo">
       <div class="container">
@@ -1089,14 +1071,19 @@
             <p>Pick an action and forget. New file will be save where the original one.</p>
           </div>
         </div>
-        <div class="how-try">
+        <!-- <div class="how-try">
           <a class="btn btn-ghost" href="#try">Try it live</a>
-        </div>
+        </div> -->
       </div>
     </section>
 
-<section class="demo" id="try">
+<!-- <section class="demo" id="try">
       <div class="container">
+        <div class="demo-head">
+          <span class="demo-badge"><span class="dot"></span>Live demo</span>
+          <h2>Try it yourself</h2>
+          <p>This is a working demo - click a file below.</p>
+        </div>
         <div class="demo-frame">
           <div class="desktop-icons">
             <div class="desktop-icon pos-tl selected" data-file="photo.jpg" data-kind="image">
@@ -1139,40 +1126,22 @@
 
             <div class="bar-input" id="bar-input">photo.jpg</div>
 
-            <div class="bar-price-hint">Copy a file to see its exact price</div>
-
             <div class="bar-actions" id="bar-actions"></div>
 
             <div class="bar-status" id="bar-status"></div>
             <div class="bar-result" id="bar-result"></div>
-
-            <div class="bar-special">
-              <div class="bar-special-btn"><span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10c.7.7 1 1.5 1 2h6c0-.5.3-1.3 1-2a6 6 0 0 0-4-10z"/></svg></span><span class="s-label">Wish Service Box</span><span class="s-hotkey">[Ctrl+1]</span></div>
-              <div class="bar-special-btn"><span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13a9 9 0 0 1 18 0"/><rect x="2" y="13" width="4" height="6" rx="1.5"/><rect x="18" y="13" width="4" height="6" rx="1.5"/><path d="M20 19a3 3 0 0 1-3 3h-3"/></svg></span><span class="s-label">I have a problem</span><span class="s-hotkey">[Ctrl+2]</span></div>
-              <div class="bar-special-btn accent"><span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span><span class="s-label">Actions Store</span><span class="s-hotkey">[Ctrl+3]</span></div>
-            </div>
-
-            <div class="bar-footer">
-              <span>Ctrl+Alt - hide</span>
-              <span>Enter - run action</span>
-            </div>
           </div>
 
           <div class="taskbar">
-            <span class="taskbar-start"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="6.5" height="6.5" rx="0.5" fill="#3b82f6"/><rect x="8.5" y="1" width="6.5" height="6.5" rx="0.5" fill="#3b82f6"/><rect x="1" y="8.5" width="6.5" height="6.5" rx="0.5" fill="#3b82f6"/><rect x="8.5" y="8.5" width="6.5" height="6.5" rx="0.5" fill="#3b82f6"/></svg></span>
-            <div class="taskbar-pinned">
-              <span class="taskbar-icon" title="Files"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" fill="#f59e0b"/></svg></span>
-              <span class="taskbar-icon" title="Browser"><svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#2563eb"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" stroke="#fff" stroke-width="1.4" fill="none"/></svg></span>
-              <span class="taskbar-icon" title="Terminal"><svg width="20" height="20" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="#18181b" stroke="#52525b"/><path d="M6 9l3 3-3 3M12 15h6" stroke="#e4e4e7" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-            </div>
             <span class="taskbar-clock" id="taskbar-clock"></span>
           </div>
 
           </div>
       </div>
-    </section>
+    </section> -->
 
     <script>
+      /*
       (function () {
         var bar = document.getElementById('scryptian-bar');
         var balanceEl = document.getElementById('balance');
@@ -1400,6 +1369,7 @@
         updateClock();
         setInterval(updateClock, 30000);
       })();
+      */
     </script>
 
     <section id="features">
@@ -1436,14 +1406,14 @@
           </div>
         </div>
 
-        <div class="feature">
+        <!-- <div class="feature">
           <div>
             <h3>Pay per result</h3>
             <p>Each service has a transparent per-result price. Use it once, pay once — nothing else.</p>
           </div>
           <div class="visual"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg></div>
         </div>
-      </div>
+      </div> -->
     </section>
 
     <section class="pricing" id="pricing">

@@ -64,7 +64,8 @@ class CurrencyPanel:
         self.bar.separator.pack_forget()
         self.bar.result_box.pack_forget()
         self.bar.hint_label.pack_forget()
-        self.bar.entry_shell.pack_forget()
+        self.bar.balance_frame.pack_forget()
+        self.bar.entry_border.pack_forget()
         self.bar.entry.config(state="disabled")
         self.root.bind_all("<BackSpace>", self._on_backspace, add="+")
         self._backspace_hotkey = keyboard.add_hotkey(
@@ -75,7 +76,7 @@ class CurrencyPanel:
 
         if self.frame:
             self.frame.destroy()
-        self.frame = tk.Frame(self.bar.container, bg="#0e0e10")
+        self.frame = tk.Frame(self.bar.container, bg="#1a1a1e")
         self.frame.pack(fill="both", expand=True, padx=12, pady=(0, 10))
 
         self._build_header()
@@ -114,50 +115,51 @@ class CurrencyPanel:
         self.bar.entry.delete(0, "end")
         self.bar.entry.insert(0, self.bar.placeholder_text)
         self.bar._placeholder_active = True
-        self.bar.entry.config(fg="#adadb8")
-        self.bar.entry_shell.pack(fill="x", padx=12, pady=8)
+        self.bar.entry.config(fg="#9c9ca7")
+        self.bar.balance_frame.pack(fill="x", padx=14, pady=(8, 0))
+        self.bar.entry_border.pack(fill="x", padx=14, pady=(8, 8))
         self.bar._update_filter("")
         self.bar.entry.focus_set()
         self.bar.root.after_idle(self.bar._restore_placeholder_cursor)
         self.bar.root.after(50, self.bar._restore_placeholder_cursor)
 
     def _build_header(self):
-        header = tk.Frame(self.frame, bg="#0e0e10")
+        header = tk.Frame(self.frame, bg="#1a1a1e")
         header.pack(fill="x", pady=(0, 8))
 
         tk.Label(header, text="Slippers", font=("Manrope", 13, "bold"),
-                 bg="#0e0e10", fg="#efeff1").pack(side="left")
+                 bg="#1a1a1e", fg="#f4f4f6").pack(side="left")
 
-        back_group = tk.Frame(header, bg="#0e0e10")
+        back_group = tk.Frame(header, bg="#1a1a1e")
         back_group.pack(side="right")
 
         back = tk.Label(back_group, text="← Back", font=("Manrope", 11),
-                        bg="#0e0e10", fg="#3b82f6", cursor="hand2")
+                        bg="#1a1a1e", fg="#3b82f6", cursor="hand2")
         back.pack(anchor="e")
         back.bind("<Button-1>", lambda e: self.close())
         back.bind("<Enter>", lambda e: back.config(fg="#60a5fa"))
         back.bind("<Leave>", lambda e: back.config(fg="#3b82f6"))
 
         back_hint = tk.Label(back_group, text="[ Backspace ]", font=("Manrope", 9),
-                             bg="#0e0e10", fg="#adadb8")
+                             bg="#1a1a1e", fg="#9c9ca7")
         back_hint.pack(anchor="e")
 
     def _build_body(self):
-        body = tk.Frame(self.frame, bg="#0e0e10")
+        body = tk.Frame(self.frame, bg="#1a1a1e")
         body.pack(fill="both", expand=True)
 
-        card = tk.Frame(body, bg="#18181b", padx=20, pady=20,
-                        highlightthickness=1, highlightbackground="#2d2d33")
+        card = tk.Frame(body, bg="#1a1a1e", padx=20, pady=20,
+                        highlightthickness=1, highlightbackground="#2a2a31")
         card.pack(fill="x", pady=(10, 16))
 
         tk.Label(card, text="Your balance", font=("Manrope", 11),
-                 bg="#18181b", fg="#adadb8").pack(anchor="w")
+                 bg="#1a1a1e", fg="#9c9ca7").pack(anchor="w")
 
-        balance_row = tk.Frame(card, bg="#18181b")
+        balance_row = tk.Frame(card, bg="#1a1a1e")
         balance_row.pack(anchor="w", pady=(4, 0))
 
         self.balance_icon = tk.Label(balance_row, text="🩴", font=("Segoe UI Emoji", 22),
-                                     bg="#18181b", fg="#3b82f6")
+                                     bg="#1a1a1e", fg="#3b82f6")
         self.balance_icon.pack(side="left", padx=(0, 8))
         self.balance_photo = None
         try:
@@ -176,11 +178,11 @@ class CurrencyPanel:
             pass
 
         self.balance_value = tk.Label(balance_row, text="—", font=("Manrope", 26, "bold"),
-                                      bg="#18181b", fg="#efeff1")
+                                      bg="#1a1a1e", fg="#f4f4f6")
         self.balance_value.pack(side="left")
 
         rate = tk.Label(body, text=RATE_TEXT, font=("Manrope", 11),
-                        bg="#0e0e10", fg="#adadb8")
+                        bg="#1a1a1e", fg="#9c9ca7")
         rate.pack(pady=(0, 10))
 
         
@@ -190,21 +192,21 @@ class CurrencyPanel:
                 body,
                 text=f"{amount}  →  {credits}",
                 font=("Manrope", 12, "bold"),
-                bg="#18181b", fg="#efeff1",
+                bg="#1a1a1e", fg="#f4f4f6",
                 padx=12, pady=10, cursor="hand2",
-                highlightthickness=1, highlightbackground="#2d2d33",
+                highlightthickness=1, highlightbackground="#2a2a31",
             )
             btn.pack(fill="x", pady=3)
             btn.bind("<Button-1>", lambda e, pid=price_id, amt=amount: self._buy(pid, amt))
-            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#1e3a8a"))
-            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#18181b"))
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2b2b32"))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#1a1a1e"))
 
         self.buy_status = tk.Label(body, text="", font=("Manrope", 10),
-                                   bg="#0e0e10", fg="#adadb8", wraplength=600, justify="center")
+                                   bg="#1a1a1e", fg="#9c9ca7", wraplength=600, justify="center")
         self.buy_status.pack(fill="x", pady=(10, 0))
 
         info = tk.Label(body, text=PAY_PER_OUTCOME_TEXT, font=("Manrope", 10),
-                        bg="#0e0e10", fg="#71717a", wraplength=600, justify="left")
+                        bg="#1a1a1e", fg="#6e6e7a", wraplength=600, justify="left")
         info.pack(fill="x", pady=(14, 0))
 
         self._set_balance(wallet.cached_balance())

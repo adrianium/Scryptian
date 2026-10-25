@@ -9,6 +9,19 @@ import time
 import urllib.error
 from urllib import request
 
+try:
+    import telemetry as _telemetry
+except Exception:
+    _telemetry = None
+
+
+def _report(detail):
+    if _telemetry is not None:
+        try:
+            _telemetry.report_skill_error("video_upscale", detail)
+        except Exception:
+            pass
+
 _UPLOAD_INIT = "https://rest.alpha.fal.ai/storage/upload/initiate"
 _QUEUE_BASE = "https://queue.fal.run"
 _ENDPOINT = "fal-ai/video-upscaler"
@@ -165,6 +178,7 @@ def _video_meta(file_path):
         out = subprocess.run(
             ["mediainfo", "--Output=JSON", file_path],
             capture_output=True, encoding="utf-8", errors="replace", timeout=30,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
         data = json.loads(out.stdout)
         w = h = fps = frames = dur = None
@@ -209,12 +223,13 @@ def run(text):
     """text: path to a video file to upscale 2x (fal.ai RealESRGAN)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Video file not found."
+        return "[Scryptian Error] Couldn't find this video. Copy it again and try."
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in _VIDEO_EXTS:
-        return "[Scryptian Error] Unsupported video format."
+        return "[Scryptian Error] This video type isn't supported."
     if not _api_key():
-        return "[Scryptian Error] fal.ai key not set (FAL_KEY in .env)."
+        _report("fal key not set")
+        return "[Scryptian Error] This action isn't set up yet. We're on it."
 
     filename = os.path.basename(file_path)
     base, _ = os.path.splitext(file_path)
@@ -231,11 +246,13 @@ def run(text):
         print("[Upscale] Job submitted.")
         result, err = _poll(submit_data)
         if err:
-            return f"[Scryptian Error] {err}"
+            _report(err)
+            return "[Scryptian Error] Couldn't process this video. We're on it."
         video = (result or {}).get("video") or {}
         output_url = video.get("url")
         if not output_url:
-            return "[Scryptian Error] fal.ai returned no video URL."
+            _report("no video url")
+            return "[Scryptian Error] Couldn't process this video. We're on it."
         _download(output_url, out_path)
         return f"[Scryptian File] {out_path}"
     except urllib.error.HTTPError as e:
@@ -243,6 +260,8 @@ def run(text):
             detail = e.read().decode("utf-8", "replace")
         except Exception:
             detail = ""
-        return f"[Scryptian Error] {e.code} {detail[:300]}"
+        _report(f"HTTP {e.code} {detail[:300]}")
+        return "[Scryptian Error] Couldn't process this video. We're on it."
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Something went wrong. We're on it."

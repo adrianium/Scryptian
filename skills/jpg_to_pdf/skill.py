@@ -4,6 +4,19 @@ import os
 
 from PIL import Image
 
+try:
+    import telemetry as _telemetry
+except Exception:
+    _telemetry = None
+
+
+def _report(detail):
+    if _telemetry is not None:
+        try:
+            _telemetry.report_skill_error("jpg_to_pdf", detail)
+        except Exception:
+            pass
+
 _INPUT_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 
@@ -16,10 +29,10 @@ def run(text):
     """text: path to an image to convert into a PDF document."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] File not found."
+        return "[Scryptian Error] Couldn't find this image. Copy it again and try."
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in _INPUT_EXTS:
-        return "[Scryptian Error] Unsupported image format."
+        return "[Scryptian Error] This image type isn't supported."
 
     base, _ = os.path.splitext(file_path)
     out_path = f"{base}.pdf"
@@ -35,4 +48,5 @@ def run(text):
         img.save(out_path, "PDF", resolution=150)
         return f"[Scryptian File] {out_path}"
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        _report(str(e))
+        return "[Scryptian Error] Couldn't convert this image. We're on it."

@@ -5,12 +5,9 @@
 # then extracts only the domain. No site keyword list, no raw titles sent.
 
 import os
-import sys
 import ctypes
 from ctypes import wintypes
 from urllib.parse import urlparse
-
-IS_WINDOWS = sys.platform == "win32"
 
 # ── WinAPI helpers ──────────────────────────────────────────────
 
@@ -40,8 +37,6 @@ def get_source_window():
     Uses GetGUIThreadInfo -> hwndFocus -> GetAncestor(GA_ROOT), which follows
     the real focus instead of relying only on GetForegroundWindow().
     """
-    if not IS_WINDOWS:
-        return None
     try:
         fg = ctypes.windll.user32.GetForegroundWindow()
         if not fg:
@@ -241,7 +236,7 @@ def get_source_info(hwnd):
     "youtube.com"), read from the address bar. No keyword list, no raw titles.
     """
     result = {"source_app": "unknown"}
-    if not IS_WINDOWS or not hwnd:
+    if not hwnd:
         return result
     exe = _get_exe(hwnd)
     if not exe:
