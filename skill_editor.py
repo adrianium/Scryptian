@@ -3,14 +3,25 @@ import os
 import re
 import tkinter as tk
 from tkinter import messagebox
+import ctypes
 
-BG = "#1e1e2e"
-BG2 = "#313244"
-FG = "#cdd6f4"
-FG_DIM = "#6c7086"
-ACCENT = "#89b4fa"
-FONT = ("Manrope", 10)
-FONT_SM = ("Manrope", 9)
+def _round_corners(win):
+    try:
+        win.update_idletasks()
+        hwnd = ctypes.windll.user32.GetAncestor(win.winfo_id(), 2)
+        pref = ctypes.c_int(2)
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(pref), ctypes.sizeof(pref))
+    except Exception:
+        pass
+
+
+BG = "#202020"
+BG2 = "#2B2B2B"
+FG = "#FFFFFF"
+FG_DIM = "#9A9A9A"
+ACCENT = "#60CDFF"
+FONT = ("Segoe UI Variable", 12)
+FONT_SM = ("Segoe UI Variable", 11)
 
 _TEMPLATE = '''\
 # @title: {title}
@@ -42,6 +53,7 @@ def open_editor(root, skills_dir, on_saved=None, skill=None):
     dlg.resizable(False, False)
     dlg.attributes("-topmost", True)
     dlg.grab_set()
+    _round_corners(dlg)
 
     pad = {"padx": 12, "pady": 4}
 

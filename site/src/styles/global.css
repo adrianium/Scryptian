@@ -1,18 +1,25 @@
 :root {
-  --bg: #0e0e10;
-  --surface: #18181b;
-  --surface-2: #1f1f23;
-  --border: #2d2d33;
-  --border-strong: #3f3f46;
-  --text: #efeff1;
-  --text-dim: #adadb8;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.25);
-  --radius: 12px;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --bg: #0E171C;
+  --surface: #1A2328;
+  --surface-2: #1A2328;
+  --border: #2A3439;
+  --border-strong: #2A3439;
+  --text: #f5f5f5;
+  --text-dim: #8a8a8a;
+  --accent: #2536eb;
+  --accent-hover: #3a48f0;
+  --accent-soft: rgba(37, 54, 235, 0.14);
+  --radius: 8px;
+  --shadow-sm: none;
+  --shadow-md: none;
   --maxw: 1120px;
+  --fs-hero: clamp(40px, 4.8vw, 60px);
+  --fs-title: clamp(28px, 3vw, 40px);
+  --fs-h3: 24px;
+  --fs-step: 18px;
+  --fs-body: 17px;
+  --fs-btn: 16px;
+  --fs-small: 14px;
 }
 
 * {
@@ -27,8 +34,9 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
-  line-height: 1.55;
+  font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -46,34 +54,41 @@ a {
 
 /* ── Header (white zone) ── */
 .site-header {
-  background: var(--surface);
+  background: var(--bg);
   position: sticky;
   top: 0;
   z-index: 10;
+  border-bottom: 0;
 }
 
 .site-header .container {
   display: flex;
   align-items: center;
-  gap: 24px;
-  height: 68px;
+  gap: 28px;
+  height: 56px;
 }
 
 .brand {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-family: "Space Grotesk", "Manrope", sans-serif;
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  align-items: center;
+  gap: 9px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.01em;
   color: var(--text);
   flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.brand-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: block;
 }
 
 .brand:hover {
-  text-decoration: underline;
+  color: #fff;
 }
 
 .brand .brand-sub {
@@ -83,9 +98,11 @@ a {
 .nav {
   display: flex;
   align-items: center;
-  gap: 28px;
-  font-size: 14px;
-  color: var(--text-dim);
+  gap: 22px;
+  margin-left: auto;
+  font-size: var(--fs-small);
+  font-weight: 400;
+  color: #edecec;
   flex-shrink: 0;
 }
 
@@ -103,27 +120,25 @@ a {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
+  border: none;
+  border-radius: 8px;
   overflow: hidden;
   background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: none;
 }
 
 .header-search:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  background: #243038;
 }
 
 .header-search input {
   flex: 1;
   min-width: 0;
-  height: 44px;
-  padding: 0 16px;
+  height: 36px;
+  padding: 0 14px;
   border: none;
   outline: none;
-  font-size: 14px;
+  font-size: var(--fs-small);
   font-family: inherit;
   color: var(--text);
   background: transparent;
@@ -134,8 +149,8 @@ a {
 }
 
 .header-search .search-btn {
-  height: 44px;
-  width: 52px;
+  height: 36px;
+  width: 40px;
   display: grid;
   place-items: center;
   border: none;
@@ -163,14 +178,15 @@ a {
 
 .catalog-head h2 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
+  font-size: var(--fs-h3);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
 }
 
 .catalog-head .count {
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: var(--fs-small);
 }
 
 .grid {
@@ -203,9 +219,9 @@ a {
 }
 
 .card-title {
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.2px;
+  font-size: var(--fs-step);
+  font-weight: 500;
+  letter-spacing: -0.4px;
   line-height: 1.35;
   color: var(--text);
   transition: color 0.15s ease;
@@ -217,23 +233,23 @@ a {
 
 .card .by {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
 .card .by a {
-  color: var(--accent);
+  color: #2536eb;
   transition: color 0.15s ease;
 }
 
 .card .by a:hover {
-  color: var(--accent-hover);
+  color: #3a48f0;
 }
 
 .card .desc {
   margin: 0;
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: var(--fs-body);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -244,7 +260,7 @@ a {
 
 .card .stats {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -252,12 +268,12 @@ a {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 .card .meta .price {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: var(--fs-body);
+  font-weight: 500;
   color: var(--text);
 }
 
@@ -265,24 +281,17 @@ a {
   color: var(--text-dim);
 }
 
-.card-btn {
-  display: flex;
+.card-link {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  height: 36px;
-  padding: 0 20px;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: var(--accent);
-  transition: background 0.15s ease, border-color 0.15s ease;
+  gap: 6px;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: #2536eb;
 }
 
-.card-btn:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+.card-link:hover {
+  color: #3a48f0;
 }
 
 /* ── Landing page ── */
@@ -296,15 +305,15 @@ a {
 
 .landing-head h1 {
   margin: 0 0 12px;
-  font-size: clamp(28px, 4vw, 40px);
-  line-height: 1.15;
+  font-size: var(--fs-hero);
+  line-height: 1.1;
   letter-spacing: -1px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .landing-head .tagline {
   color: var(--text-dim);
-  font-size: 17px;
+  font-size: var(--fs-body);
   max-width: 720px;
   margin: 0;
 }
@@ -324,15 +333,15 @@ a {
 
 .panel {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius);
   padding: 24px;
 }
 
 .panel-title {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
+  font-size: var(--fs-h3);
+  font-weight: 500;
+  letter-spacing: -0.4px;
   margin: 0 0 14px;
   color: var(--text);
 }
@@ -351,51 +360,49 @@ a {
 }
 
 .price-row .price {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--fs-body);
+  font-weight: 500;
   letter-spacing: -0.2px;
 }
 
 .price-row .mode {
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 .install-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  padding: 0 20px;
-  background: var(--accent);
+  height: 44px;
+  padding: 0 22px;
+  background: #2536eb;
   color: #fff;
-  font-weight: 600;
-  border-radius: 8px;
-  font-size: 14px;
+  font-weight: 500;
+  border-radius: 999px;
+  font-size: var(--fs-btn);
   white-space: nowrap;
-  border: 1px solid var(--accent);
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  border: none;
+  transition: background 0.15s ease;
 }
 
 .install-btn:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: #3a48f0;
 }
 
 .install-btn.secondary {
-  background: transparent;
-  color: var(--text);
-  border-color: var(--border-strong);
+  background: #2b2b2b;
+  color: #f2f2f2;
+  border: none;
 }
 
 .install-btn.secondary:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: transparent;
+  background: #3a3a3a;
+  color: #fff;
 }
 
 .what-is {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--accent);
   text-align: center;
   transition: color 0.15s ease;
@@ -424,8 +431,8 @@ a {
   padding: 12px 14px;
   border: 1.5px dashed var(--accent);
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--fs-btn);
+  font-weight: 500;
   color: var(--text);
   background: var(--accent-soft);
   text-align: center;
@@ -438,7 +445,7 @@ a {
 }
 
 .pc-file:hover .pc-file-label {
-  background: rgba(37, 99, 235, 0.35);
+  background: rgba(37, 54, 235, 0.22);
   border-color: var(--accent-hover);
 }
 
@@ -448,8 +455,8 @@ a {
 
 .pc-result {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--fs-body);
+  font-weight: 500;
   color: var(--text);
   text-align: center;
 }
@@ -457,7 +464,7 @@ a {
 /* Download bonus hint */
 .bonus-hint {
   margin: -4px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
   text-align: center;
 }
@@ -471,7 +478,7 @@ a {
 }
 
 .tag {
-  font-size: 14px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -486,7 +493,7 @@ a {
 }
 
 .card-tags .tag {
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 /* Specs */
@@ -513,16 +520,16 @@ a {
 }
 
 .spec .label {
-  font-size: 12px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .spec .value {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--fs-body);
+  font-weight: 500;
   color: var(--text);
   text-align: right;
 }
@@ -547,7 +554,7 @@ a {
   place-items: center;
   height: 100%;
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: var(--fs-small);
 }
 
 /* Features */
@@ -563,7 +570,7 @@ a {
   position: relative;
   padding-left: 24px;
   color: var(--text-dim);
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 
 .feature-list li::before {
@@ -580,7 +587,7 @@ a {
 /* Prose */
 .prose {
   color: var(--text-dim);
-  font-size: 16px;
+  font-size: var(--fs-body);
 }
 
 .prose p {
@@ -594,16 +601,16 @@ a {
 /* ── How it works ── */
 .how-it-works {
   background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  padding: 40px 0;
+  padding: 72px 0;
 }
 
 .how-title {
-  margin: 0 0 24px;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
+  margin: 0 0 48px;
+  max-width: 36rem;
+  font-size: var(--fs-title);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -1px;
 }
 
 .how-steps {
@@ -623,37 +630,37 @@ a {
 
 .how-num {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-btn);
+  font-weight: 600;
 }
 
 .how-step h3 {
-  margin: 0 0 4px;
-  font-size: 15px;
-  font-weight: 700;
+  margin: 0 0 8px;
+  font-size: var(--fs-step);
+  font-weight: 500;
   color: var(--text);
 }
 
 .how-step p {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-body);
   color: var(--text-dim);
 }
 
 /* ── Footer (light-gray zone) ── */
 .site-footer {
-  background: var(--surface-2);
+  background: var(--bg);
   border-top: 1px solid var(--border);
-  padding: 28px 0;
+  padding: 32px 0;
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: var(--fs-small);
 }
 
 .site-footer .container {

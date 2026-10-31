@@ -55,10 +55,13 @@ def idle_seconds() -> float:
 
 
 def find_setup_url(assets):
-    """Pick the installer download URL from a GitHub release's assets list."""
+    """Pick the full Inno installer from a GitHub release's assets list.
+
+    Matches only Scryptian_Setup.exe. The website stub is ScryptianSetup.exe
+    and must never be chosen here, or auto-update would install the stub.
+    """
     for a in assets or []:
-        name = (a.get("name") or "").lower()
-        if name == SETUP_ASSET.lower() or (name.endswith(".exe") and "setup" in name):
+        if (a.get("name") or "") == SETUP_ASSET:
             return a.get("browser_download_url")
     return None
 

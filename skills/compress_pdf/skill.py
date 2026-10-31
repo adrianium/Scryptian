@@ -28,7 +28,11 @@ def _ensure_gs():
     """Return gswin64c.exe path, downloading & extracting Ghostscript on first use."""
     skill_dir = os.path.dirname(os.path.abspath(__file__))
     skills_root = os.path.dirname(skill_dir)
-    gs_dir = os.path.join(skills_root, _GS_DIR_NAME)
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        app_root = os.path.dirname(sys._MEIPASS)
+    else:
+        app_root = os.path.dirname(skills_root)
+    gs_dir = os.path.join(app_root, "runtimes", "ghostscript")
     gs_exe = os.path.join(gs_dir, "bin", "gswin64c.exe")
 
     if os.path.exists(gs_exe):

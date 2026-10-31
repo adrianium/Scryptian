@@ -2,8 +2,6 @@
 
 import os
 import subprocess
-import sys
-import urllib.request
 
 try:
     import telemetry as _telemetry
@@ -23,31 +21,11 @@ _CRF = "23"
 _PRESET = "medium"
 
 
-_FFMPEG_URL = "https://qvihfoeouvfveacexcol.supabase.co/storage/v1/object/public/actions/ffmpeg.exe"
-
-
 def _ensure_ffmpeg():
-    """Return ffmpeg.exe path, downloading it on first use from Supabase Storage."""
-    skill_dir = os.path.dirname(os.path.abspath(__file__))
-    shared_dir = os.path.join(os.path.dirname(skill_dir), "_ffmpeg")
-    ffmpeg_path = os.path.join(shared_dir, "ffmpeg.exe")
-
-    if os.path.exists(ffmpeg_path):
-        return ffmpeg_path
-
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        bundled = os.path.join(sys._MEIPASS, "ffmpeg.exe")
-        if os.path.exists(bundled):
-            return bundled
-
+    """Return essentials ffmpeg.exe from runtimes/ffmpeg, downloading it if needed."""
     try:
-        os.makedirs(shared_dir, exist_ok=True)
-        tmp = ffmpeg_path + ".part"
-        req = urllib.request.Request(_FFMPEG_URL, headers={"User-Agent": "Scryptian"})
-        with urllib.request.urlopen(req, timeout=600) as resp, open(tmp, "wb") as f:
-            f.write(resp.read())
-        os.replace(tmp, ffmpeg_path)
-        return ffmpeg_path
+        import runtime_bins
+        return runtime_bins.ensure_ffmpeg()
     except Exception:
         return "ffmpeg"
 

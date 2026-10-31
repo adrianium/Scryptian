@@ -8,6 +8,7 @@ import source_detect
 
 _on_selection_cb = None
 _running = False
+# _last_path = None  # dedup disabled (caused re-copy of same file to be ignored)
 
 
 def _read_clipboard_input():
@@ -29,6 +30,7 @@ def _read_clipboard_input():
 
 
 def _poll():
+    # global _last_path  # dedup disabled
     try:
         last_seq = ctypes.windll.user32.GetClipboardSequenceNumber()
     except Exception:

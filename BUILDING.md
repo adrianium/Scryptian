@@ -45,6 +45,21 @@ Install [Inno Setup 6](https://jrsoftware.org/isdl.php), then:
 
 Output: `dist/Scryptian_Setup.exe`
 
+This full installer is what auto-update downloads. Do not rename it.
+
+## 6. Build the Chrome-style stub (website download)
+
+```bash
+pyinstaller stub.spec --noconfirm
+```
+
+Output: `dist/ScryptianSetup.exe`
+
+This is the small file the website should offer. It shows a download window, silently runs `Scryptian_Setup.exe`, then launches the real app. Upload **both** assets to the GitHub release:
+
+- `ScryptianSetup.exe` — website / first-time download
+- `Scryptian_Setup.exe` — auto-update (name must stay exact)
+
 ## Notes
 
 - The LLM runs in the cloud (OpenRouter via a Cloudflare Worker) — no local model download needed

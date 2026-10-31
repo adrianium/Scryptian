@@ -9,19 +9,24 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #ffffff;
-      --bg-soft: #f7f8fa;
-      --text: #0e0e10;
-      --text-dim: #5b5b66;
+      --bg: #0E171C;
+      --bg-soft: #1A2328;
+      --surface: #1A2328;
+      --text: #f5f5f5;
+      --text-dim: #8a8a8a;
       --accent: #2563eb;
       --accent-hover: #1d4ed8;
-      --accent-soft: rgba(37, 99, 235, 0.08);
-      --border: #e7e8ec;
-      --radius: 16px;
+      --accent-soft: rgba(37, 99, 235, 0.14);
+      --border: #2A3439;
+      --radius: 8px;
       --maxw: 1120px;
+      --fs-hero: clamp(40px, 4.8vw, 60px);
+      --fs-title: clamp(28px, 3vw, 40px);
+      --fs-body: 17px;
+      --fs-small: 14px;
     }
 
     * { box-sizing: border-box; }
@@ -32,8 +37,9 @@
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
-      line-height: 1.6;
+      font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+      font-size: var(--fs-body);
+      line-height: 1.5;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
@@ -51,43 +57,65 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      border-bottom: 0;
     }
 
     .site-header .container {
       display: flex;
       align-items: center;
       gap: 28px;
-      height: 68px;
+      height: 56px;
+    }
+
+    .site-header .btn {
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 500;
+      background: #2536eb;
+      color: #fff;
+      border: none;
+      box-shadow: none;
+    }
+    .site-header .btn:hover {
+      background: #3a48f0;
+      color: #fff;
+      border: none;
+      box-shadow: none;
     }
 
     .brand {
       display: flex;
-      align-items: baseline;
-      gap: 8px;
-      font-family: "Space Grotesk", "Manrope", sans-serif;
-      font-weight: 700;
-      font-size: 20px;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
+      align-items: center;
+      gap: 9px;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.01em;
       flex-shrink: 0;
     }
 
-    .brand .brand-sub { color: var(--accent); }
+    .brand-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: block;
+    }
 
     .nav {
       display: flex;
       align-items: center;
-      gap: 28px;
+      gap: 22px;
       font-size: 14px;
-      color: var(--text-dim);
+      font-weight: 400;
+      color: #edecec;
       margin-left: auto;
     }
 
     .nav a { transition: color 0.15s ease; }
-    .nav a:hover { color: var(--text); }
+    .nav a:hover { color: #fff; }
 
     .btn {
       display: inline-flex;
@@ -95,22 +123,29 @@
       justify-content: center;
       height: 44px;
       padding: 0 22px;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 600;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 500;
       border: 1px solid transparent;
       cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
       white-space: nowrap;
     }
 
     .btn:active { transform: translateY(1px); }
 
     .btn-primary {
-      background: var(--accent);
+      background: #2536eb;
       color: #fff;
+      border: none;
+      box-shadow: none;
     }
-    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:hover {
+      background: #3a48f0;
+      color: #fff;
+      border: none;
+      box-shadow: none;
+    }
 
     .btn-ghost {
       background: transparent;
@@ -119,47 +154,56 @@
     }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-    .btn-lg { height: 52px; padding: 0 30px; font-size: 16px; }
+    .btn-secondary {
+      background: #2b2b2b;
+      color: #f2f2f2;
+      border-color: transparent;
+    }
+    .btn-secondary:hover {
+      background: #3a3a3a;
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .btn-lg { height: 44px; padding: 0 22px; font-size: 16px; }
 
     /* Hero */
     .hero {
-      padding: 28px 0 80px;
-      text-align: center;
+      padding: 36px 0 72px;
+      text-align: left;
     }
 
     .hero h1 {
-      margin: 0 auto 20px;
-      max-width: 900px;
-      font-size: clamp(28px, 4.5vw, 52px);
-      line-height: 1.1;
+      margin: 0 0 16px;
+      max-width: 18em;
+      font-size: var(--fs-hero);
+      line-height: 1.05;
       letter-spacing: -1.5px;
-      font-weight: 800;
+      font-weight: 500;
     }
 
     .hero h1 .accent { color: var(--accent); }
 
     .hero-demo {
       display: block;
-      margin: 0 auto 32px;
-      max-width: 560px;
       width: 100%;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10);
+      margin: 48px 0 0;
+      border-radius: 8px;
+      border: none;
     }
 
     .hero .sub {
-      margin: 0 auto 28px;
-      max-width: 640px;
-      font-size: 20px;
+      margin: 0 0 22px;
+      max-width: 36rem;
+      font-size: var(--fs-body);
       line-height: 1.5;
       color: var(--text-dim);
     }
 
     .hero .actions {
       display: flex;
-      gap: 14px;
-      justify-content: center;
+      gap: 10px;
+      justify-content: flex-start;
       flex-wrap: wrap;
     }
 
@@ -184,8 +228,8 @@
 
     .demo-frame {
       background: var(--bg-soft);
-      border: 1px solid var(--border);
-      border-radius: 20px;
+      border: none;
+      border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
     }
@@ -209,7 +253,7 @@
     .gif-slot {
       max-width: 900px;
       margin: 0 auto;
-      border-radius: 20px;
+      border-radius: 8px;
       overflow: hidden;
     }
     .gif-slot img {
@@ -218,11 +262,11 @@
       height: auto;
     }
 
-    .demo-photo { padding: 40px 0 0; }
+    .demo-photo { padding: 40px 0 72px; }
     .demo-photo-frame {
       background: var(--bg-soft);
-      border: 1px solid var(--border);
-      border-radius: 20px;
+      border: none;
+      border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
     }
@@ -239,7 +283,7 @@
       text-align: center;
       padding: 44px 24px 36px;
       background: #0f1d42;
-      border-radius: 20px 20px 0 0;
+      border-radius: 8px 8px 0 0;
       margin-bottom: 0;
     }
 
@@ -252,7 +296,7 @@
       background: rgba(255, 255, 255, 0.18);
       color: #fff;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
@@ -272,8 +316,8 @@
 
     .demo-head h2 {
       margin: 14px 0 6px;
-      font-size: clamp(24px, 3.4vw, 36px);
-      font-weight: 800;
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: 600;
       color: #fff;
     }
 
@@ -289,7 +333,7 @@
       background:
         radial-gradient(1000px 520px at 50% -12%, rgba(59, 130, 246, 0.16), transparent 60%),
         linear-gradient(180deg, #0f1d42 0%, #12254f 100%);
-      border: 1px solid var(--border);
+      border: none;
       border-radius: 0 0 20px 20px;
       overflow: hidden;
       box-shadow: 0 24px 60px rgba(15, 29, 66, 0.20);
@@ -342,7 +386,7 @@
     }
     .desktop-icon .pdf-badge {
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 600;
       color: #fff;
       background: #ef4444;
       border-radius: 4px;
@@ -351,7 +395,7 @@
     }
     .desktop-icon .txt-badge {
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 600;
       color: #fff;
       background: #475569;
       border-radius: 4px;
@@ -427,7 +471,7 @@
     }
     .bar-balance {
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 600;
       color: #3b82f6;
     }
     .bar-hotkey {
@@ -482,7 +526,7 @@
     }
     .bar-action .action-price {
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 600;
       color: #3b82f6;
       white-space: nowrap;
       flex-shrink: 0;
@@ -534,7 +578,7 @@
     }
     .res-thumb .pdf-badge {
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 600;
       color: #fff;
       background: #ef4444;
       border-radius: 4px;
@@ -636,7 +680,7 @@
     .os-content { padding: 12px; }
     .os-content img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 6px; display: block; }
     .os-content video { width: 100%; max-height: 400px; object-fit: contain; border-radius: 6px; display: block; }
-    .os-content iframe { width: 100%; height: 360px; border: none; background: #fff; border-radius: 6px; }
+    .os-content iframe { width: 100%; height: 360px; border: none; background: #161d2e; border-radius: 6px; }
     .os-content .os-text { color: #d4d4d8; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
     .os-content audio { width: 100%; }
     .os-content .os-openlink {
@@ -697,10 +741,10 @@
       padding: 2px 8px;
       font-family: inherit;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       color: #fff;
     }
-    .demo-hint b { color: #93c5fd; font-weight: 700; }
+    .demo-hint b { color: #93c5fd; font-weight: 600; }
     .demo-copy-btn {
       cursor: pointer;
       background: var(--accent);
@@ -710,7 +754,7 @@
       height: 30px;
       padding: 0 12px;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 600;
       font-family: inherit;
     }
     .demo-copy-btn:hover { background: var(--accent-hover); }
@@ -719,22 +763,31 @@
     section { padding: 90px 0; }
 
     .section-head {
-      max-width: 720px;
-      margin: 0 auto 56px;
-      text-align: center;
+      max-width: 36rem;
+      margin: 0 0 48px;
+      text-align: left;
     }
 
-    .section-head h2 {
-      margin: 0 0 16px;
-      font-size: clamp(30px, 4.5vw, 46px);
-      line-height: 1.15;
-      letter-spacing: -1.5px;
-      font-weight: 800;
+    .section-head h2,
+    .marketplace h2,
+    .cta h2 {
+      margin: 0 0 12px;
+      font-size: var(--fs-title);
+      line-height: 1.1;
+      letter-spacing: -1px;
+      font-weight: 500;
     }
 
-    .section-head p {
+    .section-head p,
+    .marketplace p,
+    .cta .sub,
+    .feature p,
+    .step p,
+    .stat .label,
+    .pricing-note {
       margin: 0;
-      font-size: 18px;
+      font-size: var(--fs-body);
+      line-height: 1.5;
       color: var(--text-dim);
     }
 
@@ -743,13 +796,13 @@
 
     .steps {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 24px;
     }
 
     .step {
       background: var(--bg);
-      border: 1px solid var(--border);
+      border: none;
       border-radius: var(--radius);
       padding: 32px 28px;
     }
@@ -760,16 +813,15 @@
       justify-content: center;
       width: 40px;
       height: 40px;
-      border-radius: 10px;
+      border-radius: 6px;
       background: var(--accent-soft);
       color: var(--accent);
-      font-weight: 800;
+      font-weight: 600;
       font-size: 18px;
       margin-bottom: 18px;
     }
 
-    .step h3 { margin: 0 0 10px; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-    .step p { margin: 0; color: var(--text-dim); font-size: 15px; }
+    .step h3 { margin: 0 0 8px; font-size: 18px; font-weight: 500; letter-spacing: -0.2px; }
 
     /* Features */
     .feature {
@@ -783,23 +835,18 @@
     .feature + .feature { border-top: 1px solid var(--border); }
 
     .feature h3 {
-      margin: 0 0 16px;
-      font-size: clamp(26px, 3.5vw, 38px);
-      line-height: 1.15;
-      letter-spacing: -1px;
-      font-weight: 800;
+      margin: 0 0 12px;
+      font-size: 24px;
+      line-height: 1.2;
+      letter-spacing: -0.4px;
+      font-weight: 500;
     }
 
-    .feature p {
-      margin: 0;
-      font-size: 17px;
-      color: var(--text-dim);
-      max-width: 480px;
-    }
+    .feature p { max-width: 36rem; }
 
     .feature .visual {
       background: var(--bg-soft);
-      border: 1px solid var(--border);
+      border: none;
       border-radius: var(--radius);
       min-height: 220px;
       display: grid;
@@ -823,25 +870,21 @@
       text-align: center;
     }
 
-    .marketplace h2 {
-      margin: 0 0 16px;
-      font-size: clamp(30px, 4.5vw, 46px);
-      letter-spacing: -1.5px;
-      font-weight: 800;
-    }
+    .marketplace h2 { color: #fff; }
 
     .marketplace p {
-      margin: 0 auto 32px;
-      max-width: 560px;
-      font-size: 18px;
+      margin: 0 auto 28px;
+      max-width: 36rem;
+      color: #fff;
       opacity: 0.9;
     }
 
     .marketplace .btn {
-      background: #fff;
+      background: var(--surface);
       color: var(--accent);
+      border-color: var(--border);
     }
-    .marketplace .btn:hover { background: #eef2ff; }
+    .marketplace .btn:hover { background: var(--accent-soft); }
 
     /* Stats */
     .stats {
@@ -852,13 +895,13 @@
     }
 
     .stat .value {
-      font-size: clamp(34px, 5vw, 52px);
-      font-weight: 800;
-      letter-spacing: -1.5px;
+      font-size: var(--fs-title);
+      font-weight: 500;
+      letter-spacing: -1px;
       color: var(--accent);
     }
 
-    .stat .label { color: var(--text-dim); font-size: 15px; margin-top: 4px; }
+    .stat .label { margin-top: 4px; }
 
     /* Pricing */
     .pricing { background: var(--bg-soft); }
@@ -871,7 +914,7 @@
 
     .price-card {
       background: var(--bg);
-      border: 1px solid var(--border);
+      border: none;
       border-radius: var(--radius);
       padding: 32px 24px;
       text-align: center;
@@ -888,15 +931,15 @@
       background: var(--accent);
       color: #fff;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       padding: 4px 12px;
       border-radius: 999px;
       white-space: nowrap;
     }
 
-    .price-card .amount { font-size: 34px; font-weight: 800; letter-spacing: -1px; }
+    .price-card .amount { font-size: 34px; font-weight: 600; letter-spacing: -1px; }
 
-    .price-card .credits { font-size: 20px; font-weight: 700; color: var(--accent); margin: 6px 0 4px; }
+    .price-card .credits { font-size: 20px; font-weight: 600; color: var(--accent); margin: 6px 0 4px; }
 
     .price-card .bonus { font-size: 14px; color: var(--text-dim); min-height: 21px; }
 
@@ -904,10 +947,8 @@
 
     .pricing-note {
       margin: 28px auto 0;
-      max-width: 640px;
+      max-width: 36rem;
       text-align: center;
-      font-size: 15px;
-      color: var(--text-dim);
     }
 
     .pricing-note strong { color: var(--text); }
@@ -932,11 +973,11 @@
     .action-link {
       display: block;
       background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      border: none;
+      border-radius: 8px;
       padding: 18px 20px;
-      font-size: 16px;
-      font-weight: 600;
+      font-size: var(--fs-body);
+      font-weight: 500;
       color: var(--text);
       transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
     }
@@ -950,30 +991,18 @@
     .actions-teaser .center { text-align: center; }
 
     /* Final CTA */
-    .cta { text-align: center; }
+    .cta { text-align: left; }
 
-    .cta h2 {
-      margin: 0 auto 20px;
-      max-width: 760px;
-      font-size: clamp(32px, 5vw, 52px);
-      line-height: 1.1;
-      letter-spacing: -1.5px;
-      font-weight: 800;
-    }
+    .cta h2 { max-width: 18em; }
 
-    .cta .sub {
-      margin: 0 auto 36px;
-      max-width: 560px;
-      font-size: 18px;
-      color: var(--text-dim);
-    }
+    .cta .sub { max-width: 36rem; margin-bottom: 28px; }
 
     /* Footer */
     .site-footer {
       border-top: 1px solid var(--border);
       padding: 32px 0;
       color: var(--text-dim);
-      font-size: 14px;
+      font-size: var(--fs-small);
     }
 
     .site-footer .container {
@@ -1000,32 +1029,32 @@
   <header class="site-header">
     <div class="container">
       <a class="brand" href="/">
-        <span>Scryptian</span>
-        <span class="brand-sub">.</span>
+        <img class="brand-logo" src="favicon.svg" alt="Scryptian" />
+        <span>SCRYPTIAN</span>
       </a>
       <nav class="nav">
         <!-- <a href="#how-it-works">How it works</a> -->
         <!-- <a href="#features">Features</a> -->
+        <a href="/pricing.html">Pricing</a>
         <a href="https://actionstore.scryptian.com/">Actions</a>
       </nav>
-      <a class="btn btn-primary" href="https://github.com/adrianium/Scryptian/releases/download/v0.1.0/Scryptian_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"header"}'>Download</a>
+      <a class="btn btn-primary" href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"header"}'>Download</a>
     </div>
   </header>
 
   <main>
     <section class="hero">
       <div class="container">
-        <img class="hero-demo" src="main-demo.gif" alt="Scryptian in action" />
         <h1>Use services without browser.<br /><span class="accent">One hotkey.</span> Any service.</h1>
         <!-- <h1>Any service.<br /><span class="accent"> One wallet.</span> <span class="accent">One hotkey.</span> Pay per result.</h1> -->
         <p class="sub">
-          Copy any file on your screen, press Ctrl+Alt, and transform it instantly with any service. No app switching.
+          Copy any file on your screen, and transform it instantly with any service. No app switching.
         </p>
         <div class="actions">
-          <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/Scryptian/releases/download/v0.1.0/Scryptian_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"hero"}'>Download for Windows</a>
-          <a class="btn btn-ghost btn-lg" href="https://actionstore.scryptian.com/" data-ph-event="browse_actions_clicked">Browse actions</a>
+          <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"hero"}'>Download for Windows</a>
+          <a class="btn btn-secondary btn-lg" href="https://www.virustotal.com/gui/file/bc6599df53535a60da2372e7bf78c476350e62f82d1e439e68a7e7415fffe533?nocache=1" target="_blank" rel="noopener" data-ph-event="virustotal_clicked">Scanned by VirusTotal</a>
         </div>
-        <p class="hint">Free to download · Windows · <a class="vt" href="https://www.virustotal.com/gui/file/bc6599df53535a60da2372e7bf78c476350e62f82d1e439e68a7e7415fffe533?nocache=1" target="_blank" rel="noopener" data-ph-event="virustotal_clicked">✓ Scanned by VirusTotal</a></p>
+        <img class="hero-demo" src="main-demo.gif" alt="Scryptian in action" />
       </div>
     </section>
 
@@ -1037,38 +1066,32 @@
       </div>
     </section> -->
 
-    <section class="demo-photo">
+    <!-- <section class="demo-photo">
       <div class="container">
         <div class="demo-photo-frame">
           <img src="ui-demo.png" alt="Scryptian interface demo" />
         </div>
       </div>
-    </section>
+    </section> -->
 
     
 
     <section class="how" id="how-it-works">
       <div class="container">
         <div class="section-head">
-          <h2>Three steps. Zero friction.</h2>
+          <h2>Two steps. Zero friction.</h2>
           <p>Scryptian lives where you already work.</p>
         </div>
         <div class="steps">
           <div class="step">
             <div class="num">1</div>
-            <h3>Select</h3>
-            <!-- <p>Highlight any any in any app - a browser, an editor, an email.</p> -->
-            <p>Highlight any file on your screen and copy.</p>
+            <h3>Copy</h3>
+            <p>Copy any file — the action bar appears right next to your cursor.</p>
           </div>
           <div class="step">
             <div class="num">2</div>
-            <h3>Press</h3>
-            <p>Hit Ctrl+Alt to open the Scryptian bar right over your file.</p>
-          </div>
-          <div class="step">
-            <div class="num">3</div>
             <h3>Transform</h3>
-            <p>Pick an action and forget. New file will be save where the original one.</p>
+            <p>Pick an action and forget. The new file is saved next to the original.</p>
           </div>
         </div>
         <!-- <div class="how-try">
@@ -1377,7 +1400,7 @@
         <div class="feature">
           <div>
             <h3>One wallet</h3>
-            <p>Pay per result, not per subscription. One balance for every service you use — no more juggling a dozen accounts.</p>
+            <p>One balance for every service you use - no more juggling a dozen accounts of multiple services.</p>
           </div>
           <div class="visual"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></div>
         </div>
@@ -1386,14 +1409,14 @@
           <div class="visual"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M7 16h10"/></svg></div>
           <div>
             <h3>One hotkey</h3>
-            <p>Every service, one shortcut. Press Ctrl+Alt anywhere on your screen and everything is right there.</p>
+            <p>Every service, one shortcut.</p>
           </div>
         </div>
 
         <div class="feature">
           <div>
             <h3>Any service</h3>
-            <p>Bring any service to the place where you work — browser, editor, email, anywhere you can select text.</p>
+            <p>Bring any service to the place where your files are.</p>
           </div>
           <div class="visual"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="14" y="3" rx="1"/><path d="M10 21V8a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H3"/></svg></div>
         </div>
@@ -1414,43 +1437,6 @@
           <div class="visual"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg></div>
         </div>
       </div> -->
-    </section>
-
-    <section class="pricing" id="pricing">
-      <div class="container">
-        <div class="section-head">
-          <h2>Simple pricing. Pay only for results.</h2>
-          <p>Slippers are prepaid credits. Top up once and pay as you go — no subscription.</p>
-        </div>
-        <div class="pricing-grid">
-          <div class="price-card">
-            <div class="amount">$5</div>
-            <div class="credits">5,000 Slippers</div>
-            <div class="bonus"></div>
-            <a class="btn btn-primary" href="#">Get started</a>
-          </div>
-          <div class="price-card popular">
-            <div class="tag">Most popular</div>
-            <div class="amount">$10</div>
-            <div class="credits">11,000 Slippers</div>
-            <div class="bonus">+10% bonus</div>
-            <a class="btn btn-primary" href="#">Get started</a>
-          </div>
-          <div class="price-card">
-            <div class="amount">$20</div>
-            <div class="credits">23,000 Slippers</div>
-            <div class="bonus">+15% bonus</div>
-            <a class="btn btn-primary" href="#">Get started</a>
-          </div>
-          <div class="price-card">
-            <div class="amount">$50</div>
-            <div class="credits">60,000 Slippers</div>
-            <div class="bonus">+20% bonus</div>
-            <a class="btn btn-primary" href="#">Get started</a>
-          </div>
-        </div>
-        <p class="pricing-note">New here? Every new account starts with <strong>2,000 free Slippers</strong> — no purchase needed.</p>
-      </div>
     </section>
 
     <section class="actions-teaser" id="actions">
@@ -1475,7 +1461,7 @@
           <a class="action-link" href="https://actionstore.scryptian.com/actions/translate_pdf_to_english_deepl/">Translate PDF (DeepL)</a>
         </div>
         <div class="center">
-          <a class="btn btn-ghost" href="https://actionstore.scryptian.com/">Browse all actions</a>
+          <a class="btn btn-secondary" href="https://actionstore.scryptian.com/">Browse all actions</a>
         </div>
       </div>
     </section>
@@ -1511,7 +1497,7 @@
       <div class="container">
         <h2>Stop switching apps. Start call them to place where you work.</h2>
         <p class="sub">Download Scryptian and put every action one hotkey away.</p>
-        <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/Scryptian/releases/download/v0.1.0/Scryptian_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"cta"}'>Download for Windows</a>
+        <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"cta"}'>Download for Windows</a>
       </div>
     </section>
   </main>

@@ -1,0 +1,25 @@
+{
+  "title": "Convert to BMP",
+  "description": "Convert a supported image to BMP (free & local)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "local",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": false,
+  "unit": "",
+  "price_per_unit": 0,
+  "input_type": [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".bmp",
+    ".tiff",
+    ".tif",
+    ".heic",
+    ".heif"
+  ],
+  "output_type": ".bmp"
+}

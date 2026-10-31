@@ -17,9 +17,11 @@ venv/
 .id
 .first_launch_sent
 first_launch_sent.txt
+runtimes/
 pinned.json
 main_pinned.json
 *.exe
+!tools/7zr.exe
 *.spec.warn
 
 # PDF translator lives in the store as a bundle zip; ignore the local dev copy

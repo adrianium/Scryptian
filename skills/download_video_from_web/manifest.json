@@ -1,6 +1,6 @@
 {
   "title": "Download Video from Web",
-  "description": "Download a web video as MP4, up to 1080p (free)",
+  "description": "Download a web video from Social Media as MP4, up to 1080p (free)",
   "author": "Scryptian",
   "author_id": "",
   "price": 0,
@@ -10,6 +10,6 @@
   "background": true,
   "unit": "",
   "price_per_unit": 0,
-  "input_type": [],
+  "input_type": ["link"],
   "output_type": ".mp4"
 }

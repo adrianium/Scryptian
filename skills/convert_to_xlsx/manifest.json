@@ -1,0 +1,27 @@
+{
+  "title": "Convert to XLSX",
+  "description": "Convert a supported spreadsheet to Excel (free)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "",
+  "price_per_unit": 0,
+  "input_type": [
+    ".csv",
+    ".fods",
+    ".ods",
+    ".ots",
+    ".tsv",
+    ".xls",
+    ".xlsm",
+    ".xlsx",
+    ".xlt",
+    ".xltm",
+    ".xltx"
+  ],
+  "output_type": ".xlsx"
+}

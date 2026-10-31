@@ -4,37 +4,49 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Checkout - Scryptian</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root { --bg: #ffffff; --text: #0e0e10; --text-dim: #5b5b66; --accent: #2563eb; }
+    :root { --bg: #0E171C; --text: #f5f5f5; --text-dim: #8a8a8a; --accent: #2536eb; }
     * { box-sizing: border-box; }
     body {
       margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
-      font-family: "Manrope", "Segoe UI", system-ui, sans-serif;
+      font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+      font-size: 17px;
+      line-height: 1.5;
       display: grid; place-items: center; text-align: center; padding: 24px;
+      -webkit-font-smoothing: antialiased;
     }
     .box { max-width: 480px; }
-    .brand { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 22px; text-transform: uppercase; letter-spacing: 0.02em; }
-    .brand .brand-sub { color: var(--accent); }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+    }
+    .brand img { width: 24px; height: 24px; border-radius: 6px; display: block; }
     .spinner {
       width: 40px; height: 40px; margin: 32px auto 16px;
-      border: 3px solid #e7e8ec; border-top-color: var(--accent); border-radius: 50%;
+      border: 3px solid #2A3439; border-top-color: var(--accent); border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    p { color: var(--text-dim); font-size: 15px; }
+    p { color: var(--text-dim); font-size: 17px; }
     .done { display: none; }
+    .done .title { font-size: 24px; color: var(--text); font-weight: 500; }
   </style>
 </head>
 <body>
   <div class="box">
-    <div class="brand"><span>Scryptian</span><span class="brand-sub">.</span></div>
+    <div class="brand"><img src="favicon.svg" alt="" /><span>SCRYPTIAN</span></div>
     <div class="spinner" id="spinner"></div>
     <p id="status">Opening checkout&hellip;</p>
     <div class="done" id="done">
-      <p style="font-size:18px; color:#0e0e10; font-weight:700;">Payment complete</p>
+      <p class="title">Payment complete</p>
       <p>You can close this window and return to Scryptian.</p>
     </div>
   </div>

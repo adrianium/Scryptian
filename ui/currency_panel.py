@@ -32,7 +32,7 @@ RATE_TEXT = "1 dollar = 1000 slippers"
 REFRESH_INTERVAL_MS = 10000  # poll balance every 10s while the panel is open
 
 PAY_PER_OUTCOME_TEXT = (
-    "On Scryptian works Pay per Result model: you pay only when you get a result. "
+    "On Scryptian works Pay per Result model: balance decreases only when you get a result. "
     "If an action fails, you pay nothing - the developer takes the loss."
 )
 
@@ -76,14 +76,15 @@ class CurrencyPanel:
 
         if self.frame:
             self.frame.destroy()
-        self.frame = tk.Frame(self.bar.container, bg="#1a1a1e")
+        self.frame = tk.Frame(self.bar.container, bg="#202020")
         self.frame.pack(fill="both", expand=True, padx=12, pady=(0, 10))
 
         self._build_header()
         self._build_body()
 
         self.bar.window.update_idletasks()
-        self.bar._resize(self.bar.container.winfo_reqheight() + 4)
+        target_h = self.bar.container.winfo_reqheight() + 4
+        self._animate_height(target_h)
         self._start_refresh()
 
     def _on_backspace(self, event):
@@ -103,63 +104,110 @@ class CurrencyPanel:
         if self._backspace_hotkey is not None:
             keyboard.remove_hotkey(self._backspace_hotkey)
             self._backspace_hotkey = None
-        if self.frame:
-            self.frame.destroy()
-            self.frame = None
-        if self._orig_geo and self.bar.window:
-            self.bar.window.geometry(self._orig_geo)
+
+        def _restore_bar():
+            if self.frame:
+                self.frame.destroy()
+                self.frame = None
+            if not self.bar.window:
+                return
+            self.bar.entry.config(state="normal")
+            self.bar.entry.delete(0, "end")
+            self.bar.entry.insert(0, self.bar.placeholder_text)
+            self.bar._placeholder_active = True
+            self.bar.entry.config(fg="#C5C5C5")
+            self.bar.balance_frame.pack(fill="x", padx=14, pady=(8, 0))
+            self.bar.entry_border.pack(fill="x", padx=14, pady=(8, 8))
+            self.bar._update_filter("")
+            self.bar.entry.focus_set()
+            self.bar.root.after_idle(self.bar._restore_placeholder_cursor)
+            self.bar.root.after(50, self.bar._restore_placeholder_cursor)
+
+        if self._orig_geo:
+            parts = self._orig_geo.split("+")
+            target_h = int(parts[0].split("x")[1])
             self._orig_geo = None
+            self._animate_height(target_h, on_done=_restore_bar, check_open=False)
+        else:
+            _restore_bar()
+
+    def _animate_height(self, target_h, on_done=None, check_open=True):
         if not self.bar.window:
+            if on_done:
+                on_done()
             return
-        self.bar.entry.config(state="normal")
-        self.bar.entry.delete(0, "end")
-        self.bar.entry.insert(0, self.bar.placeholder_text)
-        self.bar._placeholder_active = True
-        self.bar.entry.config(fg="#9c9ca7")
-        self.bar.balance_frame.pack(fill="x", padx=14, pady=(8, 0))
-        self.bar.entry_border.pack(fill="x", padx=14, pady=(8, 8))
-        self.bar._update_filter("")
-        self.bar.entry.focus_set()
-        self.bar.root.after_idle(self.bar._restore_placeholder_cursor)
-        self.bar.root.after(50, self.bar._restore_placeholder_cursor)
+        cur_h = self.bar.window.winfo_height()
+        w = self.bar.window.winfo_width()
+        x = self.bar.window.winfo_x()
+        y = self.bar.window.winfo_y()
+        steps = 12
+
+        def _step(i):
+            if check_open and not self._open:
+                return
+            if not self.bar.window:
+                if on_done:
+                    on_done()
+                return
+            if i >= steps:
+                try:
+                    self.bar.window.geometry(f"{w}x{target_h}+{x}+{y}")
+                    self.bar.window.update_idletasks()
+                except Exception:
+                    pass
+                if on_done:
+                    on_done()
+                return
+            p = 1 - (1 - i / steps) ** 3  # ease-out cubic
+            nh = int(cur_h + (target_h - cur_h) * p)
+            try:
+                self.bar.window.geometry(f"{w}x{nh}+{x}+{y}")
+                self.bar.window.update_idletasks()
+            except Exception:
+                if on_done:
+                    on_done()
+                return
+            self.root.after(16, lambda: _step(i + 1))
+
+        _step(1)
 
     def _build_header(self):
-        header = tk.Frame(self.frame, bg="#1a1a1e")
+        header = tk.Frame(self.frame, bg="#202020")
         header.pack(fill="x", pady=(0, 8))
 
-        tk.Label(header, text="Slippers", font=("Manrope", 13, "bold"),
-                 bg="#1a1a1e", fg="#f4f4f6").pack(side="left")
+        tk.Label(header, text="Slippers", font=("Segoe UI Variable", 13, "bold"),
+                 bg="#202020", fg="#FFFFFF").pack(side="left")
 
-        back_group = tk.Frame(header, bg="#1a1a1e")
+        back_group = tk.Frame(header, bg="#202020")
         back_group.pack(side="right")
 
-        back = tk.Label(back_group, text="← Back", font=("Manrope", 11),
-                        bg="#1a1a1e", fg="#3b82f6", cursor="hand2")
+        back = tk.Label(back_group, text="← Back", font=("Segoe UI Variable", 11),
+                        bg="#202020", fg="#60CDFF", cursor="hand2")
         back.pack(anchor="e")
         back.bind("<Button-1>", lambda e: self.close())
-        back.bind("<Enter>", lambda e: back.config(fg="#60a5fa"))
-        back.bind("<Leave>", lambda e: back.config(fg="#3b82f6"))
+        back.bind("<Enter>", lambda e: back.config(fg="#60CDFF"))
+        back.bind("<Leave>", lambda e: back.config(fg="#60CDFF"))
 
-        back_hint = tk.Label(back_group, text="[ Backspace ]", font=("Manrope", 9),
-                             bg="#1a1a1e", fg="#9c9ca7")
+        back_hint = tk.Label(back_group, text="[ Backspace ]", font=("Segoe UI Variable", 9),
+                             bg="#202020", fg="#C5C5C5")
         back_hint.pack(anchor="e")
 
     def _build_body(self):
-        body = tk.Frame(self.frame, bg="#1a1a1e")
+        body = tk.Frame(self.frame, bg="#202020")
         body.pack(fill="both", expand=True)
 
-        card = tk.Frame(body, bg="#1a1a1e", padx=20, pady=20,
-                        highlightthickness=1, highlightbackground="#2a2a31")
+        card = tk.Frame(body, bg="#202020", padx=20, pady=20,
+                        highlightthickness=1, highlightbackground="#3C3C3C")
         card.pack(fill="x", pady=(10, 16))
 
-        tk.Label(card, text="Your balance", font=("Manrope", 11),
-                 bg="#1a1a1e", fg="#9c9ca7").pack(anchor="w")
+        tk.Label(card, text="Your balance", font=("Segoe UI Variable", 11),
+                 bg="#202020", fg="#C5C5C5").pack(anchor="w")
 
-        balance_row = tk.Frame(card, bg="#1a1a1e")
+        balance_row = tk.Frame(card, bg="#202020")
         balance_row.pack(anchor="w", pady=(4, 0))
 
         self.balance_icon = tk.Label(balance_row, text="🩴", font=("Segoe UI Emoji", 22),
-                                     bg="#1a1a1e", fg="#3b82f6")
+                                     bg="#202020", fg="#60CDFF")
         self.balance_icon.pack(side="left", padx=(0, 8))
         self.balance_photo = None
         try:
@@ -170,19 +218,19 @@ class CurrencyPanel:
             icon_path = os.path.join(assets_dir, "slippers.png")
             source = Image.open(icon_path).convert("RGBA")
             alpha = source.getchannel("A").resize((32, 32), Image.Resampling.LANCZOS)
-            icon = Image.new("RGBA", (32, 32), "#3b82f6")
+            icon = Image.new("RGBA", (32, 32), "#60CDFF")
             icon.putalpha(alpha)
             self.balance_photo = ImageTk.PhotoImage(icon)
             self.balance_icon.config(image=self.balance_photo, text="", width=32)
         except Exception:
             pass
 
-        self.balance_value = tk.Label(balance_row, text="—", font=("Manrope", 26, "bold"),
-                                      bg="#1a1a1e", fg="#f4f4f6")
+        self.balance_value = tk.Label(balance_row, text="—", font=("Segoe UI Variable", 26, "bold"),
+                                      bg="#202020", fg="#FFFFFF")
         self.balance_value.pack(side="left")
 
-        rate = tk.Label(body, text=RATE_TEXT, font=("Manrope", 11),
-                        bg="#1a1a1e", fg="#9c9ca7")
+        rate = tk.Label(body, text=RATE_TEXT, font=("Segoe UI Variable", 11),
+                        bg="#202020", fg="#C5C5C5")
         rate.pack(pady=(0, 10))
 
         
@@ -191,22 +239,22 @@ class CurrencyPanel:
             btn = tk.Label(
                 body,
                 text=f"{amount}  →  {credits}",
-                font=("Manrope", 12, "bold"),
-                bg="#1a1a1e", fg="#f4f4f6",
+                font=("Segoe UI Variable", 12, "bold"),
+                bg="#202020", fg="#FFFFFF",
                 padx=12, pady=10, cursor="hand2",
-                highlightthickness=1, highlightbackground="#2a2a31",
+                highlightthickness=1, highlightbackground="#3C3C3C",
             )
             btn.pack(fill="x", pady=3)
             btn.bind("<Button-1>", lambda e, pid=price_id, amt=amount: self._buy(pid, amt))
-            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2b2b32"))
-            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#1a1a1e"))
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#2E2E2E"))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg="#202020"))
 
-        self.buy_status = tk.Label(body, text="", font=("Manrope", 10),
-                                   bg="#1a1a1e", fg="#9c9ca7", wraplength=600, justify="center")
+        self.buy_status = tk.Label(body, text="", font=("Segoe UI Variable", 10),
+                                   bg="#202020", fg="#C5C5C5", wraplength=600, justify="center")
         self.buy_status.pack(fill="x", pady=(10, 0))
 
-        info = tk.Label(body, text=PAY_PER_OUTCOME_TEXT, font=("Manrope", 10),
-                        bg="#1a1a1e", fg="#6e6e7a", wraplength=600, justify="left")
+        info = tk.Label(body, text=PAY_PER_OUTCOME_TEXT, font=("Segoe UI Variable", 10),
+                        bg="#202020", fg="#9A9A9A", wraplength=600, justify="left")
         info.pack(fill="x", pady=(14, 0))
 
         self._set_balance(wallet.cached_balance())

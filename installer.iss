@@ -39,6 +39,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "dist\Scryptian\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "uninstall_telemetry.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "download_runtimes.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "tools\7zr.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -46,9 +48,13 @@ Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
+; Download runtime components (ffmpeg, ghostscript) in the background during install.
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -NonInteractive -WindowStyle Hidden -File ""{app}\download_runtimes.ps1"" -AppDir ""{app}"""; Flags: nowait runhidden
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Auto-update path: relaunch the app after a silent update. Guarded by the
-; /AUTOUPDATE switch so normal (non-update) silent installs do NOT auto-launch.
+; /AUTOUPDATE switch so normal silent installs (including the Chrome-style
+; ScryptianSetup.exe stub) do NOT auto-launch here — the stub waits and
+; starts Scryptian.exe itself after this installer exits.
 Filename: "{app}\{#MyAppExeName}"; Flags: nowait; Check: IsAutoUpdate
 
 [UninstallRun]

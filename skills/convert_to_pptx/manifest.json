@@ -1,0 +1,26 @@
+{
+  "title": "Convert to PPTX",
+  "description": "Convert a supported presentation or PDF to PPTX (free)",
+  "author": "Scryptian",
+  "author_id": "",
+  "price": 0,
+  "mode": "cloud",
+  "entry": "skill.py",
+  "version": "1.0.0",
+  "background": true,
+  "unit": "",
+  "price_per_unit": 0,
+  "input_type": [
+    ".fodp",
+    ".odp",
+    ".otp",
+    ".pdf",
+    ".pot",
+    ".potm",
+    ".potx",
+    ".ppt",
+    ".pptm",
+    ".pptx"
+  ],
+  "output_type": ".pptx"
+}

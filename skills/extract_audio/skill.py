@@ -1,9 +1,7 @@
-# Extract Audio — local ffmpeg (free, no cloud cost). Video -> M4A (AAC 192k).
+# Extract Audio — local ffmpeg (free, no cloud cost). Video -> WAV (PCM).
 
 import os
 import subprocess
-import sys
-import urllib.request
 
 try:
     import telemetry as _telemetry
@@ -19,32 +17,13 @@ def _report(detail):
             pass
 
 _VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".wmv", ".flv", ".mpeg", ".mpg", ".ts", ".3gp"}
-_AUDIO_BITRATE = "192k"
-_FFMPEG_URL = "https://qvihfoeouvfveacexcol.supabase.co/storage/v1/object/public/actions/ffmpeg.exe"
 
 
 def _ensure_ffmpeg():
-    """Return ffmpeg.exe path, downloading it on first use from Supabase Storage."""
-    skill_dir = os.path.dirname(os.path.abspath(__file__))
-    shared_dir = os.path.join(os.path.dirname(skill_dir), "_ffmpeg")
-    ffmpeg_path = os.path.join(shared_dir, "ffmpeg.exe")
-
-    if os.path.exists(ffmpeg_path):
-        return ffmpeg_path
-
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        bundled = os.path.join(sys._MEIPASS, "ffmpeg.exe")
-        if os.path.exists(bundled):
-            return bundled
-
+    """Return essentials ffmpeg.exe from runtimes/ffmpeg, downloading it if needed."""
     try:
-        os.makedirs(shared_dir, exist_ok=True)
-        tmp = ffmpeg_path + ".part"
-        req = urllib.request.Request(_FFMPEG_URL, headers={"User-Agent": "Scryptian"})
-        with urllib.request.urlopen(req, timeout=600) as resp, open(tmp, "wb") as f:
-            f.write(resp.read())
-        os.replace(tmp, ffmpeg_path)
-        return ffmpeg_path
+        import runtime_bins
+        return runtime_bins.ensure_ffmpeg()
     except Exception:
         return "ffmpeg"
 
@@ -63,7 +42,7 @@ def measure(file_path):
 
 
 def run(text):
-    """text: path to a video to extract audio from (M4A / AAC 192k)."""
+    """text: path to a video to extract audio from (WAV)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
         return "[Scryptian Error] Couldn't find this video. Copy it again and try."
@@ -72,17 +51,16 @@ def run(text):
         return "[Scryptian Error] This video type isn't supported."
 
     base, _ = os.path.splitext(file_path)
-    out_path = f"{base}_audio.m4a"
+    out_path = f"{base}_audio.wav"
     counter = 2
     while os.path.exists(out_path):
-        out_path = f"{base}_audio_{counter}.m4a"
+        out_path = f"{base}_audio_{counter}.wav"
         counter += 1
 
     cmd = [
         _ensure_ffmpeg(), "-y",
         "-i", file_path,
-        "-vn", "-c:a", "aac", "-b:a", _AUDIO_BITRATE,
-        "-f", "mp4",
+        "-vn", "-map", "0:a:0?", "-c:a", "pcm_s16le",
         out_path,
     ]
     try:

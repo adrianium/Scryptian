@@ -2,6 +2,7 @@ pyperclip
 keyboard
 pystray
 Pillow
+pillow-heif
 certifi
 pymediainfo
 cryptography

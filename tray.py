@@ -26,6 +26,52 @@ _icon_ref = None
 RELEASES_URL = "https://github.com/adrianium/Scryptian/releases/latest"
 _update_version = None
 
+_notif_stack = []  # active notification windows, for Telegram-style stacking
+
+
+def _stack_offset():
+    """Total height taken by active notifications (plus gaps)."""
+    gap = 8
+    return sum(h for _, h in _notif_stack) + gap * len(_notif_stack)
+
+
+def _round_corners(win):
+    """Native Windows 11 rounded corners via DWM (safe no-op on failure)."""
+    try:
+        import ctypes
+        hwnd = ctypes.windll.user32.GetAncestor(win.winfo_id(), 2)  # GA_ROOT
+        pref = ctypes.c_int(2)  # DWMWCP_ROUND
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(pref), ctypes.sizeof(pref))
+    except Exception:
+        pass
+
+
+def _rounded_rect(canvas, x1, y1, x2, y2, r, **kw):
+    """Draw a rounded rectangle on a canvas (smooth polygon)."""
+    points = [
+        x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r,
+        x2, y2 - r, x2, y2, x2 - r, y2, x1 + r, y2,
+        x1, y2, x1, y2 - r, x1, y1 + r, x1, y1,
+    ]
+    return canvas.create_polygon(points, smooth=True, **kw)
+
+
+def _rounded_button(parent, text, command, accent=True):
+    """A compact Win11-style rounded button drawn on a Canvas."""
+    import tkinter as tk
+    import tkinter.font as tkfont
+    f = tkfont.Font(family="Segoe UI Variable", size=14)
+    w = max(80, f.measure(text) + 32)
+    h = 34
+    c = tk.Canvas(parent, width=w, height=h, bg=parent.cget("bg"), highlightthickness=0, bd=0)
+    bg = "#0078D4" if accent else "#2B2B2B"
+    fg = "#FFFFFF"
+    _rounded_rect(c, 0, 1, w - 1, h - 1, 5, fill=bg, outline=bg)
+    c.create_text(w // 2, h // 2, text=text, fill=fg, font=f)
+    c.config(cursor="hand2")
+    c.bind("<Button-1>", lambda e: command())
+    return c
+
 
 def notify(title, message):
     """Show tray notification."""
@@ -69,11 +115,26 @@ def _idle_ms():
 
 
 def open_in_explorer(path):
-    """Open Explorer with the given file selected (Windows)."""
+    """Open Explorer with the given file selected (Windows), and bring it to front."""
     import subprocess
     try:
         if path and os.path.isfile(path):
             subprocess.Popen(['explorer', '/select,', os.path.normpath(path)])
+
+            def _focus():
+                import ctypes
+                import time
+                try:
+                    time.sleep(0.4)
+                    hwnd = ctypes.windll.user32.FindWindowW("CabinetWClass", None)
+                    if hwnd:
+                        ctypes.windll.user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                        ctypes.windll.user32.SetForegroundWindow(hwnd)
+                        ctypes.windll.user32.BringWindowToTop(hwnd)
+                except Exception:
+                    pass
+
+            threading.Thread(target=_focus, daemon=True).start()
     except Exception:
         pass
 
@@ -100,55 +161,83 @@ def show_notify_popup(title, message, root=None, duration=5000, action=None):
             win.destroy()
         except Exception:
             pass
+        for i, (w_, _h) in enumerate(_notif_stack):
+            if w_ is win:
+                _notif_stack.pop(i)
+                break
 
     try:
         win = tk.Toplevel(root)
         win.overrideredirect(True)
         win.attributes("-topmost", True)
-        win.attributes("-alpha", 0.97)
-        win.configure(bg="#1a1a1e")
+        win.configure(bg="#3C3C3C")
 
-        w = 360
-        wrap = w - 28
+        W = 440
+        PAD = 12
+        wrap = W - PAD * 2
 
-        tk.Label(win, text="Scryptian",
-                 bg="#1a1a1e", fg="#3b82f6",
-                 font=("Manrope", 8, "bold")).place(x=14, y=10)
+        outer = tk.Frame(win, bg="#3C3C3C", padx=1, pady=1)
+        outer.pack(fill="both", expand=True)
+        inner = tk.Frame(outer, bg="#202020")
+        inner.pack(fill="both", expand=True)
 
-        tk.Label(win, text=title,
-                 bg="#1a1a1e", fg="#f4f4f6",
-                 font=("Manrope", 10, "bold"),
-                 wraplength=wrap, justify="left").place(x=14, y=28)
+        # ── Header: app name + close ──
+        header = tk.Frame(inner, bg="#202020")
+        header.pack(fill="x", padx=PAD, pady=(8, 0))
 
-        msg = tk.Label(win, text=message,
-                       bg="#1a1a1e", fg="#9c9ca7",
-                       font=("Manrope", 9),
-                       wraplength=wrap, justify="left")
-        msg.place(x=14, y=52)
+        tk.Label(header, text="Scryptian", bg="#202020", fg="#FFFFFF",
+                 font=("Segoe UI Variable", 12, "bold"), anchor="w").pack(side="left")
 
-        # Size the popup to fit the (wrapped) message instead of clipping it.
-        win.update_idletasks()
-        msg_h = max(24, msg.winfo_reqheight())
+        close_btn = tk.Label(header, text="✕", bg="#202020", fg="#9A9A9A",
+                             font=("Segoe UI Variable", 12), cursor="hand2", padx=4)
+        close_btn.pack(side="right")
+        close_btn.bind("<Button-1>", lambda e: _cleanup())
 
-        # Optional action hint (hotkey + label) below the message.
-        action_h = 0
+        # ── Title ──
+        tk.Label(inner, text=title, bg="#202020", fg="#FFFFFF",
+                 font=("Segoe UI Variable", 14, "bold"), anchor="w",
+                 wraplength=wrap, justify="left").pack(fill="x", padx=PAD, pady=(2, 0))
+
+        # ── Body ──
+        tk.Label(inner, text=message, bg="#202020", fg="#C5C5C5",
+                 font=("Segoe UI Variable", 12), anchor="w",
+                 wraplength=wrap, justify="left").pack(fill="x", padx=PAD, pady=(1, 0))
+
+        # ── Action ──
         if action:
             hotkey = (action.get("hotkey") or "").strip()
             callback = action.get("callback")
-            label = (action.get("label") or "Open file").strip()
+            label = (action.get("label") or "Open").strip()
+
+            def _do_action():
+                if callable(callback):
+                    try:
+                        callback()
+                    except Exception:
+                        pass
+                _cleanup()
+
             if hotkey and callable(callback):
                 try:
-                    hotkey_handler = keyboard.add_hotkey(hotkey, callback)
+                    hotkey_handler = keyboard.add_hotkey(hotkey, _do_action)
                 except Exception:
                     hotkey_handler = None
-            display = hotkey.replace("+", " + ").upper()
-            hint_text = f"[{display}] {label}" if display else label
-            tk.Label(win, text=hint_text,
-                     bg="#1a1a1e", fg="#3b82f6",
-                     font=("Manrope", 9, "bold")).place(x=14, y=52 + msg_h + 6)
-            action_h = 22
+            btn_row = tk.Frame(inner, bg="#202020")
+            btn_row.pack(fill="x", padx=PAD, pady=(8, 0))
 
-        h = 52 + msg_h + action_h + 14
+            _rounded_button(btn_row, label, _do_action, accent=True).pack(side="right")
+
+            if hotkey:
+                hint = hotkey.replace("+", " + ").upper()
+                tk.Label(inner, text=hint, bg="#202020", fg="#9A9A9A",
+                         font=("Segoe UI Variable", 12), anchor="e").pack(fill="x", padx=PAD, pady=(2, 8))
+            else:
+                tk.Frame(inner, bg="#202020", height=8).pack(fill="x")
+        else:
+            tk.Frame(inner, bg="#202020", height=10).pack(fill="x")
+
+        win.update_idletasks()
+        h = inner.winfo_reqheight() + 2
 
         wa = _get_work_area()
         if wa:
@@ -156,9 +245,26 @@ def show_notify_popup(title, message, root=None, duration=5000, action=None):
         else:
             right = win.winfo_screenwidth()
             bottom = win.winfo_screenheight()
-        x = right - w - 16
-        y = bottom - h - 12
-        win.geometry(f"{w}x{h}+{x}+{y}")
+        x = right - W - 16
+        y = bottom - h - 12 - _stack_offset()
+        _notif_stack.append((win, h))
+        win.geometry(f"{W}x{h}+{x}+{y + 16}")
+        win.attributes("-alpha", 0.0)
+        _round_corners(win)
+
+        def _slide_in(step=0):
+            total = 14
+            p = 1 - (1 - step / total) ** 3  # ease-out cubic
+            try:
+                win.attributes("-alpha", p)
+                ny = y + int(16 * (1 - p))
+                win.geometry(f"{W}x{h}+{x}+{ny}")
+            except Exception:
+                return
+            if step < total:
+                win.after(16, lambda: _slide_in(step + 1))
+
+        _slide_in()
 
         try:
             import winsound
@@ -212,27 +318,37 @@ def show_update_popup(version, releases_url, root=None):
         win = tk.Toplevel(root)
         win.overrideredirect(True)
         win.attributes("-topmost", True)
-        win.attributes("-alpha", 0.97)
-        win.configure(bg="#1a1a1e")
+        win.configure(bg="#3C3C3C")
+        _round_corners(win)
 
-        w, h = 300, 80
+        W = 320
+        PAD = 16
+        outer = tk.Frame(win, bg="#3C3C3C", padx=1, pady=1)
+        outer.pack(fill="both", expand=True)
+        inner = tk.Frame(outer, bg="#202020")
+        inner.pack(fill="both", expand=True)
+
+        tk.Label(inner, text="Scryptian", bg="#202020", fg="#60CDFF",
+                 font=("Segoe UI Variable", 12, "bold"), anchor="w").pack(fill="x", padx=PAD, pady=(14, 0))
+
+        tk.Label(inner, text=f"Version {version} is available", bg="#202020", fg="#FFFFFF",
+                 font=("Segoe UI Variable", 14, "bold"), anchor="w").pack(fill="x", padx=PAD, pady=(2, 0))
+
+        tk.Label(inner, text="Click to update →", bg="#202020", fg="#C5C5C5",
+                 font=("Segoe UI Variable", 12), anchor="w", cursor="hand2").pack(fill="x", padx=PAD, pady=(4, 14))
+
+        win.update_idletasks()
+        h = inner.winfo_reqheight() + 2
+
         wa = _get_work_area()
         if wa:
             _, _, right, bottom = wa
         else:
             right = win.winfo_screenwidth()
             bottom = win.winfo_screenheight()
-        x = right - w - 16
+        x = right - W - 16
         y = bottom - h - 12
-        win.geometry(f"{w}x{h}+{x}+{y}")
-
-        tk.Label(win, text=f"Scryptian {version} is available",
-                 bg="#1a1a1e", fg="#f4f4f6",
-                 font=("Manrope", 10, "bold")).place(x=12, y=10)
-
-        tk.Label(win, text="Click to update →",
-                 bg="#1a1a1e", fg="#9c9ca7",
-                 font=("Manrope", 9), cursor="hand2").place(x=12, y=34)
+        win.geometry(f"{W}x{h}+{x}+{y}")
 
         def _open(e=None):
             try:

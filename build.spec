@@ -3,7 +3,11 @@
 import os
 
 import pymediainfo
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_all, collect_submodules
+
+# pillow-heif bundles libheif for iPhone HEIC photos. Skills import it at
+# runtime, so PyInstaller will not see the package or its DLLs on its own.
+_heif_datas, _heif_binaries, _heif_hidden = collect_all("pillow_heif")
 
 block_cipher = None
 base_dir = os.path.dirname(os.path.abspath(SPEC))
@@ -23,7 +27,7 @@ _skill_bundles = [
 a = Analysis(
     ['main.py'],
     pathex=[base_dir],
-    binaries=[(_media_dll, '.')],
+    binaries=[(_media_dll, '.')] + _heif_binaries,
     datas=[
         ('icon.ico', '.'),
         ('config.py', '.'),
@@ -32,6 +36,8 @@ a = Analysis(
         ('tray.py', '.'),
         ('autostart.py', '.'),
         ('bootstrap.py', '.'),
+        ('runtime_bins.py', '.'),
+        ('tools/7zr.exe', '.'),
         # Skill bundles are bundled as folders. The 'translate_pdf' bundle
         # (folder + ~22 MB libs/) is intentionally EXCLUDED — it ships via the
         # store (registry + zip) and is downloaded on demand, keeping the
@@ -51,7 +57,7 @@ a = Analysis(
         ('skill_settings.py', '.'),
         ('.env', '.'),
         ('gcloud-key.json', '.')
-    ] + _skill_bundles,
+    ] + _skill_bundles + _heif_datas,
     hiddenimports=[
         'pystray._win32',
         'certifi',
@@ -62,6 +68,8 @@ a = Analysis(
         # by PyInstaller's static analysis, so force-include them here.
         'pymediainfo',
         'pypdf',
+        'pillow_heif',
+        *_heif_hidden,
         # Stdlib modules used by the store-delivered PDF skill (reportlab +
         # pdfminer.six). Those libraries are NOT analyzed by PyInstaller (they
         # ship in the skill zip), so any stdlib module they import at runtime
