@@ -1494,10 +1494,14 @@ class ScryptianBar:
             return
 
         # Hide list, show status
-        self.list_frame.pack_forget()
-        self.skill_hint.pack_forget()
-        self.entry.config(state="disabled")
-        self._start_anim(skill["title"])
+        # self.list_frame.pack_forget()
+        # self.skill_hint.pack_forget()
+        # self.entry.config(state="disabled")
+        # self._start_anim(skill["title"])
+        start_msg = "Started. You'll get a notification when it's done."
+        bridge.notify(skill["title"], start_msg)
+        if self.window:
+            self._hide()
 
         self.processing = True
         print(f"[Scryptian] Running: {skill['title']}...")
@@ -1514,29 +1518,42 @@ class ScryptianBar:
                 result = core.run_skill(skill, input_text)
                 self.processing = False
                 if result and not result.startswith("[Scryptian Error]"):
-                    if self.window and self.visible:
-                        self.last_result = result
-                        self.last_skill_title = skill["title"]
-                        self.has_result = True
-                        self.root.after(0, lambda: self._show_result(result))
-                    else:
-                        self.pending_result = result
+                    self.last_skill_title = skill["title"]
+                    # self.root.after(0, lambda r=result: self._present_result(r))
                     telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src))
                     _track_skill(skill["filename"].replace(".py", ""))
                     _settle_skill(skill)
                     print(f"[Scryptian] Done!")
+                    out_path = None
+                    if isinstance(result, str) and result.startswith("[Scryptian File] "):
+                        out_path = result[len("[Scryptian File] "):].strip()
+                    if out_path:
+                        bridge.notify(
+                            skill["title"],
+                            f"Saved to {os.path.basename(os.path.dirname(out_path))}",
+                            action={
+                                "label": "Open file",
+                                "hotkey": "alt+q",
+                                "callback": lambda p=out_path: tray.open_in_explorer(p),
+                            },
+                        )
+                    else:
+                        bridge.notify(skill["title"], result if isinstance(result, str) and result.strip() else "Done.")
                 elif result and result.startswith("[Scryptian Error]"):
                     telemetry.send("skill_failed", {"name": skill["title"], "reason": "error", "error": result[:200]})
-                    self.root.after(0, lambda: self._show_result(result))
+                    # self.root.after(0, lambda r=result: self._present_result(r))
+                    bridge.notify(skill["title"], "Something went wrong. Please try again.")
                     _refund_skill(skill)
                 else:
                     telemetry.send("skill_failed", {"name": skill["title"], "reason": "empty"})
-                    self.root.after(0, lambda: self._show_result("Skill returned an empty result."))
+                    # self.root.after(0, lambda: self._present_result("Skill returned an empty result."))
+                    bridge.notify(skill["title"], "Something went wrong. Please try again.")
                     _refund_skill(skill)
             except Exception as e:
                 telemetry.send("skill_failed", {"name": skill["title"], "reason": "exception", "error": str(e)[:200]})
                 err_msg = f"Error: {e}"
-                self.root.after(0, lambda msg=err_msg: self._show_result(msg))
+                # self.root.after(0, lambda msg=err_msg: self._present_result(msg))
+                bridge.notify(skill["title"], "Something went wrong. Please try again.")
                 _refund_skill(skill)
 
         threading.Thread(target=execute, daemon=True).start()
@@ -1546,8 +1563,8 @@ class ScryptianBar:
         if getattr(self, "_bg_running", False):
             self._show_result("A background task is already running.\nPlease wait for it to finish.")
             return
-        if not self.visible:
-            self._show()
+        # if not self.visible:
+        #     self._show()
         price = _skill_price(skill, input_text)
         if not _reserve_skill(skill, price):
             return
@@ -1593,10 +1610,12 @@ class ScryptianBar:
 
         threading.Thread(target=bg_execute, daemon=True).start()
         start_msg = "Started. You'll get a notification when it's done."
-        self._show_result(start_msg)
+        # self._show_result(start_msg)
         bridge.notify(skill["title"], start_msg)
+        # if self.window:
+        #     self.window.after(2500, self._hide)
         if self.window:
-            self.window.after(2500, self._hide)
+            self._hide()
 
     def open_bar(self, source_hwnd=None):
         """Open the full bar without running a skill (called from SelectionToolbar)."""
@@ -1619,12 +1638,16 @@ class ScryptianBar:
         if bool(skill.get("background", False)):
             self._run_background(skill, input_text)
             return
-        if not self.visible:
-            self._show()
-        self.list_frame.pack_forget()
-        self.skill_hint.pack_forget()
-        self.entry.config(state="disabled")
-        self._start_anim(skill["title"])
+        # if not self.visible:
+        #     self._show()
+        # self.list_frame.pack_forget()
+        # self.skill_hint.pack_forget()
+        # self.entry.config(state="disabled")
+        # self._start_anim(skill["title"])
+        start_msg = "Started. You'll get a notification when it's done."
+        bridge.notify(skill["title"], start_msg)
+        if self.window:
+            self._hide()
         self.processing = True
         _t0 = time.time()
         _src = source_detect.get_source_info(getattr(self, '_source_hwnd', None))
@@ -1642,9 +1665,8 @@ class ScryptianBar:
                 print(f"[Scryptian] Done (external): {skill['title']}")
                 self.processing = False
                 if result and not result.startswith("[Scryptian Error]"):
-                    self.last_result = result
-                    self.has_result = True
-                    self.root.after(0, lambda: self._show_result(result))
+                    self.last_skill_title = skill["title"]
+                    # self.root.after(0, lambda r=result: self._present_result(r))
                     telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src, via="selection"))
                     _settle_skill(skill, _price)
                     out_path = None
@@ -1664,16 +1686,25 @@ class ScryptianBar:
                         bridge.notify(skill["title"], "Done.")
                 else:
                     telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "error_or_empty", "error": (result or "")[:200]})
-                    self.root.after(0, lambda t=result: self._show_result(t or "Skill returned an empty result."))
+                    # self.root.after(0, lambda t=result: self._present_result(t or "Skill returned an empty result."))
                     bridge.notify(skill["title"], "Something went wrong. Please try again.")
                     _refund_skill(skill, _price)
             except Exception as e:
                 telemetry.send("skill_failed", {"name": skill["title"], "via": "selection", "reason": "exception", "error": str(e)[:200]})
-                self.root.after(0, lambda msg=str(e): self._show_result(f"Error: {msg}"))
+                # self.root.after(0, lambda msg=str(e): self._present_result(f"Error: {msg}"))
                 bridge.notify(skill["title"], "Something went wrong. Please try again.")
                 _refund_skill(skill, _price)
 
         threading.Thread(target=execute, daemon=True).start()
+
+    def _present_result(self, text):
+        """Open the bar only to show a finished result, not the running state."""
+        if not self.window or not self.visible:
+            self.pending_result = None
+            self._show()
+        self.last_result = text
+        self.has_result = True
+        self._show_result(text)
 
     def _show_result(self, text):
         """Shows result below the bar, dynamically expanding the window."""

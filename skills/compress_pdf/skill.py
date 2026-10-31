@@ -2,9 +2,6 @@
 
 import os
 import subprocess
-import sys
-import urllib.request
-import zipfile
 
 try:
     import telemetry as _telemetry
@@ -19,40 +16,16 @@ def _report(detail):
         except Exception:
             pass
 
-_GHOSTSCRIPT_URL = "https://qvihfoeouvfveacexcol.supabase.co/storage/v1/object/public/actions/ghostscript.zip"
-_GS_DIR_NAME = "_ghostscript"
 _PDFSETTINGS = "/ebook"
 
 
 def _ensure_gs():
-    """Return gswin64c.exe path, downloading & extracting Ghostscript on first use."""
-    skill_dir = os.path.dirname(os.path.abspath(__file__))
-    skills_root = os.path.dirname(skill_dir)
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        app_root = os.path.dirname(sys._MEIPASS)
-    else:
-        app_root = os.path.dirname(skills_root)
-    gs_dir = os.path.join(app_root, "runtimes", "ghostscript")
-    gs_exe = os.path.join(gs_dir, "bin", "gswin64c.exe")
-
-    if os.path.exists(gs_exe):
-        return gs_exe
-
+    """Return gswin64c.exe, unpacking the shipped zip when it is missing."""
     try:
-        os.makedirs(gs_dir, exist_ok=True)
-        tmp_zip = os.path.join(gs_dir, "_gs.zip")
-        req = urllib.request.Request(_GHOSTSCRIPT_URL, headers={"User-Agent": "Scryptian"})
-        with urllib.request.urlopen(req, timeout=600) as resp, open(tmp_zip, "wb") as f:
-            f.write(resp.read())
-        with zipfile.ZipFile(tmp_zip) as z:
-            z.extractall(gs_dir)
-        if os.path.exists(tmp_zip):
-            os.remove(tmp_zip)
-        if os.path.exists(gs_exe):
-            return gs_exe
+        import runtime_bins
+        return runtime_bins.ensure_ghostscript()
     except Exception:
-        pass
-    return "gs"
+        return "gs"
 
 
 def measure(file_path):

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notification preview</title>
+  <style>
+    /* Правь эти значения. После одобрения переносим их в tray.py.
+       Шкала cursor.com при корне 15px: 11 / 13 / 15, межстрочный 15 / 20 / 22, вес 400. */
+    :root {
+      --w: 440px;
+      --page: #14120B;
+      --bg: #1A2328;
+      --text: #EDECEC;
+      --body: rgba(237, 236, 236, 0.62);
+      --dim: rgba(237, 236, 236, 0.46);
+      --btn-bg: #EDECEC;
+      --btn-text: #14120B;
+      --radius: 4px;
+      --pad: 10px 14px;
+      --meta-size: 11px;
+      --meta-lh: 15px;
+      --body-size: 13px;
+      --body-lh: 20px;
+      --title-size: 15px;
+      --title-lh: 22px;
+      --btn-h: 28px;
+      --btn-size: 13px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--text);
+      font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .stage {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 48px 28px 28px;
+    }
+
+    .item { width: var(--w); }
+
+    .label {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .notify {
+      width: var(--w);
+      background: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+      box-shadow: none;
+    }
+
+    .notify-inner {
+      padding: var(--pad);
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .row + .row { margin-top: 2px; }
+
+    .lead {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .close {
+      color: var(--dim);
+      font-size: var(--meta-size);
+      line-height: var(--meta-lh);
+      padding: 0 4px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: var(--title-size);
+      font-weight: 400;
+      line-height: var(--title-lh);
+      letter-spacing: 0;
+    }
+
+    .body {
+      margin: 0;
+      min-width: 0;
+      font-size: var(--body-size);
+      font-weight: 400;
+      line-height: var(--body-lh);
+      color: var(--body);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      flex: none;
+      gap: 12px;
+      margin: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: var(--btn-h);
+      padding: 0 10px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      font-family: inherit;
+      font-size: var(--btn-size);
+      font-weight: 500;
+      line-height: var(--body-lh);
+    }
+
+    .hint {
+      font-size: var(--meta-size);
+      font-weight: 400;
+      line-height: var(--meta-lh);
+      letter-spacing: 0.04em;
+      color: var(--dim);
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="item">
+      <p class="label">Скилл начал работу</p>
+      <div class="notify">
+        <div class="notify-inner">
+          <div class="row">
+            <div class="lead">
+              <div class="title">Convert to PPTX</div>
+            </div>
+            <div class="close">✕</div>
+          </div>
+          <div class="row">
+            <div class="body">Started. You'll get a notification when it's done.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <p class="label">Результат готов</p>
+      <div class="notify">
+        <div class="notify-inner">
+          <div class="row">
+            <div class="lead">
+              <div class="title">Convert to PPTX</div>
+            </div>
+            <div class="close">✕</div>
+          </div>
+          <div class="row">
+            <div class="body">Saved to Documents</div>
+            <div class="actions">
+              <div class="hint">ALT + Q</div>
+              <button class="btn" type="button">Open file</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <p class="label">Ошибка</p>
+      <div class="notify">
+        <div class="notify-inner">
+          <div class="row">
+            <div class="lead">
+              <div class="title">Convert to PPTX</div>
+            </div>
+            <div class="close">✕</div>
+          </div>
+          <div class="row">
+            <div class="body">Something went wrong. Please try again.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

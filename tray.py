@@ -1,6 +1,7 @@
 # tray.py — System tray icon for Scryptian
 
 import os
+import re
 import threading
 import webbrowser
 import pystray
@@ -26,7 +27,8 @@ _icon_ref = None
 RELEASES_URL = "https://github.com/adrianium/Scryptian/releases/latest"
 _update_version = None
 
-_notif_stack = []  # active notification windows, for Telegram-style stacking
+_notif_stack = []  # active notification windows, bottom to top
+_layout_gen = 0
 
 
 def _stack_offset():
@@ -35,12 +37,79 @@ def _stack_offset():
     return sum(h for _, h in _notif_stack) + gap * len(_notif_stack)
 
 
-def _round_corners(win):
+def _parse_geometry(win):
+    m = re.match(r"(\d+)x(\d+)([+-]\d+)([+-]\d+)", str(win.geometry()))
+    if not m:
+        return None
+    return tuple(int(g) for g in m.groups())
+
+
+def _relayout(enter=None):
+    """Place the stack from the bottom. Windows above a closed one slide down."""
+    global _layout_gen
+    _layout_gen += 1
+    gen = _layout_gen
+    alive = []
+    for win, h in _notif_stack:
+        try:
+            if win.winfo_exists():
+                alive.append((win, h))
+        except Exception:
+            continue
+    if not alive:
+        return
+
+    sample = alive[0][0]
+    gap = 8
+    margin_x = 16
+    margin_y = 12
+    wa = _get_work_area()
+    if wa:
+        _, _, right, bottom = wa
+    else:
+        right = sample.winfo_screenwidth()
+        bottom = sample.winfo_screenheight()
+
+    offset = 0
+    moves = []
+    for win, h in alive:
+        box = _parse_geometry(win)
+        width = getattr(win, "_notif_w", 440)
+        target_y = bottom - h - margin_y - offset
+        target_x = right - width - margin_x
+        start_y = target_y + margin_x if win is enter else (box[3] if box else target_y)
+        moves.append((win, width, h, target_x, start_y, target_y))
+        offset += h + gap
+
+    def step(i=0):
+        if gen != _layout_gen:
+            return
+        total = 12
+        t = min(i / total, 1)
+        p = 1 - (1 - t) ** 3
+        for win, width, h, tx, sy, ty in moves:
+            try:
+                if not win.winfo_exists():
+                    continue
+                ny = int(round(sy + (ty - sy) * p))
+                win.geometry(f"{width}x{h}+{tx}+{ny}")
+            except Exception:
+                continue
+        if i < total:
+            try:
+                sample.after(16, lambda: step(i + 1))
+            except Exception:
+                pass
+
+    step()
+
+
+def _round_corners(win, small=False):
     """Native Windows 11 rounded corners via DWM (safe no-op on failure)."""
     try:
         import ctypes
         hwnd = ctypes.windll.user32.GetAncestor(win.winfo_id(), 2)  # GA_ROOT
-        pref = ctypes.c_int(2)  # DWMWCP_ROUND
+        pref = ctypes.c_int(3 if small else 2)  # 3 = about 4px, 2 = default round
         ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(pref), ctypes.sizeof(pref))
     except Exception:
         pass
@@ -56,17 +125,16 @@ def _rounded_rect(canvas, x1, y1, x2, y2, r, **kw):
     return canvas.create_polygon(points, smooth=True, **kw)
 
 
-def _rounded_button(parent, text, command, accent=True):
-    """A compact Win11-style rounded button drawn on a Canvas."""
+def _rounded_button(parent, text, command, bg, fg, font, height, radius, pad_x):
+    """Flat rounded button. Matches the notification mock."""
     import tkinter as tk
     import tkinter.font as tkfont
-    f = tkfont.Font(family="Segoe UI Variable", size=14)
-    w = max(80, f.measure(text) + 32)
-    h = 34
+    family, size = font
+    f = tkfont.Font(family=family, size=size)
+    w = f.measure(text) + pad_x * 2
+    h = height
     c = tk.Canvas(parent, width=w, height=h, bg=parent.cget("bg"), highlightthickness=0, bd=0)
-    bg = "#0078D4" if accent else "#2B2B2B"
-    fg = "#FFFFFF"
-    _rounded_rect(c, 0, 1, w - 1, h - 1, 5, fill=bg, outline=bg)
+    _rounded_rect(c, 0, 0, w, h, radius, fill=bg, outline=bg)
     c.create_text(w // 2, h // 2, text=text, fill=fg, font=f)
     c.config(cursor="hand2")
     c.bind("<Button-1>", lambda e: command())
@@ -165,45 +233,62 @@ def show_notify_popup(title, message, root=None, duration=5000, action=None):
             if w_ is win:
                 _notif_stack.pop(i)
                 break
+        try:
+            if root is not None:
+                root.after(0, _relayout)
+            else:
+                _relayout()
+        except Exception:
+            pass
 
     try:
         win = tk.Toplevel(root)
         win.overrideredirect(True)
         win.attributes("-topmost", True)
-        win.configure(bg="#3C3C3C")
+
+        # Colors and sizes from notify-preview.html
+        bg = "#1A2328"
+        fg = "#EDECEC"
+        body_fg = "#9DA0A2"
+        dim = "#7B7F82"
+        btn_bg = "#EDECEC"
+        btn_fg = "#14120B"
+        win.configure(bg=bg)
+
+        import tkinter.font as tkfont
+        families = set(tkfont.families(win))
+        semi = "Segoe UI Semibold" if "Segoe UI Semibold" in families else "Segoe UI Variable"
+        regular = "Segoe UI Variable" if "Segoe UI Variable" in families else "Segoe UI"
+        meta_font = (regular, 12)
+        title_font = (regular, 15)
+        body_font = (regular, 13)
+        btn_font = (semi, 13)
 
         W = 440
-        PAD = 12
-        wrap = W - PAD * 2
+        PAD_X = 14
+        PAD_Y = 10
+        win._notif_w = W
 
-        outer = tk.Frame(win, bg="#3C3C3C", padx=1, pady=1)
-        outer.pack(fill="both", expand=True)
-        inner = tk.Frame(outer, bg="#202020")
-        inner.pack(fill="both", expand=True)
+        inner = tk.Frame(win, bg=bg)
+        inner.pack(fill="both", expand=True, padx=PAD_X, pady=PAD_Y)
 
-        # ── Header: app name + close ──
-        header = tk.Frame(inner, bg="#202020")
-        header.pack(fill="x", padx=PAD, pady=(8, 0))
+        header = tk.Frame(inner, bg=bg)
+        header.pack(fill="x")
+        lead = tk.Frame(header, bg=bg)
+        lead.pack(side="left", fill="x", expand=True)
 
-        tk.Label(header, text="Scryptian", bg="#202020", fg="#FFFFFF",
-                 font=("Segoe UI Variable", 12, "bold"), anchor="w").pack(side="left")
+        tk.Label(lead, text=title, bg=bg, fg=fg,
+                 font=title_font, anchor="w").pack(side="left", padx=(0, 8))
 
-        close_btn = tk.Label(header, text="✕", bg="#202020", fg="#9A9A9A",
-                             font=("Segoe UI Variable", 12), cursor="hand2", padx=4)
+        close_btn = tk.Label(header, text="✕", bg=bg, fg=dim,
+                             font=meta_font, cursor="hand2", padx=4)
         close_btn.pack(side="right")
         close_btn.bind("<Button-1>", lambda e: _cleanup())
 
-        # ── Title ──
-        tk.Label(inner, text=title, bg="#202020", fg="#FFFFFF",
-                 font=("Segoe UI Variable", 14, "bold"), anchor="w",
-                 wraplength=wrap, justify="left").pack(fill="x", padx=PAD, pady=(2, 0))
+        body_row = tk.Frame(inner, bg=bg)
+        body_row.pack(fill="x", pady=(2, 0))
 
-        # ── Body ──
-        tk.Label(inner, text=message, bg="#202020", fg="#C5C5C5",
-                 font=("Segoe UI Variable", 12), anchor="w",
-                 wraplength=wrap, justify="left").pack(fill="x", padx=PAD, pady=(1, 0))
-
-        # ── Action ──
+        action_btn = None
         if action:
             hotkey = (action.get("hotkey") or "").strip()
             callback = action.get("callback")
@@ -222,22 +307,24 @@ def show_notify_popup(title, message, root=None, duration=5000, action=None):
                     hotkey_handler = keyboard.add_hotkey(hotkey, _do_action)
                 except Exception:
                     hotkey_handler = None
-            btn_row = tk.Frame(inner, bg="#202020")
-            btn_row.pack(fill="x", padx=PAD, pady=(8, 0))
 
-            _rounded_button(btn_row, label, _do_action, accent=True).pack(side="right")
-
+            action_btn = _rounded_button(
+                body_row, label, _do_action,
+                bg=btn_bg, fg=btn_fg, font=btn_font,
+                height=28, radius=4, pad_x=10,
+            )
+            action_btn.pack(side="right")
             if hotkey:
                 hint = hotkey.replace("+", " + ").upper()
-                tk.Label(inner, text=hint, bg="#202020", fg="#9A9A9A",
-                         font=("Segoe UI Variable", 12), anchor="e").pack(fill="x", padx=PAD, pady=(2, 8))
-            else:
-                tk.Frame(inner, bg="#202020", height=8).pack(fill="x")
-        else:
-            tk.Frame(inner, bg="#202020", height=10).pack(fill="x")
+                tk.Label(body_row, text=hint, bg=bg, fg=dim,
+                         font=meta_font, anchor="e").pack(side="right", padx=(0, 12))
+
+        tk.Label(body_row, text=message, bg=bg, fg=body_fg,
+                 font=body_font, anchor="w", justify="left",
+                 wraplength=W - PAD_X * 2 - (180 if action else 0)).pack(side="left", fill="x", expand=True)
 
         win.update_idletasks()
-        h = inner.winfo_reqheight() + 2
+        h = inner.winfo_reqheight() + PAD_Y * 2
 
         wa = _get_work_area()
         if wa:
@@ -250,21 +337,20 @@ def show_notify_popup(title, message, root=None, duration=5000, action=None):
         _notif_stack.append((win, h))
         win.geometry(f"{W}x{h}+{x}+{y + 16}")
         win.attributes("-alpha", 0.0)
-        _round_corners(win)
+        _round_corners(win, small=True)
+        _relayout(enter=win)
 
-        def _slide_in(step=0):
+        def _fade_in(step=0):
             total = 14
-            p = 1 - (1 - step / total) ** 3  # ease-out cubic
+            p = 1 - (1 - step / total) ** 3
             try:
                 win.attributes("-alpha", p)
-                ny = y + int(16 * (1 - p))
-                win.geometry(f"{W}x{h}+{x}+{ny}")
             except Exception:
                 return
             if step < total:
-                win.after(16, lambda: _slide_in(step + 1))
+                win.after(16, lambda: _fade_in(step + 1))
 
-        _slide_in()
+        _fade_in()
 
         try:
             import winsound
@@ -284,9 +370,14 @@ def show_notify_popup(title, message, root=None, duration=5000, action=None):
             except Exception:
                 pass
 
-        win.bind("<Button-1>", lambda e: _cleanup())
-        for w_ in win.winfo_children():
-            w_.bind("<Button-1>", lambda e: _cleanup())
+        def _bind_close(widget):
+            if widget is action_btn:
+                return
+            widget.bind("<Button-1>", lambda e: _cleanup(), add="+")
+            for child in widget.winfo_children():
+                _bind_close(child)
+
+        _bind_close(win)
 
         # Hold at least `duration`, then wait until the user is active before fading.
         def _wait_for_activity():

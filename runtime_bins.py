@@ -1,14 +1,19 @@
-# runtime_bins.py — shared download of local tools into runtimes/.
+# runtime_bins.py — local ffmpeg and Ghostscript for runtimes/.
 #
-# ffmpeg is the Gyan essentials build (all common codecs), not the old
-# stripped ffmpeg.exe. Files land in <app>/runtimes/ffmpeg/.
+# The build ships two archives (ffmpeg essentials .7z and ghostscript.zip),
+# not the unpacked binaries. First launch extracts them next to the exe.
+# A download runs only when those archives are not in the build.
 
 import os
 import subprocess
 import sys
 import urllib.request
+import zipfile
 
 FFMPEG_URL = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z"
+GHOSTSCRIPT_URL = "https://qvihfoeouvfveacexcol.supabase.co/storage/v1/object/public/actions/ghostscript.zip"
+_FFMPEG_ARCHIVE = "ffmpeg-release-essentials.7z"
+_GS_ARCHIVE = "ghostscript.zip"
 _MARKER = "essentials"
 
 def app_root():
@@ -45,6 +50,24 @@ def sevenzr_path():
     raise FileNotFoundError("7zr.exe")
 
 
+def ghostscript_exe():
+    return os.path.join(runtime_root(), "ghostscript", "bin", "gswin64c.exe")
+
+
+def bundled_archive(filename):
+    """Archive shipped with the app. Dev keeps it in runtimes/; the frozen
+    build places datas under _internal, which is _MEIPASS."""
+    candidates = [os.path.join(runtime_root(), filename)]
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        candidates.append(os.path.join(sys._MEIPASS, "runtimes", filename))
+        candidates.append(os.path.join(sys._MEIPASS, filename))
+    candidates.append(os.path.join(app_root(), filename))
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+    return None
+
+
 def needs_ffmpeg():
     """True when ffmpeg is missing or still the old stripped build."""
     exe = ffmpeg_exe()
@@ -58,28 +81,75 @@ def needs_ffmpeg():
         return True
 
 
+def _mark_ffmpeg():
+    with open(os.path.join(ffmpeg_dir(), "build.txt"), "w", encoding="utf-8") as f:
+        f.write(_MARKER + "\n")
+
+
 def ensure_ffmpeg(on_progress=None):
-    """Return path to essentials ffmpeg.exe, downloading it if needed."""
+    """Return path to essentials ffmpeg.exe. Unpack the shipped 7z when the
+    binaries are missing; download only if that archive is not in the build."""
     exe = ffmpeg_exe()
     if not needs_ffmpeg():
         return exe
 
     dest_dir = ffmpeg_dir()
     os.makedirs(dest_dir, exist_ok=True)
-    archive = os.path.join(dest_dir, "essentials.7z.part")
-    try:
-        _download(FFMPEG_URL, archive, on_progress)
+    archive = bundled_archive(_FFMPEG_ARCHIVE)
+    if archive:
         _extract_bins(archive, dest_dir)
         if not os.path.isfile(exe):
             raise RuntimeError("essentials archive has no ffmpeg.exe")
-        with open(os.path.join(dest_dir, "build.txt"), "w", encoding="utf-8") as f:
-            f.write(_MARKER + "\n")
+        _mark_ffmpeg()
+        if on_progress:
+            on_progress(1.0)
+        return exe
+
+    part = os.path.join(dest_dir, "essentials.7z.part")
+    try:
+        _download(FFMPEG_URL, part, on_progress)
+        _extract_bins(part, dest_dir)
+        if not os.path.isfile(exe):
+            raise RuntimeError("essentials archive has no ffmpeg.exe")
+        _mark_ffmpeg()
         return exe
     finally:
         try:
-            os.remove(archive)
+            os.remove(part)
         except Exception:
             pass
+
+
+def ensure_ghostscript():
+    """Return gswin64c.exe. Unpack the shipped zip when it is missing;
+    download only if that archive is not in the build."""
+    exe = ghostscript_exe()
+    if os.path.isfile(exe):
+        return exe
+
+    dest_dir = os.path.join(runtime_root(), "ghostscript")
+    os.makedirs(dest_dir, exist_ok=True)
+    archive = bundled_archive(_GS_ARCHIVE)
+    if archive:
+        with zipfile.ZipFile(archive) as z:
+            z.extractall(dest_dir)
+        if not os.path.isfile(exe):
+            raise RuntimeError("ghostscript archive has no gswin64c.exe")
+        return exe
+
+    part = os.path.join(dest_dir, "_gs.zip")
+    try:
+        _download(GHOSTSCRIPT_URL, part, None)
+        with zipfile.ZipFile(part) as z:
+            z.extractall(dest_dir)
+    finally:
+        try:
+            os.remove(part)
+        except Exception:
+            pass
+    if not os.path.isfile(exe):
+        raise RuntimeError("ghostscript archive has no gswin64c.exe")
+    return exe
 
 
 def _download(url, dest, on_progress, timeout=1800):

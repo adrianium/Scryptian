@@ -17,7 +17,9 @@ venv/
 .id
 .first_launch_sent
 first_launch_sent.txt
-runtimes/
+runtimes/*
+!runtimes/ffmpeg-release-essentials.7z
+!runtimes/ghostscript.zip
 pinned.json
 main_pinned.json
 *.exe

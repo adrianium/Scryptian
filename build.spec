@@ -38,6 +38,10 @@ a = Analysis(
         ('bootstrap.py', '.'),
         ('runtime_bins.py', '.'),
         ('tools/7zr.exe', '.'),
+        # Archives only. Unpacked runtimes/ffmpeg and runtimes/ghostscript
+        # stay out of the exe; first launch extracts these two files.
+        ('runtimes/ffmpeg-release-essentials.7z', 'runtimes'),
+        ('runtimes/ghostscript.zip', 'runtimes'),
         # Skill bundles are bundled as folders. The 'translate_pdf' bundle
         # (folder + ~22 MB libs/) is intentionally EXCLUDED — it ships via the
         # store (registry + zip) and is downloaded on demand, keeping the

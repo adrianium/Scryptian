@@ -192,6 +192,246 @@
       border: none;
     }
 
+    .product-demo {
+      position: relative;
+      container-type: inline-size;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      height: auto;
+      margin: 48px 0 0;
+      background: var(--bg-soft);
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+
+    .pd-scene {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 720px;
+      height: 405px;
+      transform-origin: 0 0;
+      transform: scale(calc(100cqw / 720px));
+    }
+
+    .pd-file {
+      position: absolute;
+      top: 132px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 140px;
+      height: 140px;
+      border-radius: 4px;
+      background: transparent;
+      transition: background 180ms ease, opacity 220ms ease, transform 220ms ease;
+    }
+
+    .pd-file.is-source { left: 206px; }
+    .pd-file.is-result {
+      left: 374px;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .product-demo[data-step="done"] .pd-file.is-result {
+      opacity: 1;
+      transform: none;
+    }
+
+    .product-demo[data-step="selected"] .pd-file.is-source,
+    .product-demo[data-step="copy"] .pd-file.is-source,
+    .product-demo[data-step="menu"] .pd-file.is-source,
+    .product-demo[data-step="pick"] .pd-file.is-source {
+      background: #243038;
+    }
+
+    .pd-glyph {
+      width: 40px;
+      height: 48px;
+      color: #d07a72;
+    }
+
+    .pd-file.is-result .pd-glyph { color: #d4a15a; }
+
+    .pd-glyph svg {
+      display: block;
+      width: 40px;
+      height: 48px;
+    }
+
+    .pd-name {
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: -0.2px;
+      line-height: 20px;
+    }
+
+    .pd-keys {
+      position: absolute;
+      left: 206px;
+      top: 80px;
+      display: flex;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 160ms ease;
+    }
+
+    .product-demo[data-step="copy"] .pd-keys,
+    .product-demo[data-step="menu"] .pd-keys { opacity: 1; }
+
+    .pd-keys kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border: none;
+      border-radius: 4px;
+      background: #121a1e;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .product-demo[data-step="copy"] .pd-keys kbd {
+      transform: translateY(1px);
+      background: #0E171C;
+    }
+
+    .pd-bar {
+      position: absolute;
+      left: 378px;
+      top: 180px;
+      width: 210px;
+      padding: 4px;
+      border: none;
+      border-radius: 4px;
+      background: #121a1e;
+      box-shadow: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .product-demo[data-step="menu"] .pd-bar,
+    .product-demo[data-step="pick"] .pd-bar {
+      opacity: 1;
+      transform: none;
+    }
+
+    .pd-row {
+      padding: 10px 12px;
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 18px;
+    }
+
+    .product-demo[data-step="pick"] .pd-row.is-pptx {
+      background: #2A3439;
+      color: var(--text);
+    }
+
+    .pd-cursor {
+      position: absolute;
+      left: 156px;
+      top: 274px;
+      width: 22px;
+      height: 22px;
+      z-index: 2;
+      transition: left 460ms ease, top 460ms ease, transform 120ms ease, opacity 180ms ease;
+    }
+
+    .pd-cursor svg { display: block; width: 22px; height: 22px; }
+
+    .pd-click {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(245, 245, 245, 0.4);
+      transform: scale(0);
+    }
+
+    .product-demo[data-step="selected"] .pd-cursor,
+    .product-demo[data-step="copy"] .pd-cursor,
+    .product-demo[data-step="menu"] .pd-cursor { left: 296px; top: 214px; }
+    .product-demo[data-step="pick"] .pd-cursor { left: 414px; top: 228px; transform: scale(0.86); }
+    .product-demo[data-step="pick"] .pd-click { animation: pd-click 480ms ease; }
+    .product-demo[data-step="done"] .pd-cursor { opacity: 0; }
+
+    .pd-toast {
+      position: absolute;
+      right: 24px;
+      bottom: 24px;
+      width: 240px;
+      padding: 12px 14px;
+      border: none;
+      border-radius: 4px;
+      background: #121a1e;
+      box-shadow: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .product-demo[data-step="done"] .pd-toast {
+      opacity: 1;
+      transform: none;
+    }
+
+    .pd-toast-title {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 18px;
+      color: var(--text);
+    }
+
+    .pd-toast-body {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 18px;
+      color: var(--text-dim);
+    }
+
+    @keyframes pd-click {
+      0% { transform: scale(0.3); opacity: 1; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
+
+    @media (max-width: 820px) {
+      .product-demo {
+        width: 100%;
+        aspect-ratio: auto;
+        height: 520px;
+      }
+      .pd-scene {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform: none;
+      }
+      .pd-file.is-source { left: 8px; }
+      .pd-file.is-result { left: 176px; }
+      .pd-keys { left: 8px; }
+      .pd-bar { left: 8px; top: 300px; }
+      .pd-cursor { display: none; }
+    }
+
     .hero .sub {
       margin: 0 0 22px;
       max-width: 36rem;
@@ -1054,7 +1294,47 @@
           <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"hero"}'>Download for Windows</a>
           <a class="btn btn-secondary btn-lg" href="https://www.virustotal.com/gui/file/bc6599df53535a60da2372e7bf78c476350e62f82d1e439e68a7e7415fffe533?nocache=1" target="_blank" rel="noopener" data-ph-event="virustotal_clicked">Scanned by VirusTotal</a>
         </div>
-        <img class="hero-demo" src="main-demo.gif" alt="Scryptian in action" />
+        <div class="product-demo" id="product-demo" data-step="idle" aria-hidden="true">
+          <div class="pd-scene">
+            <div class="pd-keys">
+              <kbd>Ctrl</kbd>
+              <kbd>C</kbd>
+            </div>
+            <div class="pd-file is-source">
+              <span class="pd-glyph">
+                <svg viewBox="0 0 36 44" fill="none" aria-hidden="true">
+                  <path d="M7 2.5h13.5L31 13.5V41.5H7V2.5Z" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M20.2 2.8V13.6H31" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+              </span>
+              <span class="pd-name">Proposal.pdf</span>
+            </div>
+            <div class="pd-file is-result">
+              <span class="pd-glyph">
+                <svg viewBox="0 0 36 44" fill="none" aria-hidden="true">
+                  <path d="M7 2.5h13.5L31 13.5V41.5H7V2.5Z" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M20.2 2.8V13.6H31" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+              </span>
+              <span class="pd-name">Proposal.pptx</span>
+            </div>
+            <div class="pd-bar">
+              <div class="pd-row">Convert to DOCX</div>
+              <div class="pd-row is-pptx">Convert to PPTX</div>
+              <div class="pd-row">Compress PDF</div>
+            </div>
+            <div class="pd-toast">
+              <span class="pd-toast-title">File saved</span>
+              <span class="pd-toast-body">Proposal.pptx is next to the original.</span>
+            </div>
+            <div class="pd-cursor">
+              <span class="pd-click"></span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#f5f5f5" d="M5 2.5l12.4 8.4-5.3 1.2 3.5 6.7-2.4 1.2-3.5-6.6-4.7 3.4V2.5z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1086,7 +1366,7 @@
           <div class="step">
             <div class="num">1</div>
             <h3>Copy</h3>
-            <p>Copy any file — the action bar appears right next to your cursor.</p>
+            <p>Copy any file - the action bar appears right next to your cursor.</p>
           </div>
           <div class="step">
             <div class="num">2</div>
@@ -1516,6 +1796,26 @@
     </div>
   </footer>
 
+  <script>
+    (function () {
+      var root = document.getElementById("product-demo");
+      if (!root) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        root.dataset.step = "done";
+        return;
+      }
+      var steps = ["idle", "selected", "copy", "menu", "pick", "done"];
+      var hold = [800, 900, 800, 800, 1100, 1700];
+      var i = 0;
+      function tick() {
+        root.dataset.step = steps[i];
+        var wait = hold[i];
+        i = (i + 1) % steps.length;
+        window.setTimeout(tick, wait);
+      }
+      tick();
+    })();
+  </script>
   <script>
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
     posthog.init('phc_toDCehR5v264u7Xy96zSUjQRryGJQWZxqiy8otEtuBup',{api_host:'https://us.i.posthog.com',capture_pageview:true,capture_pageleave:true});

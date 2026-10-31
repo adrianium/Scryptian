@@ -10,7 +10,7 @@ import zipfile
 
 import runtime_bins
 
-_GHOSTSCRIPT_URL = "https://qvihfoeouvfveacexcol.supabase.co/storage/v1/object/public/actions/ghostscript.zip"
+_GHOSTSCRIPT_URL = runtime_bins.GHOSTSCRIPT_URL
 
 _BG = "#202020"
 _BORDER = "#3C3C3C"
@@ -58,8 +58,18 @@ def _rounded_rect(c, x1, y1, x2, y2, r, **kw):
 
 
 def show_setup_window(root):
-    """Show the first-launch download window if runtimes are missing. Returns the
-    Toplevel (blocking the main bar) or None if nothing needs downloading."""
+    """Unpack shipped archives before the main bar. The download window appears
+    only when those archives are missing and the binaries still are too."""
+    try:
+        if runtime_bins.needs_ffmpeg():
+            runtime_bins.ensure_ffmpeg()
+    except Exception:
+        pass
+    try:
+        runtime_bins.ensure_ghostscript()
+    except Exception:
+        pass
+
     missing = _missing()
     if not missing:
         return None

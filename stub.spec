@@ -11,7 +11,7 @@ a = Analysis(
     ['stub.py'],
     pathex=[base_dir],
     binaries=[],
-    datas=[],
+    datas=[('stub_logo.png', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

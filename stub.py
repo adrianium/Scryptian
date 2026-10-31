@@ -35,12 +35,13 @@ _DETACHED_PROCESS = 0x00000008
 _CREATE_NEW_PROCESS_GROUP = 0x00000200
 _CREATE_NO_WINDOW = 0x08000000
 
-_BG = "#202020"
-_BORDER = "#3C3C3C"
-_TEXT = "#FFFFFF"
-_TEXT_DIM = "#9A9A9A"
-_ACCENT = "#60CDFF"
-_ERROR = "#F1707B"
+_BG = "#0E171C"
+_TEXT = "#EDECEC"
+_TEXT_DIM = "#898C8E"
+_TRACK = "#20282D"
+_FILL = "#EDECEC"
+_ERROR = "#E6B3AD"
+_W = 380
 
 
 def _ssl_ctx():
@@ -122,11 +123,41 @@ def _single_instance():
         return True
 
 
+def _enable_dpi():
+    """Draw at the real screen DPI. Without this Windows stretches the window and it looks soft."""
+    try:
+        import ctypes
+        ctypes.windll.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
+        return
+    except Exception:
+        pass
+    try:
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        try:
+            import ctypes
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
+
+def _screen_dpi():
+    try:
+        import ctypes
+        dpi = ctypes.windll.user32.GetDpiForSystem()
+        if dpi:
+            return int(dpi)
+    except Exception:
+        pass
+    return 96
+
+
 def _round_corners(win):
     try:
         import ctypes
         hwnd = ctypes.windll.user32.GetAncestor(win.winfo_id(), 2)
-        pref = ctypes.c_int(2)
+        pref = ctypes.c_int(3)  # DWMWCP_ROUNDSMALL, about 4px
         ctypes.windll.dwmapi.DwmSetWindowAttribute(
             hwnd, 33, ctypes.byref(pref), ctypes.sizeof(pref)
         )
@@ -143,93 +174,138 @@ def _rounded_rect(c, x1, y1, x2, y2, r, **kw):
     return c.create_polygon(pts, smooth=True, **kw)
 
 
+def _logo_path():
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, "stub_logo.png")
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "stub_logo.png")
+
+
 class StubWindow:
     def __init__(self):
+        _enable_dpi()
         self.root = tk.Tk()
-        self.root.withdraw()
-        self.root.title("Scryptian")
-
-        self.win = tk.Toplevel(self.root)
+        self.win = self.root
+        self.win.title("Scryptian")
         self.win.overrideredirect(True)
-        self.win.attributes("-topmost", True)
-        self.win.configure(bg=_BORDER)
+        self.win.configure(bg=_BG)
         self.win.protocol("WM_DELETE_WINDOW", self._close)
 
-        outer = tk.Frame(self.win, bg=_BORDER, padx=1, pady=1)
-        outer.pack(fill="both", expand=True)
-        inner = tk.Frame(outer, bg=_BG)
+        scale = _screen_dpi() / 96.0
+        try:
+            scale = max(scale, self.root.winfo_fpixels("1i") / 96.0)
+        except Exception:
+            pass
+        self._scale = scale if scale > 0 else 1.0
+        try:
+            self.root.tk.call("tk", "scaling", self._scale)
+        except Exception:
+            pass
+
+        inner = tk.Frame(self.win, bg=_BG)
         inner.pack(fill="both", expand=True)
 
-        self.W, self.H = 380, 240
-
-        self.spinner = tk.Canvas(
-            inner, width=56, height=56, bg=_BG, highlightthickness=0, bd=0
-        )
-        self.spinner.pack(pady=(36, 8))
+        self._title_font, self._body_font = self._fonts()
+        self._logo = self._load_logo(self.px(32))
+        if self._logo is not None:
+            tk.Label(inner, image=self._logo, bg=_BG, bd=0, highlightthickness=0).pack(
+                pady=(self.px(28), self.px(16))
+            )
+        else:
+            tk.Frame(inner, bg=_BG, height=self.px(28)).pack()
 
         tk.Label(
-            inner, text="Scryptian", bg=_BG, fg=_TEXT,
-            font=("Segoe UI Variable", 16, "bold"),
+            inner, text="Scryptian", bg=_BG, fg=_TEXT, font=self._title_font,
         ).pack()
 
+        self.bar_w = self.px(_W - 56)
         self.status = tk.Label(
             inner, text="Getting Scryptian ready…", bg=_BG, fg=_TEXT_DIM,
-            font=("Segoe UI Variable", 12),
+            font=self._body_font, wraplength=self.bar_w, justify="center",
         )
-        self.status.pack(pady=(6, 0))
+        self.status.pack(pady=(self.px(8), 0))
 
+        self.bar_h = max(self.px(4), 2)
+        self.bar_r = max(self.px(2), 1)
         self.bar = tk.Canvas(
-            inner, width=self.W - 72, height=6, bg=_BG, highlightthickness=0, bd=0
+            inner, width=self.bar_w, height=self.bar_h, bg=_BG,
+            highlightthickness=0, bd=0,
         )
-        self.bar.pack(pady=(18, 0))
-        _rounded_rect(self.bar, 0, 0, self.W - 72, 6, 3, fill="#2B2B2B", outline="")
+        self.bar.pack(pady=(self.px(24), 0))
+        self._paint_bar(0)
 
         self.pct = tk.Label(
-            inner, text="0%", bg=_BG, fg=_ACCENT,
-            font=("Segoe UI Variable", 12),
+            inner, text="0%", bg=_BG, fg=_TEXT_DIM, font=self._body_font,
         )
-        self.pct.pack(pady=(10, 0))
+        self.pct.pack(pady=(self.px(8), self.px(24)))
 
+        self.win.update_idletasks()
+        width = self.px(_W)
+        height = inner.winfo_reqheight()
         sw = self.root.winfo_screenwidth()
         sh = self.root.winfo_screenheight()
-        x = (sw - self.W) // 2
-        y = (sh - self.H) // 2
-        self.win.geometry(f"{self.W}x{self.H}+{x}+{y}")
+        x = max(0, (sw - width) // 2)
+        y = max(0, (sh - height) // 2)
+        self.win.geometry(f"{width}x{height}+{x}+{y}")
         self.win.update_idletasks()
         _round_corners(self.win)
 
-        self._spinning = True
-        self._spin()
-        threading.Thread(target=self._work, daemon=True).start()
+    def px(self, n):
+        return max(1, int(round(n * self._scale)))
 
-    def _spin(self, angle=0):
-        if not self._spinning or not self.win.winfo_exists():
-            return
-        self.spinner.delete("all")
-        self.spinner.create_arc(
-            8, 8, 48, 48, start=angle, extent=110, style="arc",
-            outline=_ACCENT, width=4,
+    def _fonts(self):
+        import tkinter.font as tkfont
+        families = set(tkfont.families(self.root))
+        if "Segoe UI Semibold" in families:
+            title_family = "Segoe UI Semibold"
+        elif "Segoe UI" in families:
+            title_family = "Segoe UI"
+        else:
+            title_family = "Segoe UI Variable"
+        body_family = "Segoe UI" if "Segoe UI" in families else title_family
+        title = tkfont.Font(root=self.root, family=title_family, size=16)
+        body = tkfont.Font(root=self.root, family=body_family, size=14)
+        return title, body
+
+    def _load_logo(self, size):
+        path = _logo_path()
+        if not os.path.isfile(path):
+            return None
+        try:
+            img = tk.PhotoImage(file=path)
+            src = img.width()
+            if src > size:
+                img = img.subsample(max(1, int(round(src / size))))
+            return img
+        except Exception:
+            return None
+
+    def _paint_bar(self, frac):
+        self.bar.delete("all")
+        _rounded_rect(
+            self.bar, 0, 0, self.bar_w, self.bar_h, self.bar_r,
+            fill=_TRACK, outline="",
         )
-        self.win.after(30, lambda: self._spin(angle + 22))
+        width = int(self.bar_w * max(0.0, min(1.0, frac)))
+        if width > 0:
+            _rounded_rect(
+                self.bar, 0, 0, max(width, self.bar_r * 2), self.bar_h, self.bar_r,
+                fill=_FILL, outline="", tags="fill",
+            )
 
     def _set_status(self, text):
         self.win.after(0, lambda: self.status.config(text=text, fg=_TEXT_DIM))
 
     def _set_progress(self, frac):
         def _apply():
-            self.pct.config(text=f"{int(frac * 100)}%")
-            self.bar.delete("fill")
-            _rounded_rect(
-                self.bar, 0, 0, max(1, int((self.W - 72) * frac)), 6, 3,
-                fill=_ACCENT, outline="", tags="fill",
-            )
+            self.pct.config(text=f"{int(frac * 100)}%", fg=_TEXT_DIM)
+            self._paint_bar(frac)
         self.win.after(0, _apply)
 
     def _fail(self, text):
         def _apply():
-            self._spinning = False
             self.status.config(text=text, fg=_ERROR)
             self.pct.config(text="")
+            self.bar.delete("all")
         self.win.after(0, _apply)
 
     def _finish(self):
@@ -243,11 +319,6 @@ class StubWindow:
         self.win.after(0, _apply)
 
     def _close(self):
-        self._spinning = False
-        try:
-            self.win.destroy()
-        except Exception:
-            pass
         try:
             self.root.destroy()
         except Exception:
@@ -288,6 +359,7 @@ class StubWindow:
         self.win.after(300, self._finish)
 
     def run(self):
+        threading.Thread(target=self._work, daemon=True).start()
         self.root.mainloop()
 
 
