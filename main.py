@@ -7,7 +7,7 @@ import re
 import importlib.util
 import threading
 import tkinter as tk
-from PIL import Image, ImageTk
+from PIL import Image, ImageDraw, ImageTk
 import pyperclip
 import keyboard
 import time
@@ -18,7 +18,7 @@ import telemetry
 import tray
 import store
 import updater
-from ui import StorePanel, CurrencyPanel
+from ui import StorePanel, CurrencyPanel, QualityPanel
 import autostart
 import queue
 import selection_watcher
@@ -132,9 +132,12 @@ def _file_supported(skill, file_path):
     return ext in types
 
 
-def _io_label(skill):
+def _io_label(skill, file_path=""):
     """Return a short 'input → output' label for a skill (e.g. 'PDF → JPG')."""
     itypes = skill.get("input_type") or []
+    ext = os.path.splitext(file_path or "")[1].lower()
+    if file_path and itypes and ext not in itypes:
+        return "File type not supported"
     _out = skill.get("output_type")
     if isinstance(_out, (list, tuple)):
         otype = (_out[0] if _out else "")
@@ -144,23 +147,26 @@ def _io_label(skill):
 
     _audio_exts = (".wav", ".mp3", ".m4a", ".aac", ".flac", ".ogg", ".opus", ".wma", ".aiff", ".aif")
     _audio_out = {"MP3", "WAV", "M4A", "AAC", "FLAC", "OGG", "OPUS", "WMA", "AIFF"}
+    _book_exts = (".epub", ".fb2", ".mobi", ".azw", ".azw3")
+    _doc_exts = (
+        ".doc", ".docx", ".docm", ".dot", ".dotx", ".dotm",
+        ".odt", ".ott", ".fodt", ".rtf", ".txt", ".pdf", ".html", ".htm", ".xhtml",
+        ".ppt", ".pptx", ".pptm", ".pot", ".potx", ".potm", ".odp", ".otp", ".fodp",
+        ".xls", ".xlsx", ".xlsm", ".xlt", ".xltx", ".xltm", ".ods", ".ots", ".fods",
+        ".csv", ".tsv", ".sxw", ".wpd", ".wps", ".xml",
+    )
+    _text_out = {"PDF", "DOCX", "DOC", "TXT", "RTF", "ODT", "HTML", "HTM", "PPTX", "XLSX", "CSV",
+                 "EPUB", "FB2", "AZW3", "MOBI", "AZW"}
     # Audio converters also accept video files, but the label is the audio action.
     if otype in _audio_out and any(e in itypes for e in _audio_exts):
         inp = "Audio"
-    elif otype in {"EPUB", "FB2", "AZW3", "MOBI", "AZW"} and any(
-        e in itypes for e in (
-            ".epub", ".fb2", ".mobi", ".azw", ".azw3",
-            ".doc", ".docx", ".odt", ".rtf", ".txt", ".pdf", ".html", ".htm",
-        )
-    ):
-        inp = "Book"
-    elif otype in {"PDF", "DOCX", "DOC", "TXT", "RTF", "ODT", "HTML", "HTM", "PPTX", "XLSX", "CSV"} and any(
-        e in itypes for e in (
-            ".doc", ".docx", ".odt", ".rtf", ".txt", ".pdf", ".html", ".htm",
-            ".ppt", ".pptx", ".odp", ".xls", ".xlsx", ".ods", ".csv",
-        )
-    ):
-        inp = "Document"
+    elif otype in _text_out:
+        groups = []
+        if any(e in itypes for e in _doc_exts):
+            groups.append("Documents")
+        if any(e in itypes for e in _book_exts):
+            groups.append("eBooks")
+        inp = ", ".join(groups) if groups else "Documents"
     elif "link" in itypes:
         inp = "Link"
     elif not itypes:
@@ -178,6 +184,8 @@ def _io_label(skill):
     else:
         inp = "/".join(sorted({e.lstrip(".").upper() for e in itypes}))[:12]
 
+    if ext:
+        inp = ext.lstrip(".").upper()
     return f"{inp} → {otype}" if otype else inp
 
 
@@ -247,6 +255,15 @@ SKILLS_DIR = os.path.join(BASE_DIR, "skills")
 
 
 # Source app/site detection lives in source_detect.py (ctypes-only, no deps).
+
+
+def _remember_result(skill, input_text) -> None:
+    """Keep a local row so the user can mark a bad file result later."""
+    try:
+        import result_history
+        result_history.remember(skill, input_text)
+    except Exception:
+        pass
 
 
 def _track_skill(skill_id: str) -> None:
@@ -366,6 +383,8 @@ class ScryptianBar:
         self.store_panel = StorePanel(self)
         self.in_currency = False
         self.currency_panel = CurrencyPanel(self)
+        self.in_quality = False
+        self.quality_panel = QualityPanel(self)
         self._source_hwnd = None
         self._clip_seq_at_hide = None
 
@@ -702,11 +721,13 @@ class ScryptianBar:
         self.window.bind("<Control-Key-1>", lambda e: self._on_hotkey(1))
         self.window.bind("<Control-Key-2>", lambda e: self._on_hotkey(2))
         self.window.bind("<Control-Key-3>", lambda e: self._on_hotkey(3))
+        self.window.bind("<Control-Key-4>", lambda e: self._on_hotkey(4))
 
         self.visible = True
         self.selected_index = 0
         self.in_store = False
         self.in_currency = False
+        self.in_quality = False
         self.store_frame = None
         self.processing = False
         self._bar_fade_in()
@@ -787,6 +808,8 @@ class ScryptianBar:
 
     def _hide(self):
         if self.window:
+            if getattr(self, "in_quality", False):
+                self.quality_panel.dismiss()
             self.visible = False
             self._clip_seq_at_hide = _clip_seq()
             win = self.window
@@ -1047,10 +1070,11 @@ class ScryptianBar:
                                 bg="#202020", fg="#9A9A9A", anchor="w")
             desc_lbl.pack(anchor="w")
 
-        # Input → output chip (separate, noticeable badge)
+        # Input → output chip. A copied file replaces the group names.
         io_chip = None
+        _file = getattr(self, "_preview_file", "")
         if skill_obj:
-            io_text = _io_label(skill_obj)
+            io_text = _io_label(skill_obj, _file)
             if io_text:
                 io_chip = tk.Label(left, text=io_text,
                                    font=("Segoe UI Variable", 11),
@@ -1122,18 +1146,11 @@ class ScryptianBar:
         _price = int(skill_obj.get("price", 0) or 0) if skill_obj else 0
         _ppu = int(skill_obj.get("price_per_unit", 0) or 0) if skill_obj else 0
         _unit = (skill_obj.get("unit") or "").strip() if skill_obj else ""
-        _file = getattr(self, "_preview_file", "")
         _ext = os.path.splitext(_file)[1].lower() if _file else ""
-        _types = skill_obj.get("input_type") or []
+        _types = skill_obj.get("input_type") or [] if skill_obj else []
         _unsupported = bool(_file) and bool(_types) and _ext not in _types
 
-        if skill_obj and _unsupported:
-            price_lbl = tk.Label(row, text="file type not supported",
-                                 font=("Segoe UI Variable", 12),
-                                 bg="#202020", fg="#9A9A9A")
-            price_lbl.pack(side="right", padx=(8, 0), pady=13)
-            price_lbl.bind("<Button-1>", lambda e, i=idx: self._click_row(i))
-        elif skill_obj and (_price > 0 or _ppu > 0):
+        if skill_obj and not _unsupported and (_price > 0 or _ppu > 0):
             icon_photo = self._slippers_icon(26)
             if icon_photo:
                 icon_lbl = tk.Label(row, image=icon_photo, bg="#202020")
@@ -1172,6 +1189,30 @@ class ScryptianBar:
 
         return row
 
+    def _star_icon(self, size=19, color="#FFFFFF"):
+        """Cached star used by the Rate the result button."""
+        key = ("star", size, color)
+        cache = getattr(self, "_tinted_icons", None)
+        if cache is None:
+            cache = {}
+            self._tinted_icons = cache
+        if key in cache:
+            return cache[key]
+        img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        cx = cy = (size - 1) / 2
+        outer = size / 2 - 0.5
+        inner = outer * 0.42
+        pts = []
+        for i in range(10):
+            ang = -math.pi / 2 + i * math.pi / 5
+            r = outer if i % 2 == 0 else inner
+            pts.append((cx + r * math.cos(ang), cy + r * math.sin(ang)))
+        draw.polygon(pts, fill=color)
+        photo = ImageTk.PhotoImage(img)
+        cache[key] = photo
+        return photo
+
     def _tinted_icon(self, filename, size=24, color="#FFFFFF"):
         """Return a cached tinted PhotoImage for a monochrome PNG, or None."""
         key = (filename, size, color)
@@ -1201,6 +1242,43 @@ class ScryptianBar:
         """Return a cached green slippers icon PhotoImage, or None."""
         return self._tinted_icon("slippers.png", size, "#60CDFF")
 
+    def _rounded_tool_button(self, parent, photo, label, hotkey, handler, fg, bg, hover_bg):
+        """Toolbar button with a small corner radius."""
+        import tkinter.font as tkfont
+        font = tkfont.Font(family="Segoe UI Variable", size=12)
+        line = font.metrics("linespace")
+        icon_h = 19 if photo is not None else 0
+        pad_y = 6
+        gap = 3 if photo is not None else 0
+        height = pad_y * 2 + icon_h + gap + line * 2
+        canvas = tk.Canvas(
+            parent, height=height, bg="#202020",
+            highlightthickness=0, bd=0, cursor="hand2",
+        )
+        canvas._icon = photo
+        fill = {"color": bg}
+
+        def redraw(event=None, color=None):
+            if color is not None:
+                fill["color"] = color
+            w = max(canvas.winfo_width(), 8)
+            h = max(canvas.winfo_height(), 8)
+            canvas.delete("all")
+            _rounded_rect(canvas, 1, 1, w - 1, h - 1, 6, fill=fill["color"], outline=fill["color"])
+            cx = w / 2
+            y = pad_y
+            if photo is not None:
+                canvas.create_image(cx, y + icon_h / 2, image=photo)
+                y += icon_h + gap
+            canvas.create_text(cx, y, text=label, fill=fg, font=font, anchor="n")
+            canvas.create_text(cx, y + line, text=f"[{hotkey}]", fill=fg, font=font, anchor="n")
+
+        canvas.bind("<Configure>", redraw)
+        canvas.bind("<Button-1>", lambda e, h=handler: h())
+        canvas.bind("<Enter>", lambda e: redraw(color=hover_bg))
+        canvas.bind("<Leave>", lambda e: redraw(color=bg))
+        return canvas
+
     def _render_special_actions(self):
         """Render compact special-action buttons below the skill list (chain-bar style)."""
         sep = tk.Frame(self.special_frame, bg="#3C3C3C", height=1)
@@ -1210,38 +1288,29 @@ class ScryptianBar:
         grid = tk.Frame(self.special_frame, bg="#202020")
         grid.pack(fill="x", padx=4, pady=(0, 0))
         self._special_widgets.append(grid)
-        for c in range(3):
+        for c in range(4):
             grid.columnconfigure(c, weight=1, uniform="special")
 
         actions = [
             # ("📁", "Open actions folder", "Ctrl+1", self._open_skills_folder, False, None),
             ("", "Want another action?", "Ctrl+1", self._open_wish_box, False, "wish.png"),
             ("", "I have a problem", "Ctrl+2", self._open_problem, False, "support.png"),
-            ("", "Actions Store", "Ctrl+3", self._open_store, True, "store.png"),
+            ("", "Rate the result", "Ctrl+3", self._open_quality, False, "star"),
+            ("", "Actions Store", "Ctrl+4", self._open_store, True, "store.png"),
         ]
         for i, (icon, label, hotkey, handler, accent, icon_file) in enumerate(actions):
             fg = "#60CDFF" if accent else "#FFFFFF"
             hover_bg = "#0078D4" if accent else "#3C3C3C"
 
-            photo = self._tinted_icon(icon_file, 19, "#FFFFFF") if icon_file else None
-            if photo:
-                btn = tk.Label(
-                    grid, image=photo, text=f"{label}\n[{hotkey}]",
-                    compound="top", font=("Segoe UI Variable", 12),
-                    bg="#2B2B2B", fg=fg, cursor="hand2",
-                    padx=4, pady=4.29, justify="center",
-                )
+            if icon_file == "star":
+                photo = self._star_icon(19, "#FFFFFF")
             else:
-                btn = tk.Label(
-                    grid, text=f"{icon}\n{label}\n[{hotkey}]", font=("Segoe UI Variable", 12),
-                    bg="#2B2B2B", fg=fg, cursor="hand2",
-                    padx=4, pady=4, justify="center",
-                )
-
-            btn.grid(row=0, column=i, sticky="ew", padx=(0, 4) if i < 2 else (0, 0))
-            btn.bind("<Button-1>", lambda e, h=handler: h())
-            btn.bind("<Enter>", lambda e, b=btn, hb=hover_bg, f=fg: b.config(bg=hb, fg=f))
-            btn.bind("<Leave>", lambda e, b=btn, f=fg: b.config(bg="#2B2B2B", fg=f))
+                photo = self._tinted_icon(icon_file, 19, "#FFFFFF") if icon_file else None
+            btn = self._rounded_tool_button(
+                grid, photo, label, hotkey, handler,
+                fg=fg, bg="#2B2B2B", hover_bg=hover_bg,
+            )
+            btn.grid(row=0, column=i, sticky="ew", padx=(0, 4) if i < len(actions) - 1 else (0, 0))
 
     def _open_discord(self):
         import webbrowser
@@ -1453,7 +1522,7 @@ class ScryptianBar:
 
     def _on_enter(self, event):
         """Runs the selected skill or copies the result."""
-        if self.in_store or self.in_currency:
+        if self.in_store or self.in_currency or self.in_quality:
             return
         if self.has_result:
             if self.last_result:
@@ -1521,6 +1590,7 @@ class ScryptianBar:
                     self.last_skill_title = skill["title"]
                     # self.root.after(0, lambda r=result: self._present_result(r))
                     telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src))
+                    _remember_result(skill, input_text)
                     _track_skill(skill["filename"].replace(".py", ""))
                     _settle_skill(skill)
                     print(f"[Scryptian] Done!")
@@ -1582,6 +1652,7 @@ class ScryptianBar:
                     _refund_skill(skill, price)
                 else:
                     telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _bt0, **_bg_src, background=True))
+                    _remember_result(skill, input_text)
                     _track_skill(skill["filename"].replace(".py", ""))
                     _settle_skill(skill, price)
                     print(f"[Scryptian] Done (background): {skill['title']}")
@@ -1668,6 +1739,7 @@ class ScryptianBar:
                     self.last_skill_title = skill["title"]
                     # self.root.after(0, lambda r=result: self._present_result(r))
                     telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src, via="selection"))
+                    _remember_result(skill, input_text)
                     _settle_skill(skill, _price)
                     out_path = None
                     if isinstance(result, str) and result.startswith("[Scryptian File] "):
@@ -1823,7 +1895,7 @@ class ScryptianBar:
         self._chain_btns.clear()
 
     def _on_hotkey(self, n):
-        """Dispatch Ctrl+0..3: chain actions when result shown, special actions in menu."""
+        """Dispatch Ctrl+0..4: chain actions when result shown, special actions in menu."""
         if self.has_result:
             chain_map = {
                 1: "Summarize",
@@ -1833,13 +1905,14 @@ class ScryptianBar:
             if n in chain_map:
                 self._run_chain(chain_map[n])
             return
-        if self.in_store or self.in_currency:
+        if self.in_store or self.in_currency or self.in_quality:
             return
         special_map = {
             0: self._open_currency,
             1: self._open_wish_box,
             2: self._open_problem,
-            3: self._open_store,
+            3: self._open_quality,
+            4: self._open_store,
         }
         if n in special_map:
             special_map[n]()
@@ -2149,6 +2222,9 @@ class ScryptianBar:
         """Open skills folder in file manager."""
         os.startfile(SKILLS_DIR)
 
+    def _open_quality(self):
+        self.quality_panel.open()
+
     def _open_store(self):
         self.store_panel.open()
 
@@ -2207,6 +2283,18 @@ class SelectionToolbar:
         else:
             _ext = os.path.splitext(file_path)[1].lower() if file_path else ""
             visible = [s for s in self.skills if _ext and _ext in (s.get("input_type") or [])]
+            # Book files match five converters. The bar shows four, so keep PDF
+            # and drop the conversion into the same format.
+            if _ext in {".fb2", ".mobi", ".epub", ".azw", ".azw3"}:
+                def _out_ext(skill):
+                    out = skill.get("output_type") or []
+                    if isinstance(out, str):
+                        return out.lower()
+                    return (out[0] if out else "").lower()
+                pdfs = [s for s in visible if _out_ext(s) == ".pdf"]
+                rest = [s for s in visible if s not in pdfs and _out_ext(s) != _ext]
+                same = [s for s in visible if _out_ext(s) == _ext]
+                visible = pdfs + rest + same
             # Pinned / default Transcribe Audio (commented out — show matching type instead).
             # pinned = pins_module.get_pinned_skills(self.skills)
             # if pinned:

@@ -202,7 +202,6 @@
       background: var(--bg-soft);
       border: none;
       border-radius: 8px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
       overflow: hidden;
     }
 
@@ -414,22 +413,16 @@
     }
 
     @media (max-width: 820px) {
-      .product-demo {
-        width: 100%;
-        aspect-ratio: auto;
-        height: 520px;
-      }
-      .pd-scene {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        transform: none;
-      }
-      .pd-file.is-source { left: 8px; }
-      .pd-file.is-result { left: 176px; }
-      .pd-keys { left: 8px; }
-      .pd-bar { left: 8px; top: 300px; }
-      .pd-cursor { display: none; }
+      .container { padding: 0 16px; }
+      .site-header .container { gap: 12px; }
+      .site-header .btn { margin-left: auto; }
+      .nav { display: none; }
+      .hero { padding: 28px 0 48px; }
+      .hero h1 { letter-spacing: -0.8px; }
+      .hero .actions { flex-direction: column; align-items: stretch; }
+      .hero .actions .btn { width: 100%; }
+      .site-footer .container { align-items: flex-start; }
+      .site-footer .links { flex-wrap: wrap; gap: 10px 16px; }
     }
 
     .hero .sub {
@@ -1261,7 +1254,6 @@
       .feature { grid-template-columns: 1fr; gap: 28px; }
       .stats { grid-template-columns: 1fr; gap: 32px; }
       .action-grid { grid-template-columns: 1fr; }
-      .nav { display: none; }
     }
   </style>
 </head>
@@ -1275,8 +1267,8 @@
       <nav class="nav">
         <!-- <a href="#how-it-works">How it works</a> -->
         <!-- <a href="#features">Features</a> -->
-        <a href="/pricing.html">Pricing</a>
-        <a href="https://actionstore.scryptian.com/">Actions</a>
+        <!-- <a href="/pricing.html">Pricing</a> -->
+        <!-- <a href="https://actionstore.scryptian.com/">Actions</a> -->
       </nav>
       <a class="btn btn-primary" href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"header"}'>Download</a>
     </div>

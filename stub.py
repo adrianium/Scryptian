@@ -174,6 +174,47 @@ def _rounded_rect(c, x1, y1, x2, y2, r, **kw):
     return c.create_polygon(pts, smooth=True, **kw)
 
 
+def _set_app_id():
+    """Own taskbar identity, so the stub is not grouped with Python or Scryptian."""
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Scryptian.Setup")
+    except Exception:
+        pass
+
+
+def _icon_path():
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, "icon.ico")
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.ico")
+
+
+def _pin_taskbar(win):
+    """A borderless window is a tool window. Give it a normal taskbar button."""
+    try:
+        import ctypes
+        user32 = ctypes.windll.user32
+        user32.GetAncestor.restype = ctypes.c_void_p
+        hwnd = user32.GetAncestor(win.winfo_id(), 2)
+        if not hwnd:
+            return
+        GWL_EXSTYLE = -20
+        WS_EX_APPWINDOW = 0x00040000
+        WS_EX_TOOLWINDOW = 0x00000080
+        user32.GetWindowLongW.restype = ctypes.c_long
+        user32.GetWindowLongW.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        user32.SetWindowLongW.restype = ctypes.c_long
+        user32.SetWindowLongW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_long]
+        style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+        style = (style | WS_EX_APPWINDOW) & ~WS_EX_TOOLWINDOW
+        user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+        user32.ShowWindow(hwnd, 0)
+        user32.ShowWindow(hwnd, 5)
+        win.lift()
+    except Exception:
+        pass
+
+
 def _logo_path():
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return os.path.join(sys._MEIPASS, "stub_logo.png")
@@ -182,10 +223,17 @@ def _logo_path():
 
 class StubWindow:
     def __init__(self):
+        _set_app_id()
         _enable_dpi()
         self.root = tk.Tk()
         self.win = self.root
         self.win.title("Scryptian")
+        icon = _icon_path()
+        if os.path.isfile(icon):
+            try:
+                self.win.iconbitmap(default=icon)
+            except Exception:
+                pass
         self.win.overrideredirect(True)
         self.win.configure(bg=_BG)
         self.win.protocol("WM_DELETE_WINDOW", self._close)
@@ -248,6 +296,7 @@ class StubWindow:
         self.win.geometry(f"{width}x{height}+{x}+{y}")
         self.win.update_idletasks()
         _round_corners(self.win)
+        _pin_taskbar(self.win)
 
     def px(self, n):
         return max(1, int(round(n * self._scale)))
