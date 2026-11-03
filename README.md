@@ -23,14 +23,14 @@
 <a href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe"><img src="docs/design/download-installer.svg" width="190" height="52" alt="Download for Windows"></a>
 
 
-# Actions list:
+## Actions list
 
-Convertors (PDF to DOCX, MP4 to MP3 and etc.)
-Remove Background (Image/Video)
-Translate PDF with preserved layout (DeepL)
-Text to Speech (Male/Female)
-Audio to Text
-AI Upscale (Image/Video)
+- Convertors (PDF to DOCX, MP4 to MP3 and etc.)
+- Remove Background (Image/Video)
+- Translate PDF with preserved layout (DeepL)
+- Text to Speech (Male/Female)
+- Audio to Text
+- AI Upscale (Image/Video)
 
 list will be bigger and bigger in future.
 
