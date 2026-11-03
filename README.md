@@ -2,21 +2,20 @@
 
 ## What is Scryptian
 
-<h4>Scryptian is a tool for using file services without visiting their webpages or desktop apps.</h4>
+<h3>Scryptian is a tool for using file services without visiting their webpages or desktop apps.</h3>
 
-<h4>Works with:</h4>
-
-- Documents
-- Video
-- Audio
-- Image
-- Ebook
+<h3>Works with:<br>
+• Documents<br>
+• Video<br>
+• Audio<br>
+• Image<br>
+• Ebook</h3>
 
 <picture><img width="640" alt="Demo" src="landing/product-demo-1920x1080.gif"></picture>
 
-<p align="center">Select. Copy a file. Actions for this file type appear. Windows.</p>
+<h3 align="center">Select. Copy a file. Actions for this file type appear. Windows.</h3>
 
-<h4>Screenshot:</h4>
+<h3>Screenshot:</h3>
 
 <picture><img width="640" alt="Screenshot" src="landing/pagey.png"></picture>
 
@@ -25,18 +24,18 @@
 
 ## Actions list
 
-- Convertors (PDF to DOCX, MP4 to MP3 and etc.)
-- Remove Background (Image/Video)
-- Translate PDF with preserved layout (DeepL)
-- Text to Speech (Male/Female)
-- Audio to Text
-- AI Upscale (Image/Video)
+<h3>• Convertors (PDF to DOCX, MP4 to MP3 and etc.)<br>
+• Remove Background (Image/Video)<br>
+• Translate PDF with preserved layout (DeepL)<br>
+• Text to Speech (Male/Female)<br>
+• Audio to Text<br>
+• AI Upscale (Image/Video)</h3>
 
-list will be bigger and bigger in future.
+<h3>list will be bigger and bigger in future.</h3>
 
 ## Build
 
-Windows 10/11, Python 3.10+.
+<h3>Windows 10/11, Python 3.10+.</h3>
 
 ```
 python main.py
@@ -44,8 +43,8 @@ pyinstaller packaging/build.spec --noconfirm
 
 ```
 
-The full installer is `packaging/installer.iss`. Details are in [BUILDING.md](BUILDING.md).
+<h3>The full installer is <code>packaging/installer.iss</code>. Details are in <a href="BUILDING.md">BUILDING.md</a>.</h3>
 
 ## License
 
-[MIT](LICENSE)
+<h3><a href="LICENSE">MIT</a></h3>
