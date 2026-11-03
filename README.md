@@ -1,7 +1,14 @@
 # Scryptian [<scryptian.com>](https://github.com/adrianium/Scryptian)
 
 What is Scryptian?
-Scryptian is bar where collects any kind of file services.
+
+Scryptian is bar where collects any type of file services.
+
+-Documents
+-Video
+-Audio
+-Image
+-Ebook
 
 ## Demo
 
