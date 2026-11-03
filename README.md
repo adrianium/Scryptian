@@ -4,11 +4,11 @@ Copy a file and theres appears actions bar. Windows.
 
 ## Demo
 
-<!-- demo video -->
+https://github.com/user-attachments/assets/717b2b1c-bce2-4c7e-a42f-0b3fe300254a
 
 ## Install
 
-[ScryptianSetup.exe](https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe)
+[![Download ScryptianSetup.exe](https://img.shields.io/badge/Download-ScryptianSetup.exe-2ea44f?style=for-the-badge&logo=github)](https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe)
 
 ## Build
 
@@ -25,5 +25,3 @@ The full installer is `installer.iss`. Details are in [BUILDING.md](BUILDING.md)
 ## License
 
 [MIT](LICENSE)
-
-[<img alt="Download the latest release" src="https://img.shields.io/badge/download-latest%20release-2ea44f?style=for-the-badge">](https://github.com/adrianium/Scryptian/releases/latest)
