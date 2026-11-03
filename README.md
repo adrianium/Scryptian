@@ -1,25 +1,29 @@
-Scryptian
+# [Scryptian](https://github.com/adrianium/Scryptian)
 
-[Video Compress](https://actionstore.scryptian.com/actions/video_compress_balanced/)
+Copy a file and theres appears actions bar. Windows.
 
-[Video Compress (light)](https://actionstore.scryptian.com/actions/video_compress_light/)
+## Demo
 
-[Video Compress (strong)](https://actionstore.scryptian.com/actions/video_compress_strong/)
+<!-- demo video -->
 
-[Remove backround](https://actionstore.scryptian.com/actions/remove_background/)
+## Install
 
-[Text to speech (female)](https://actionstore.scryptian.com/actions/text_to_speech_female/)
+[ScryptianSetup.exe](https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe)
 
-[Text to speech (Male)](https://actionstore.scryptian.com/actions/text_to_speech_male/)
+## Build
 
-[Transcribe Audio](https://actionstore.scryptian.com/actions/transcribe_audio/)
+Windows 10/11, Python 3.10+.
 
-[Transcribe Video](https://actionstore.scryptian.com/actions/transcribe_video/)
+```
+python main.py
+pyinstaller build.spec --noconfirm
+pyinstaller stub.spec --noconfirm
+```
 
-[Translate PDF to English (DeepL)](https://actionstore.scryptian.com/actions/translate_pdf_to_english_deepl/)
+The full installer is `installer.iss`. Details are in [BUILDING.md](BUILDING.md).
 
-[Translate PDF to English (Google)](https://actionstore.scryptian.com/actions/translate_pdf_to_english/)
+## License
 
-[AI Upscale Image](https://actionstore.scryptian.com/actions/upscale_image/)
+[MIT](LICENSE)
 
-[AI Upscale Video](https://actionstore.scryptian.com/actions/video_upscale/)
+[<img alt="Download the latest release" src="https://img.shields.io/badge/download-latest%20release-2ea44f?style=for-the-badge">](https://github.com/adrianium/Scryptian/releases/latest)
