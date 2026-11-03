@@ -14,7 +14,7 @@ Works with:
 
 <img width="640" height="360" alt="Demo" src="https://github.com/user-attachments/assets/07a592a1-c185-4657-afd5-4458ea769cda" />
 
-Copy a file. Actions for this file type appear. Windows.
+<p align="center">Copy a file. Actions for this file type appear. Windows.</p>
 
 In the real app
 
