@@ -20,7 +20,10 @@ def app_root():
     """Folder next to Scryptian.exe when frozen, project root in dev."""
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return os.path.dirname(sys._MEIPASS)
-    return os.path.dirname(os.path.abspath(__file__))
+    here = os.path.dirname(os.path.abspath(__file__))
+    if os.path.basename(here) == "app":
+        return os.path.dirname(here)
+    return here
 
 
 def runtime_root():
@@ -42,8 +45,10 @@ def sevenzr_path():
         candidates.append(os.path.join(sys._MEIPASS, "7zr.exe"))
         candidates.append(os.path.join(os.path.dirname(sys._MEIPASS), "7zr.exe"))
     here = os.path.dirname(os.path.abspath(__file__))
+    root = app_root()
     candidates.append(os.path.join(here, "tools", "7zr.exe"))
-    candidates.append(os.path.join(app_root(), "7zr.exe"))
+    candidates.append(os.path.join(root, "tools", "7zr.exe"))
+    candidates.append(os.path.join(root, "7zr.exe"))
     for path in candidates:
         if os.path.isfile(path):
             return path

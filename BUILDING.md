@@ -30,7 +30,7 @@ The app will start in the system tray. Press `Ctrl+Alt` to open the panel.
 ## 4. Build the EXE
 
 ```bash
-pyinstaller build.spec --noconfirm
+pyinstaller packaging/build.spec --noconfirm
 ```
 
 Output: `dist/Scryptian.exe`
@@ -40,7 +40,7 @@ Output: `dist/Scryptian.exe`
 Install [Inno Setup 6](https://jrsoftware.org/isdl.php), then:
 
 ```bash
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging/installer.iss
 ```
 
 Output: `dist/Scryptian_Setup.exe`
@@ -50,7 +50,7 @@ This full installer is what auto-update downloads. Do not rename it.
 ## 6. Build the Chrome-style stub (website download)
 
 ```bash
-pyinstaller stub.spec --noconfirm
+pyinstaller packaging/stub.spec --noconfirm
 ```
 
 Output: `dist/ScryptianSetup.exe`
@@ -64,4 +64,4 @@ This is the small file the website should offer. It shows a download window, sil
 
 - The LLM runs in the cloud (OpenRouter via a Cloudflare Worker) — no local model download needed
 - Skills are Python files in the `skills/` folder — you can add your own
-- Hotkey can be changed in `config.py`
+- Hotkey can be changed in `app/config.py`

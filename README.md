@@ -40,11 +40,11 @@ Windows 10/11, Python 3.10+.
 
 ```
 python main.py
-pyinstaller build.spec --noconfirm
+pyinstaller packaging/build.spec --noconfirm
 
 ```
 
-The full installer is `installer.iss`. Details are in [BUILDING.md](BUILDING.md).
+The full installer is `packaging/installer.iss`. Details are in [BUILDING.md](BUILDING.md).
 
 ## License
 

@@ -1,5 +1,5 @@
 # stub.spec — tiny Chrome-style installer (one-file exe).
-# Build: pyinstaller stub.spec --noconfirm
+# Build: pyinstaller packaging/stub.spec --noconfirm
 # Output: dist/ScryptianSetup.exe
 
 import os
@@ -8,10 +8,13 @@ block_cipher = None
 base_dir = os.path.dirname(os.path.abspath(SPEC))
 
 a = Analysis(
-    ['stub.py'],
+    [os.path.join(base_dir, "stub.py")],
     pathex=[base_dir],
     binaries=[],
-    datas=[('stub_logo.png', '.'), ('icon.ico', '.')],
+    datas=[
+        (os.path.join(base_dir, "stub_logo.png"), "."),
+        (os.path.join(base_dir, "icon.ico"), "."),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -43,5 +46,5 @@ exe = EXE(
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    icon='icon.ico',
+    icon=os.path.join(base_dir, "icon.ico"),
 )

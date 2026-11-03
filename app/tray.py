@@ -13,7 +13,11 @@ FEEDBACK_URL = "https://github.com/adrianium/Scryptian/discussions"
 def _icon_dir():
     if getattr(sys, 'frozen', False):
         return sys._MEIPASS
-    return os.path.dirname(os.path.abspath(__file__))
+    here = os.path.dirname(os.path.abspath(__file__))
+    packaging = os.path.join(os.path.dirname(here), "packaging")
+    if os.path.isfile(os.path.join(packaging, "icon.ico")):
+        return packaging
+    return here
 
 ICON_PATH = os.path.join(_icon_dir(), "icon.ico")
 
@@ -246,7 +250,7 @@ def show_notify_popup(title, message, root=None, duration=5000, action=None):
         win.overrideredirect(True)
         win.attributes("-topmost", True)
 
-        # Colors and sizes from notify-preview.html
+        # Colors and sizes from docs/notify-preview.html
         bg = "#1A2328"
         fg = "#EDECEC"
         body_fg = "#9DA0A2"

@@ -3,10 +3,13 @@
 # Usage: python make_icon.py
 # Tweak RADIUS (in px at 256 base) to control how rounded the corners are.
 
+import os
+
 from PIL import Image, ImageDraw
 
-SRC = "scryptian.ico"
-DST = "icon.ico"
+_HERE = os.path.dirname(os.path.abspath(__file__))
+SRC = os.path.join(_HERE, "scryptian.ico")
+DST = os.path.join(_HERE, "icon.ico")
 RADIUS = 44  # corner radius in px (applied to the 256px source frame)
 
 src = Image.open(SRC).convert("RGBA")  # largest frame (256x256)

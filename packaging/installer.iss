@@ -18,7 +18,7 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=
 InfoBeforeFile=privacy_notice.txt
-OutputDir=dist
+OutputDir=..\dist
 OutputBaseFilename=Scryptian_Setup
 SetupIconFile={#MyAppIcon}
 Compression=lzma
@@ -37,9 +37,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "dist\Scryptian\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\Scryptian\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "uninstall_telemetry.ps1"; DestDir: "{app}"; Flags: ignoreversion
-Source: "tools\7zr.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\tools\7zr.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
