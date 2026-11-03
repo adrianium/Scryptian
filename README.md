@@ -2,14 +2,15 @@
 
 ## What is Scryptian
 
-<h4>Scryptian is for instant converting files. Without switching windows.</h4>
+<h4>Scryptian converts your file to a another type. You do not need to open a new window.</h4>
 
 <h4>Works with:</h4>
-• Documents
-• Video
-• Audio
-• Image
-• Ebook
+
+- Documents
+- Video
+- Audio
+- Image
+- Ebook
 
 <img width="640" alt="Demo" src="landing/product-demo-1920x1080.gif" />
 
