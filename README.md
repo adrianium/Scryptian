@@ -2,7 +2,7 @@
 
 ## What is Scryptian
 
-<h3>Scryptian is a tool for using file services without visiting their webpages or desktop apps.</h3>
+<h3>Scryptian is a tool for using file services (like convertors) without visiting their webpages or desktop apps.</h3>
 
 <h3>Works with:<br>
 • Documents<br>
