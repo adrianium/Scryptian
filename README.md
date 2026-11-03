@@ -1,4 +1,4 @@
-# [Scryptian](https://github.com/adrianium/Scryptian)
+# Scryptian [<scryptian.com>](https://github.com/adrianium/Scryptian)
 
 Copy a file and theres appears actions bar. Windows.
 
@@ -8,7 +8,7 @@ Copy a file and theres appears actions bar. Windows.
 
 ## Install
 
-<a href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe"><img src="docs/design/download-installer.svg" width="190" height="52" alt="Download the installer"></a>
+<a href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe"><img src="docs/design/download-installer.svg" width="190" height="52" alt="Download for Windows"></a>
 
 ## Build
 
