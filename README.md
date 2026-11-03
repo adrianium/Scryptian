@@ -19,7 +19,7 @@
 
 <picture><img width="640" alt="Screenshot" src="landing/pagey.png"></picture>
 
-<a href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe"><img src="docs/design/download-installer.svg" width="190" height="52" alt="Download for Windows"></a>
+<a href="https://github.com/adrianium/Scryptian/releases/latest/download/Scryptian_Setup.exe"><img src="docs/design/download-installer.svg" width="190" height="52" alt="Download for Windows"></a>
 
 
 ## Actions list
