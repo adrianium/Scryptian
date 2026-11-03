@@ -1,9 +1,6 @@
-<svg width="480" height="52" viewBox="0 0 480 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="1" y="1" width="478" height="50" rx="5" fill="#202020"/>
-<rect x="0.5" y="0.5" width="479" height="51" rx="5.5" stroke="black" stroke-opacity="0.1"/>
-<rect x="12" y="13" width="26" height="26" rx="6" fill="#2536eb"/>
-<path d="M25 18.2L31.2 20.4V25.2C31.2 28.6 25 31.6 25 31.6C25 31.6 18.8 28.6 18.8 25.2V20.4L25 18.2Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-<path d="M22.3 25.1L24.2 27L27.8 23.2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="48" y="22" fill="white" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif" font-size="11">Check on</text>
-<text x="48" y="40" fill="white" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif" font-size="18" font-weight="600">VirusTotal</text>
+<svg width="480" height="84" viewBox="0 0 480 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="480" height="84" rx="42" fill="#2536eb"/>
+<path d="M112 30L123 33.8V42.6C123 48.4 112 53.6 112 53.6C112 53.6 101 48.4 101 42.6V33.8L112 30Z" stroke="white" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="M106.4 42L110.2 45.8L118 38" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="278" y="43" fill="white" text-anchor="middle" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif" font-size="24" font-weight="600" dominant-baseline="central">Check on VirusTotal</text>
 </svg>
