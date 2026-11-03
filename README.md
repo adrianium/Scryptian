@@ -2,7 +2,7 @@
 
 ## What is Scryptian
 
-<h4>Scryptian converts your file to a another type. You do not need to open a new window.</h4>
+<h4>Scryptian is a tool for using file services without visiting their webpages or desktop apps.</h4>
 
 <h4>Works with:</h4>
 
@@ -22,6 +22,17 @@
 
 <a href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe"><img src="docs/design/download-installer.svg" width="190" height="52" alt="Download for Windows"></a>
 
+
+# Actions list:
+
+Convertors (PDF to DOCX, MP4 to MP3 and etc.)
+Remove Background (Image/Video)
+Translate PDF with preserved layout (DeepL)
+Text to Speech (Male/Female)
+Audio to Text
+AI Upscale (Image/Video)
+
+list will be bigger and bigger in future.
 
 ## Build
 
