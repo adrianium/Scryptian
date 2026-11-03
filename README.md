@@ -1,15 +1,16 @@
 # Scryptian [<scryptian.com>](https://github.com/adrianium/Scryptian)
 
-What is Scryptian?
+## What is Scryptian
 
 Scryptian is bar for instant files converting
 
 Supports file types:
--Documents
--Video
--Audio
--Image
--Ebook
+
+- Documents
+- Video
+- Audio
+- Image
+- Ebook
 
 <img width="640" height="360" alt="Demo" src="https://github.com/user-attachments/assets/07a592a1-c185-4657-afd5-4458ea769cda" />
 
