@@ -2,20 +2,20 @@
 
 ## What is Scryptian
 
-<h3>Scryptian is for instant converting files. Without switching windows.</h3>
+<h4>Scryptian is for instant converting files. Without switching windows.</h4>
 
-<h3>Works with:<br>
-• Documents<br>
-• Video<br>
-• Audio<br>
-• Image<br>
-• Ebook</h3>
+<h4>Works with:</h4>
+• Documents
+• Video
+• Audio
+• Image
+• Ebook
 
 <img width="640" alt="Demo" src="landing/product-demo-1920x1080.gif" />
 
-<h3 align="center">Copy a file. Actions for this file type appear. Windows.</h3>
+<p align="center">Copy a file. Actions for this file type appear. Windows.</p>
 
-<h3>Screenshot:</h3>
+<h4>Screenshot:</h4>
 
 <img width="640" alt="Screenshot" src="landing/pagey.png" />
 
