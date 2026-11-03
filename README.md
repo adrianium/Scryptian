@@ -11,13 +11,13 @@
 • Image<br>
 • Ebook</h3>
 
-<picture><img width="640" alt="Demo" src="landing/product-demo-1920x1080.gif"></picture>
+<picture><img width="100%" alt="Demo" src="landing/product-demo-1920x1080.gif"></picture>
 
 <h3 align="center">Select. Copy a file. Actions for this file type appear. Windows.</h3>
 
 <h3>Screenshot:</h3>
 
-<picture><img width="640" alt="Screenshot" src="landing/pagey.png"></picture>
+<picture><img width="100%" alt="Screenshot" src="landing/pagey.png"></picture>
 
 <a href="https://github.com/adrianium/Scryptian/releases/latest/download/Scryptian_Setup.exe"><img src="docs/design/download-installer.svg" width="50%" alt="Download for Windows"></a><a href="https://www.virustotal.com/gui/file/1d929007958b311a34aa3b68705d831f21fa3af5a095f6026cdd33faaed81c0f?nocache=1"><img src="docs/design/virustotal.svg" width="50%" alt="Check on VirusTotal"></a>
 
