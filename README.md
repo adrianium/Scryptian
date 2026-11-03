@@ -1,10 +1,13 @@
 # Scryptian [<scryptian.com>](https://github.com/adrianium/Scryptian)
 
-Copy a file and theres appears actions bar. Windows.
+What is Scryptian?
+Scryptian is bar where collects any kind of file services.
 
 ## Demo
 
 <img width="640" height="360" alt="Demo" src="https://github.com/user-attachments/assets/07a592a1-c185-4657-afd5-4458ea769cda" />
+
+Copy a file and theres appears actions bar. Windows.
 
 ## Install
 
@@ -17,7 +20,7 @@ Windows 10/11, Python 3.10+.
 ```
 python main.py
 pyinstaller build.spec --noconfirm
-pyinstaller stub.spec --noconfirm
+
 ```
 
 The full installer is `installer.iss`. Details are in [BUILDING.md](BUILDING.md).
