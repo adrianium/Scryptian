@@ -2,21 +2,18 @@
 
 What is Scryptian?
 
-Scryptian is bar where collects any type of file services.
+Scryptian is bar for instant files converting
 
+Supports file types:
 -Documents
 -Video
 -Audio
 -Image
 -Ebook
 
-## Demo
-
 <img width="640" height="360" alt="Demo" src="https://github.com/user-attachments/assets/07a592a1-c185-4657-afd5-4458ea769cda" />
 
-Copy a file and theres appears actions bar. Windows.
-
-## Install
+Copy a file and theres appears actions list relevant for selected file type. Windows.
 
 <a href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe"><img src="docs/design/download-installer.svg" width="190" height="52" alt="Download for Windows"></a>
 
