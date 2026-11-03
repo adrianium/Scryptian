@@ -12,13 +12,13 @@
 - Image
 - Ebook
 
-<img width="640" alt="Demo" src="landing/product-demo-1920x1080.gif" />
+<picture><img width="640" alt="Demo" src="landing/product-demo-1920x1080.gif"></picture>
 
-<p align="center">Copy a file. Actions for this file type appear. Windows.</p>
+<p align="center">Select. Copy a file. Actions for this file type appear. Windows.</p>
 
 <h4>Screenshot:</h4>
 
-<img width="640" alt="Screenshot" src="landing/pagey.png" />
+<picture><img width="640" alt="Screenshot" src="landing/pagey.png"></picture>
 
 <a href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe"><img src="docs/design/download-installer.svg" width="190" height="52" alt="Download for Windows"></a>
 
