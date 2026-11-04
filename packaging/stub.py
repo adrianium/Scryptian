@@ -1,13 +1,13 @@
 # stub.py — Chrome-style mini installer.
 #
-# This is NOT Scryptian. It only:
+# This is NOT nespatch. It only:
 #   1) shows a small download window,
-#   2) fetches the real Inno installer (Scryptian_Setup.exe),
+#   2) fetches the real Inno installer (nespatch_Setup.exe),
 #   3) runs it silently,
-#   4) launches the installed Scryptian.exe.
+#   4) launches the installed nespatch.exe.
 #
 # Auto-update and autostart stay on the real app. Do not point the Run
-# registry key at this stub, and do not name this file Scryptian_Setup.exe.
+# registry key at this stub, and do not name this file nespatch_Setup.exe.
 
 import json
 import os
@@ -19,16 +19,16 @@ import threading
 import tkinter as tk
 from urllib import request
 
-REPO = "adrianium/Scryptian"
-SETUP_ASSET = "Scryptian_Setup.exe"
+REPO = "adrianium/nespatch"
+SETUP_ASSET = "nespatch_Setup.exe"
 SETUP_FALLBACK_URL = (
     f"https://github.com/{REPO}/releases/latest/download/{SETUP_ASSET}"
 )
 INSTALLED_EXE = os.path.join(
     os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
-    "Scryptian",
+    "nespatch",
     "Application",
-    "Scryptian.exe",
+    "nespatch.exe",
 )
 
 _DETACHED_PROCESS = 0x00000008
@@ -49,7 +49,7 @@ def _ssl_ctx():
 
 
 def _http_json(url):
-    req = request.Request(url, headers={"User-Agent": "ScryptianSetup"})
+    req = request.Request(url, headers={"User-Agent": "nespatchSetup"})
     with request.urlopen(req, timeout=30, context=_ssl_ctx()) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
@@ -80,7 +80,7 @@ def _launch_app():
 
 
 def _download(url, dest, on_progress):
-    req = request.Request(url, headers={"User-Agent": "ScryptianSetup"})
+    req = request.Request(url, headers={"User-Agent": "nespatchSetup"})
     tmp = dest + ".part"
     with request.urlopen(req, timeout=120, context=_ssl_ctx()) as resp:
         total = int(resp.headers.get("Content-Length") or 0)
@@ -117,7 +117,7 @@ def _single_instance():
     try:
         import ctypes
         kernel32 = ctypes.windll.kernel32
-        _mutex_handle = kernel32.CreateMutexW(None, True, "Local\\ScryptianSetupStub")
+        _mutex_handle = kernel32.CreateMutexW(None, True, "Local\\nespatchSetupStub")
         return kernel32.GetLastError() != 183  # ERROR_ALREADY_EXISTS
     except Exception:
         return True
@@ -175,10 +175,10 @@ def _rounded_rect(c, x1, y1, x2, y2, r, **kw):
 
 
 def _set_app_id():
-    """Own taskbar identity, so the stub is not grouped with Python or Scryptian."""
+    """Own taskbar identity, so the stub is not grouped with Python or nespatch."""
     try:
         import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Scryptian.Setup")
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("nespatch.Setup")
     except Exception:
         pass
 
@@ -227,7 +227,7 @@ class StubWindow:
         _enable_dpi()
         self.root = tk.Tk()
         self.win = self.root
-        self.win.title("Scryptian")
+        self.win.title("nespatch")
         icon = _icon_path()
         if os.path.isfile(icon):
             try:
@@ -262,12 +262,12 @@ class StubWindow:
             tk.Frame(inner, bg=_BG, height=self.px(28)).pack()
 
         tk.Label(
-            inner, text="Scryptian", bg=_BG, fg=_TEXT, font=self._title_font,
+            inner, text="nespatch", bg=_BG, fg=_TEXT, font=self._title_font,
         ).pack()
 
         self.bar_w = self.px(_W - 56)
         self.status = tk.Label(
-            inner, text="Getting Scryptian ready…", bg=_BG, fg=_TEXT_DIM,
+            inner, text="Getting nespatch ready…", bg=_BG, fg=_TEXT_DIM,
             font=self._body_font, wraplength=self.bar_w, justify="center",
         )
         self.status.pack(pady=(self.px(8), 0))
@@ -362,7 +362,7 @@ class StubWindow:
             try:
                 _launch_app()
             except Exception:
-                self._fail("Installed, but couldn't start Scryptian.")
+                self._fail("Installed, but couldn't start nespatch.")
                 return
             self._close()
         self.win.after(0, _apply)
@@ -375,14 +375,14 @@ class StubWindow:
 
     def _work(self):
         if _already_installed():
-            self._set_status("Starting Scryptian…")
+            self._set_status("Starting nespatch…")
             self._set_progress(1)
             self.win.after(400, self._finish)
             return
 
         dest = os.path.join(tempfile.gettempdir(), SETUP_ASSET)
         try:
-            self._set_status("Downloading Scryptian…")
+            self._set_status("Downloading nespatch…")
             url = _setup_url()
             _download(url, dest, self._set_progress)
         except Exception:
@@ -401,10 +401,10 @@ class StubWindow:
             pass
 
         if not ok:
-            self._fail("Install failed. Try again, or download Scryptian_Setup.exe.")
+            self._fail("Install failed. Try again, or download nespatch_Setup.exe.")
             return
 
-        self._set_status("Starting Scryptian…")
+        self._set_status("Starting nespatch…")
         self.win.after(300, self._finish)
 
     def run(self):

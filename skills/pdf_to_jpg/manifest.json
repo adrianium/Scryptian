@@ -1,7 +1,7 @@
 {
   "title": "PDF to JPG",
   "description": "Convert each PDF page to a JPG image (free & local)",
-  "author": "Scryptian",
+  "author": "nespatch",
   "author_id": "",
   "price": 0,
   "mode": "local",

@@ -59,26 +59,26 @@ def run(text):
     """text: a YouTube URL to download as MP4."""
     url = (text or "").strip().strip('"')
     if not url.lower().startswith(("http://", "https://")):
-        return "[Scryptian Error] Copy a video link first."
+        return "[nespatch Error] Copy a video link first."
 
-    out_dir = os.path.join(os.path.expanduser("~"), "Downloads", "Scryptian")
+    out_dir = os.path.join(os.path.expanduser("~"), "Downloads", "nespatch")
     os.makedirs(out_dir, exist_ok=True)
 
     try:
         data = _extract(url)
     except urllib.error.HTTPError as e:
         _report(f"HTTP {e.code}")
-        return "[Scryptian Error] Couldn't download this link. Please copy a direct video link (not a playlist)."
+        return "[nespatch Error] Couldn't download this link. Please copy a direct video link (not a playlist)."
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Couldn't download this link. We're on it."
+        return "[nespatch Error] Couldn't download this link. We're on it."
 
     title = data.get("title") or "video"
     formats = data.get("formats") or []
     fmt = _pick_video_format(formats)
     if not fmt:
         _report("no video format")
-        return "[Scryptian Error] Couldn't download this link. We're on it."
+        return "[nespatch Error] Couldn't download this link. We're on it."
 
     safe = re.sub(r'[\\/:*?"<>|]', "_", title).strip() or "video"
     ext = (fmt.get("ext") or "mp4").lower()
@@ -90,7 +90,7 @@ def run(text):
 
     try:
         _download(fmt["url"], out_path)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Couldn't save this file. We're on it."
+        return "[nespatch Error] Couldn't save this file. We're on it."

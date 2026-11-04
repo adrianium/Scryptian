@@ -1,4 +1,4 @@
-// Scryptian LLM proxy — Cloudflare Worker
+// nespatch LLM proxy — Cloudflare Worker
 //
 // Setup:
 //   1. Create a Worker in the Cloudflare dashboard and paste this file.
@@ -78,7 +78,7 @@ export default {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
         "HTTP-Referer": "https://scryptian.app",
-        "X-Title": "Scryptian",
+        "X-Title": "nespatch",
       },
       body: JSON.stringify(body),
     });

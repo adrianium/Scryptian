@@ -144,15 +144,15 @@ def run(text):
     """text: path to a .txt file to convert to speech (Google Chirp 3 HD)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Copy a .txt file first."
+        return "[nespatch Error] Copy a .txt file first."
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read().strip()
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Couldn't read this file. We're on it."
+        return "[nespatch Error] Couldn't read this file. We're on it."
     if not content:
-        return "[Scryptian Error] This file is empty."
+        return "[nespatch Error] This file is empty."
     out_dir = os.path.dirname(file_path)
     base_name = os.path.splitext(os.path.basename(file_path))[0]
     out_path = os.path.join(out_dir, f"{base_name}_tts_female.wav")
@@ -163,7 +163,7 @@ def run(text):
     token, err = _access_token()
     if err:
         _report(err)
-        return "[Scryptian Error] This action isn't set up yet. We're on it."
+        return "[nespatch Error] This action isn't set up yet. We're on it."
     _load_env()
     voice = os.environ.get("GOOGLE_TTS_VOICE", "").strip() or _DEFAULT_VOICE
     lang = os.environ.get("GOOGLE_TTS_LANG", "").strip() or _DEFAULT_LANG
@@ -179,7 +179,7 @@ def run(text):
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {token}",
-                "User-Agent": "Scryptian",
+                "User-Agent": "nespatch",
             },
             method="POST",
         )
@@ -188,17 +188,17 @@ def run(text):
         audio_b64 = data.get("audioContent", "")
         if not audio_b64:
             _report("google returned no audio")
-            return "[Scryptian Error] Couldn't create this audio. We're on it."
+            return "[nespatch Error] Couldn't create this audio. We're on it."
         with open(out_path, "wb") as f:
             f.write(base64.b64decode(audio_b64))
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except urllib.error.HTTPError as e:
         try:
             detail = e.read().decode("utf-8", "replace")
         except Exception:
             detail = ""
         _report(f"HTTP {e.code} {detail[:300]}")
-        return "[Scryptian Error] Couldn't create this audio. We're on it."
+        return "[nespatch Error] Couldn't create this audio. We're on it."
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Something went wrong. We're on it."
+        return "[nespatch Error] Something went wrong. We're on it."

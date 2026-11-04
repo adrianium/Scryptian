@@ -69,7 +69,7 @@ def _json_headers():
     return {
         "Authorization": f"DeepL-Auth-Key {_api_key()}",
         "Content-Type": "application/json",
-        "User-Agent": "Scryptian",
+        "User-Agent": "nespatch",
     }
 
 
@@ -86,7 +86,7 @@ def _upload(file_path):
     req = request.Request(f"{_api_url()}/v2/document", data=bytes(buf), method="POST")
     req.add_header("Authorization", f"DeepL-Auth-Key {_api_key()}")
     req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
-    req.add_header("User-Agent", "Scryptian")
+    req.add_header("User-Agent", "nespatch")
     with request.urlopen(req, timeout=600) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     return data.get("document_id"), data.get("document_key")
@@ -141,12 +141,12 @@ def run(text):
     """text: path to a PDF file to translate to English (DeepL, layout preserved)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Couldn't find this file. Copy it again and try."
+        return "[nespatch Error] Couldn't find this file. Copy it again and try."
     if os.path.splitext(file_path)[1].lower() != ".pdf":
-        return "[Scryptian Error] Please copy a PDF file."
+        return "[nespatch Error] Please copy a PDF file."
     if not _api_key():
         _report("deepl key not set")
-        return "[Scryptian Error] This action isn't set up yet. We're on it."
+        return "[nespatch Error] This action isn't set up yet. We're on it."
 
     base, _ = os.path.splitext(file_path)
     out_path = f"{base}_en.pdf"
@@ -159,20 +159,20 @@ def run(text):
         document_id, document_key = _upload(file_path)
         if not document_id or not document_key:
             _report("deepl did not return a document id")
-            return "[Scryptian Error] Couldn't translate this PDF. We're on it."
+            return "[nespatch Error] Couldn't translate this PDF. We're on it."
         err = _poll(document_id, document_key)
         if err:
             _report(err)
-            return "[Scryptian Error] Couldn't translate this PDF. We're on it."
+            return "[nespatch Error] Couldn't translate this PDF. We're on it."
         _download(document_id, document_key, out_path)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except urllib.error.HTTPError as e:
         try:
             detail = e.read().decode("utf-8", "replace")
         except Exception:
             detail = ""
         _report(f"HTTP {e.code} {detail[:300]}")
-        return "[Scryptian Error] Couldn't translate this PDF. We're on it."
+        return "[nespatch Error] Couldn't translate this PDF. We're on it."
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Something went wrong. We're on it."
+        return "[nespatch Error] Something went wrong. We're on it."

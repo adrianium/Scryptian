@@ -1,4 +1,4 @@
-# tray.py — System tray icon for Scryptian
+# tray.py — System tray icon for nespatch
 
 import os
 import re
@@ -8,7 +8,7 @@ import pystray
 from PIL import Image
 import sys
 
-FEEDBACK_URL = "https://github.com/adrianium/Scryptian/discussions"
+FEEDBACK_URL = "https://github.com/adrianium/nespatch/discussions"
 
 def _icon_dir():
     if getattr(sys, 'frozen', False):
@@ -28,7 +28,7 @@ def _load_icon():
 
 
 _icon_ref = None
-RELEASES_URL = "https://github.com/adrianium/Scryptian/releases/latest"
+RELEASES_URL = "https://github.com/adrianium/nespatch/releases/latest"
 _update_version = None
 
 _notif_stack = []  # active notification windows, bottom to top
@@ -423,7 +423,7 @@ def show_update_popup(version, releases_url, root=None):
         inner = tk.Frame(outer, bg="#202020")
         inner.pack(fill="both", expand=True)
 
-        tk.Label(inner, text="Scryptian", bg="#202020", fg="#60CDFF",
+        tk.Label(inner, text="nespatch", bg="#202020", fg="#60CDFF",
                  font=("Segoe UI Variable", 12, "bold"), anchor="w").pack(fill="x", padx=PAD, pady=(14, 0))
 
         tk.Label(inner, text=f"Version {version} is available", bg="#202020", fg="#FFFFFF",
@@ -489,9 +489,9 @@ def start(on_quit, on_open=None):
             return f"Update available: v{_update_version} →" if _update_version else "Up to date"
 
         icon = pystray.Icon(
-            name="Scryptian",
+            name="nespatch",
             icon=_load_icon(),
-            title="Scryptian - Ctrl+Alt",
+            title="nespatch - Ctrl+Alt",
             menu=pystray.Menu(
                 pystray.MenuItem("Open", lambda: on_open() if on_open else None, default=True),
                 pystray.Menu.SEPARATOR,

@@ -1,4 +1,4 @@
-# Building Scryptian from Source
+# Building nespatch from Source
 
 ## Prerequisites
 
@@ -9,8 +9,8 @@
 ## 1. Clone the repository
 
 ```bash
-git clone https://github.com/adrianium/Scryptian.git
-cd Scryptian
+git clone https://github.com/adrianium/nespatch.git
+cd nespatch
 ```
 
 ## 2. Install Python dependencies
@@ -33,7 +33,7 @@ The app will start in the system tray. Press `Ctrl+Alt` to open the panel.
 pyinstaller packaging/build.spec --noconfirm
 ```
 
-Output: `dist/Scryptian.exe`
+Output: `dist/nespatch.exe`
 
 ## 5. Build the installer (optional)
 
@@ -43,7 +43,7 @@ Install [Inno Setup 6](https://jrsoftware.org/isdl.php), then:
 "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging/installer.iss
 ```
 
-Output: `dist/Scryptian_Setup.exe`
+Output: `dist/nespatch_Setup.exe`
 
 This full installer is what auto-update downloads. Do not rename it.
 
@@ -53,12 +53,12 @@ This full installer is what auto-update downloads. Do not rename it.
 pyinstaller packaging/stub.spec --noconfirm
 ```
 
-Output: `dist/ScryptianSetup.exe`
+Output: `dist/nespatchSetup.exe`
 
-This is the small file the website should offer. It shows a download window, silently runs `Scryptian_Setup.exe`, then launches the real app. Upload **both** assets to the GitHub release:
+This is the small file the website should offer. It shows a download window, silently runs `nespatch_Setup.exe`, then launches the real app. Upload **both** assets to the GitHub release:
 
-- `ScryptianSetup.exe` — website / first-time download
-- `Scryptian_Setup.exe` — auto-update (name must stay exact)
+- `nespatchSetup.exe` — website / first-time download
+- `nespatch_Setup.exe` — auto-update (name must stay exact)
 
 ## Notes
 

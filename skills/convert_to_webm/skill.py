@@ -93,7 +93,7 @@ def run(text):
     """text: path to a media file. Output extension comes from manifest output_type."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Couldn't find this file. Copy it again and try."
+        return "[nespatch Error] Couldn't find this file. Copy it again and try."
 
     ext = _output_ext()
     base, _ = os.path.splitext(file_path)
@@ -111,12 +111,12 @@ def run(text):
         )
     except FileNotFoundError:
         _report("ffmpeg not found")
-        return "[Scryptian Error] This action isn't set up yet. We're on it."
+        return "[nespatch Error] This action isn't set up yet. We're on it."
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Something went wrong. We're on it."
+        return "[nespatch Error] Something went wrong. We're on it."
     if result.returncode != 0 or not os.path.isfile(out_path):
         err = (result.stderr or "").strip()[-400:]
         _report(f"ffmpeg failed: {err}")
-        return "[Scryptian Error] Couldn't convert this file. We're on it."
-    return f"[Scryptian File] {out_path}"
+        return "[nespatch Error] Couldn't convert this file. We're on it."
+    return f"[nespatch File] {out_path}"

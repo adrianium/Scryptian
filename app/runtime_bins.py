@@ -17,7 +17,7 @@ _GS_ARCHIVE = "ghostscript.zip"
 _MARKER = "essentials"
 
 def app_root():
-    """Folder next to Scryptian.exe when frozen, project root in dev."""
+    """Folder next to nespatch.exe when frozen, project root in dev."""
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return os.path.dirname(sys._MEIPASS)
     here = os.path.dirname(os.path.abspath(__file__))
@@ -158,7 +158,7 @@ def ensure_ghostscript():
 
 
 def _download(url, dest, on_progress, timeout=1800):
-    req = urllib.request.Request(url, headers={"User-Agent": "Scryptian"})
+    req = urllib.request.Request(url, headers={"User-Agent": "nespatch"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         total = int(resp.headers.get("Content-Length") or 0)
         done = 0

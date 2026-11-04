@@ -1,4 +1,4 @@
-# ui/quality_panel.py — "Rate the result" list inside the Scryptian bar.
+# ui/quality_panel.py — "Rate the result" list inside the nespatch bar.
 
 import datetime
 import tkinter as tk

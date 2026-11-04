@@ -2,7 +2,7 @@
 #
 # Flow (only when running as the installed .exe):
 #   1) main.py detects a newer GitHub release.
-#   2) We download the Scryptian_Setup.exe asset in the background.
+#   2) We download the nespatch_Setup.exe asset in the background.
 #   3) When the user is idle, main.py launches the installer with
 #      /VERYSILENT /AUTOUPDATE and quits; Inno swaps the files and relaunches.
 #
@@ -17,7 +17,7 @@ import subprocess
 import ctypes
 from urllib import request
 
-SETUP_ASSET = "Scryptian_Setup.exe"
+SETUP_ASSET = "nespatch_Setup.exe"
 
 # Windows process-creation flags: run the installer detached so it survives
 # after the main app exits.
@@ -57,7 +57,7 @@ def idle_seconds() -> float:
 def find_setup_url(assets):
     """Pick the full Inno installer from a GitHub release's assets list.
 
-    Matches only Scryptian_Setup.exe. The website stub is ScryptianSetup.exe
+    Matches only nespatch_Setup.exe. The website stub is nespatchSetup.exe
     and must never be chosen here, or auto-update would install the stub.
     """
     for a in assets or []:
@@ -69,14 +69,14 @@ def find_setup_url(assets):
 def updates_dir() -> str:
     """Per-user folder where downloaded installers are staged."""
     base = os.environ.get("LOCALAPPDATA") or tempfile.gettempdir()
-    d = os.path.join(base, "Scryptian", "updates")
+    d = os.path.join(base, "nespatch", "updates")
     os.makedirs(d, exist_ok=True)
     return d
 
 
 def download(url: str, dest: str) -> str:
     """Download url to dest atomically (writes .part, then renames)."""
-    req = request.Request(url, headers={"User-Agent": "Scryptian"})
+    req = request.Request(url, headers={"User-Agent": "nespatch"})
     tmp = dest + ".part"
     with request.urlopen(req, timeout=60, context=_ssl_ctx()) as resp, open(tmp, "wb") as f:
         while True:

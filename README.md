@@ -1,8 +1,8 @@
-# Scryptian [<scryptian.com>](https://github.com/adrianium/Scryptian)
+# nespatch [<scryptian.com>](https://github.com/adrianium/nespatch)
 
-## What is Scryptian
+## What is nespatch
 
-<h3>Scryptian is a tool for using file services (like convertors) without visiting their webpages or desktop apps.</h3>
+<h3>nespatch is a tool for using file services (like convertors) without visiting their webpages or desktop apps.</h3>
 
 <h3>Works with:<br>
 • Documents<br>
@@ -19,7 +19,7 @@
 
 <picture><img width="100%" alt="Screenshot" src="landing/pagey.png"></picture>
 
-<a href="https://github.com/adrianium/Scryptian/releases/latest/download/Scryptian_Setup.exe"><img src="docs/design/download-installer.svg" width="50%" alt="Download for Windows"></a><a href="https://www.virustotal.com/gui/file/1d929007958b311a34aa3b68705d831f21fa3af5a095f6026cdd33faaed81c0f?nocache=1"><img src="docs/design/virustotal.svg" width="50%" alt="Check on VirusTotal"></a>
+<a href="https://github.com/adrianium/nespatch/releases/latest/download/nespatch_Setup.exe"><img src="docs/design/download-installer.svg" width="50%" alt="Download for Windows"></a><a href="https://www.virustotal.com/gui/file/1d929007958b311a34aa3b68705d831f21fa3af5a095f6026cdd33faaed81c0f?nocache=1"><img src="docs/design/virustotal.svg" width="50%" alt="Check on VirusTotal"></a>
 
 
 ## Actions list

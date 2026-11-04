@@ -40,7 +40,7 @@ def run(text):
     """text: path to an image to convert (target format from manifest output_type)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] File not found."
+        return "[nespatch Error] File not found."
 
     fmt, ext = _output_format()
     base, _ = os.path.splitext(file_path)
@@ -55,6 +55,6 @@ def run(text):
         if fmt == "JPEG" and img.mode in ("RGBA", "P", "LA"):
             img = img.convert("RGB")
         img.save(out_path, fmt)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        return f"[nespatch Error] {e}"

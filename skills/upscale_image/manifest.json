@@ -1,7 +1,7 @@
 {
   "title": "Upscale Image",
   "description": "Upscale an image 4x with AI (Real-ESRGAN, optional face enhance)",
-  "author": "Scryptian",
+  "author": "nespatch",
   "author_id": "",
   "price": 10000,
   "mode": "cloud",

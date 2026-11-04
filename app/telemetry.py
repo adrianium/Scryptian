@@ -52,7 +52,7 @@ def _registry_first_launch_done():
     """Check registry flag (more reliable than file)."""
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Scryptian", 0, winreg.KEY_READ)
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\nespatch", 0, winreg.KEY_READ)
         value, _ = winreg.QueryValueEx(key, "FirstLaunchSent")
         winreg.CloseKey(key)
         return value == "1"
@@ -63,7 +63,7 @@ def _registry_first_launch_done():
 def _registry_set_first_launch():
     try:
         import winreg
-        key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Scryptian")
+        key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\nespatch")
         winreg.SetValueEx(key, "FirstLaunchSent", 0, winreg.REG_SZ, "1")
         winreg.CloseKey(key)
         return True

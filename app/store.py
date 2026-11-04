@@ -62,7 +62,7 @@ def _headers():
     return {
         "apikey": SUPABASE_ANON_KEY,
         "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
-        "User-Agent": "Scryptian Store",
+        "User-Agent": "nespatch Store",
     }
 
 

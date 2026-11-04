@@ -1,6 +1,6 @@
 # source_detect.py — Reliable source-window + site detection (ctypes only, no deps).
 #
-# Detects the app/window that was active before Scryptian opened, and for
+# Detects the app/window that was active before nespatch opened, and for
 # browsers reads the real URL from the address bar via Windows UI Automation,
 # then extracts only the domain. No site keyword list, no raw titles sent.
 
@@ -32,7 +32,7 @@ def _get_exe(hwnd):
 
 
 def get_source_window():
-    """Return the top-level HWND that had focus before Scryptian opened.
+    """Return the top-level HWND that had focus before nespatch opened.
 
     Uses GetGUIThreadInfo -> hwndFocus -> GetAncestor(GA_ROOT), which follows
     the real focus instead of relying only on GetForegroundWindow().

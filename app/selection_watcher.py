@@ -10,9 +10,26 @@ _on_selection_cb = None
 _running = False
 # _last_path = None  # dedup disabled (caused re-copy of same file to be ignored)
 
+# Only show the mini-bar for video links, not arbitrary URLs.
+_VIDEO_DOMAINS = (
+    "youtube.com", "youtu.be", "vimeo.com", "tiktok.com",
+    "twitter.com", "x.com", "instagram.com", "facebook.com", "fb.watch",
+    "twitch.tv", "dailymotion.com", "reddit.com",
+)
+
+
+def _is_video_url(url):
+    try:
+        host = url.split("//")[-1].split("/")[0].split("?")[0].lower()
+        if host.startswith("www."):
+            host = host[4:]
+        return any(host == d or host.endswith("." + d) for d in _VIDEO_DOMAINS)
+    except Exception:
+        return False
+
 
 def _read_clipboard_input():
-    """Return the clipboard file path (CF_HDROP) or a URL (text), else None."""
+    """Return the clipboard file path (CF_HDROP) or a video URL (text), else None."""
     from core.input import get_input
     try:
         result = get_input()
@@ -24,7 +41,7 @@ def _read_clipboard_input():
         return result.get("data")
     if result.get("type") == "text":
         data = (result.get("data") or "").strip()
-        if data.lower().startswith(("http://", "https://")):
+        if data.lower().startswith(("http://", "https://")) and _is_video_url(data):
             return data
     return None
 

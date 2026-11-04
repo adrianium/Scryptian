@@ -76,7 +76,7 @@ def _headers():
     return {
         "Authorization": f"Token {_api_key()}",
         "Content-Type": "application/json",
-        "User-Agent": "Scryptian",
+        "User-Agent": "nespatch",
     }
 
 
@@ -118,7 +118,7 @@ def _poll(prediction_id):
 
 
 def _download(url, out_path):
-    req = request.Request(url, headers={"User-Agent": "Scryptian"})
+    req = request.Request(url, headers={"User-Agent": "nespatch"})
     with request.urlopen(req, timeout=600) as resp:
         data = resp.read()
     with open(out_path, "wb") as f:
@@ -170,13 +170,13 @@ def run(text):
     """text: path to a video to remove the background from (Replicate RVM)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Couldn't find this video. Copy it again and try."
+        return "[nespatch Error] Couldn't find this video. Copy it again and try."
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in _VIDEO_MIME:
-        return "[Scryptian Error] This video type isn't supported."
+        return "[nespatch Error] This video type isn't supported."
     if not _api_key():
         _report("replicate token not set")
-        return "[Scryptian Error] This action isn't set up yet. We're on it."
+        return "[nespatch Error] This action isn't set up yet. We're on it."
 
     base, _ = os.path.splitext(file_path)
     out_path = f"{base}_green_screen.mp4"
@@ -190,23 +190,23 @@ def run(text):
         pred_id = pred.get("id")
         if not pred_id:
             _report("no prediction id")
-            return "[Scryptian Error] Couldn't process this video. We're on it."
+            return "[nespatch Error] Couldn't process this video. We're on it."
         output_url, err = _poll(pred_id)
         if err:
             _report(err)
-            return "[Scryptian Error] Couldn't process this video. We're on it."
+            return "[nespatch Error] Couldn't process this video. We're on it."
         if not output_url:
             _report("no output")
-            return "[Scryptian Error] Couldn't process this video. We're on it."
+            return "[nespatch Error] Couldn't process this video. We're on it."
         _download(output_url, out_path)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except urllib.error.HTTPError as e:
         try:
             detail = e.read().decode("utf-8", "replace")
         except Exception:
             detail = ""
         _report(f"HTTP {e.code} {detail[:300]}")
-        return "[Scryptian Error] Couldn't process this video. We're on it."
+        return "[nespatch Error] Couldn't process this video. We're on it."
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Something went wrong. We're on it."
+        return "[nespatch Error] Something went wrong. We're on it."

@@ -1,4 +1,4 @@
-# ui/currency_panel.py — Slippers wallet UI rendered inside the Scryptian bar.
+# ui/currency_panel.py — Slippers wallet UI rendered inside the nespatch bar.
 
 import os
 import sys
@@ -32,13 +32,13 @@ RATE_TEXT = "1 dollar = 1000 slippers"
 REFRESH_INTERVAL_MS = 10000  # poll balance every 10s while the panel is open
 
 PAY_PER_OUTCOME_TEXT = (
-    "On Scryptian works Pay per Result model: balance decreases only when you get a result. "
+    "On nespatch works Pay per Result model: balance decreases only when you get a result. "
     "If an action fails, you pay nothing - the developer takes the loss."
 )
 
 
 class CurrencyPanel:
-    """Slippers wallet UI rendered inside the Scryptian bar."""
+    """Slippers wallet UI rendered inside the nespatch bar."""
 
     def __init__(self, bar):
         self.bar = bar
@@ -308,7 +308,7 @@ class CurrencyPanel:
                 req = request.Request(
                     CHECKOUT_URL,
                     data=json.dumps({"user_id": user, "price_id": price_id}).encode("utf-8"),
-                    headers={"Content-Type": "application/json", "User-Agent": "Scryptian"},
+                    headers={"Content-Type": "application/json", "User-Agent": "nespatch"},
                 )
                 with request.urlopen(req, timeout=15, context=store._ssl_ctx()) as resp:
                     data = json.loads(resp.read().decode("utf-8"))

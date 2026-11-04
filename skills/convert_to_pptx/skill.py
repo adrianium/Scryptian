@@ -54,7 +54,7 @@ def _pdf_pages_to_pptx(file_path, out_path):
         gs = ""
     if not gs or not os.path.isfile(gs):
         _report("ghostscript not found")
-        return "[Scryptian Error] This action isn't set up yet. We're on it."
+        return "[nespatch Error] This action isn't set up yet. We're on it."
 
     tmp = tempfile.mkdtemp(prefix="scryptian-pdfpptx-")
     try:
@@ -75,12 +75,12 @@ def _pdf_pages_to_pptx(file_path, out_path):
         if result.returncode != 0 or not pages:
             err = (result.stderr or result.stdout or "").strip()[-400:]
             _report(f"ghostscript failed: {err}")
-            return "[Scryptian Error] Couldn't convert this file. We're on it."
+            return "[nespatch Error] Couldn't convert this file. We're on it."
         _write_image_pptx(pages, out_path)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Something went wrong. We're on it."
+        return "[nespatch Error] Something went wrong. We're on it."
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -133,7 +133,7 @@ _PPTX_ROOT_RELS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 _PPTX_CORE = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <dc:title>Slides</dc:title>
-  <dc:creator>Scryptian</dc:creator>
+  <dc:creator>nespatch</dc:creator>
 </cp:coreProperties>
 """
 
@@ -255,7 +255,7 @@ def _pptx_content_types(count):
 def _pptx_app(count):
     return f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
-  <Application>Scryptian</Application>
+  <Application>nespatch</Application>
   <Slides>{count}</Slides>
 </Properties>
 """
@@ -364,7 +364,7 @@ def _remote_convert(file_path, ext, out_path):
     token = os.environ.get("CONVERT_TOKEN", "").strip()
     if not token:
         _report("convert token missing")
-        return "[Scryptian Error] This action isn't set up yet. We're on it."
+        return "[nespatch Error] This action isn't set up yet. We're on it."
     fmt = ext.lstrip(".")
     req = urllib.request.Request(
         f"https://convert.scryptian.com/convert?format={fmt}",
@@ -374,7 +374,7 @@ def _remote_convert(file_path, ext, out_path):
             "Authorization": f"Bearer {token}",
             "X-Filename": os.path.basename(file_path),
             "Content-Type": "application/octet-stream",
-            "User-Agent": "Scryptian",
+            "User-Agent": "nespatch",
         },
     )
     try:
@@ -382,24 +382,24 @@ def _remote_convert(file_path, ext, out_path):
             payload = resp.read()
         if not payload:
             _report("empty convert response")
-            return "[Scryptian Error] Couldn't convert this file. We're on it."
+            return "[nespatch Error] Couldn't convert this file. We're on it."
         with open(out_path, "wb") as handle:
             handle.write(payload)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except urllib.error.HTTPError as exc:
         err = exc.read()[:400].decode("utf-8", "replace")
         _report(f"convert http {exc.code}: {err}")
-        return "[Scryptian Error] Couldn't convert this file. We're on it."
+        return "[nespatch Error] Couldn't convert this file. We're on it."
     except Exception as exc:
         _report(str(exc))
-        return "[Scryptian Error] Something went wrong. We're on it."
+        return "[nespatch Error] Something went wrong. We're on it."
 
 
 def run(text):
     """text: path to a document or book. Output extension comes from manifest output_type."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Couldn't find this file. Copy it again and try."
+        return "[nespatch Error] Couldn't find this file. Copy it again and try."
 
     ext = _output_ext()
     base, _ = os.path.splitext(file_path)

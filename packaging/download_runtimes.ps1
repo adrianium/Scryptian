@@ -1,4 +1,4 @@
-# download_runtimes.ps1 — Scryptian runtime components (like Chrome's stub downloader).
+# download_runtimes.ps1 — nespatch runtime components (like Chrome's stub downloader).
 # Downloads ffmpeg and ghostscript into <AppDir>\runtimes\ in the background.
 param([Parameter(Mandatory=$true)][string]$AppDir)
 

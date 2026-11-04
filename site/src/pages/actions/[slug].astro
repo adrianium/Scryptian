@@ -15,7 +15,7 @@ const { action } = Astro.props as { action: Action };
 
 const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const canonical = `${site}/actions/${action.id}/`;
-const seoTitle = `${action.title} - Scryptian`;
+const seoTitle = `${action.title} - nespatch`;
 const seoDescription = (
   action.long_description ||
   action.description ||
@@ -35,7 +35,7 @@ const schema = {
   operatingSystem: 'Windows',
   url: canonical,
   ...(action.demo_gif ? { image: action.demo_gif } : {}),
-  author: { '@type': 'Organization', name: action.author || 'Scryptian' },
+  author: { '@type': 'Organization', name: action.author || 'nespatch' },
   offers: {
     '@type': 'Offer',
     price: isFree(action) ? '0' : String(slipperPrice),
@@ -95,7 +95,7 @@ const schema = {
                 .map((paragraph) => <p>{paragraph.trim()}</p>)
             ) : (
               <p>
-                {action.title} runs directly from the Scryptian bar. Select text anywhere,
+                {action.title} runs directly from the nespatch bar. Select text anywhere,
                 press the hotkey, and apply this action without leaving your current window.
               </p>
             )}
@@ -112,14 +112,14 @@ const schema = {
             <PriceCalculator price={action.price} pricePerUnit={action.price_per_unit} unit={action.unit} isFree={isFree(action)} />
 
             {/* Old download buttons (kept for future reference)
-            <a class="install-btn" href={installUrl(action)} data-ph-event="action_install_clicked" data-ph-props={JSON.stringify({ action_id: action.id, title: action.title })}>Add To Scryptian</a>
-            <a class="install-btn secondary" href={mainSite} target="_blank" rel="noopener" data-ph-event="install_scryptian_clicked" data-ph-props={JSON.stringify({ action_id: action.id })}>Install Scryptian With This Action</a>
+            <a class="install-btn" href={installUrl(action)} data-ph-event="action_install_clicked" data-ph-props={JSON.stringify({ action_id: action.id, title: action.title })}>Add To nespatch</a>
+            <a class="install-btn secondary" href={mainSite} target="_blank" rel="noopener" data-ph-event="install_scryptian_clicked" data-ph-props={JSON.stringify({ action_id: action.id })}>Install nespatch With This Action</a>
             */}
 
-            <a class="install-btn" href="https://github.com/adrianium/Scryptian/releases/latest/download/ScryptianSetup.exe">Download for Windows</a>
+            <a class="install-btn" href="https://github.com/adrianium/nespatch/releases/latest/download/nespatchSetup.exe">Download for Windows</a>
             <p class="bonus-hint">~30 MB · 2,000 free Slippers (~$2) included</p>
 
-            <a class="what-is" href={mainSite} target="_blank" rel="noopener" data-ph-event="what_is_scryptian_clicked">What is Scryptian?</a>
+            <a class="what-is" href={mainSite} target="_blank" rel="noopener" data-ph-event="what_is_scryptian_clicked">What is nespatch?</a>
           </div>
 
           <div class="panel specs">
@@ -145,7 +145,7 @@ const schema = {
             </div>
             <div class="spec">
               <span class="label">Author</span>
-              <span class="value">{action.author || 'Scryptian'}</span>
+              <span class="value">{action.author || 'nespatch'}</span>
             </div>
           </div>
         </aside>

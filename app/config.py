@@ -1,4 +1,4 @@
-# config.py — Central configuration for Scryptian
+# config.py — Central configuration for nespatch
 
 import os
 import sys
@@ -8,7 +8,7 @@ APP_VERSION = "0.1.0"
 
 # ── Base directory (works for both .py and .exe) ──
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'Scryptian')
+    BASE_DIR = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'nespatch')
 else:
     _here = os.path.dirname(os.path.abspath(__file__))
     # This file lives in app/. The project root is the parent, so skills,

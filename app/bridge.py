@@ -1,11 +1,11 @@
-# bridge.py — Scryptian skill runtime: state, profile, and notifications.
+# bridge.py — nespatch skill runtime: state, profile, and notifications.
 # No LLM access — each skill brings its own LLM endpoint.
 
 import os
 import json
 import threading
 
-_DATA_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Scryptian", "state")
+_DATA_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "nespatch", "state")
 _PROFILE_PATH = os.path.join(_DATA_DIR, "_profile.json")
 _state_lock = threading.Lock()
 
@@ -73,7 +73,7 @@ def set_root(root) -> None:
 
 
 def notify(title: str, message: str, action=None) -> None:
-    """Show a Scryptian notification. Safe to call from any skill or thread.
+    """Show a nespatch notification. Safe to call from any skill or thread.
 
     Uses the custom in-app popup (bottom-right, branded, with sound) when the UI
     is available, marshalling onto the Tk main thread. Falls back to a native

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scryptian - Any service. One wallet. One hotkey. Pay per result.</title>
-  <meta name="description" content="Select any text on your screen, press a hotkey, and transform files instantly — translate, summarize, upscale, and more. No app switching." />
+  <title>nespatch - Any service. One wallet. One hotkey. Pay per result.</title>
+  <meta name="description" content="Using File service on desktop without visiting a website or an app." />
   <!-- <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-family='Arial' font-size='18' font-weight='700' fill='%23fff' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E" /> -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -92,7 +92,7 @@
       gap: 9px;
       font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 20px;
       letter-spacing: 0.01em;
       flex-shrink: 0;
     }
@@ -652,7 +652,7 @@
       outline-offset: -1px;
     }
 
-    /* Mock Scryptian bar — mirrors the real app */
+    /* Mock nespatch bar — mirrors the real app */
     .scryptian-bar {
       position: absolute;
       left: 50%;
@@ -1269,8 +1269,8 @@
   <header class="site-header">
     <div class="container">
       <a class="brand" href="/">
-        <img class="brand-logo" src="favicon.svg" alt="Scryptian" />
-        <span>SCRYPTIAN</span>
+        <img class="brand-logo" src="favicon.svg" alt="nespatch" />
+        <span>nespatch</span>
       </a>
       <nav class="nav">
         <!-- <a href="#how-it-works">How it works</a> -->
@@ -1278,7 +1278,7 @@
         <!-- <a href="/pricing.html">Pricing</a> -->
         <!-- <a href="https://actionstore.scryptian.com/">Actions</a> -->
       </nav>
-      <a class="btn btn-primary" href="https://github.com/adrianium/Scryptian/releases/latest/download/Scryptian_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"header"}'>Download</a>
+      <a class="btn btn-primary" href="https://github.com/adrianium/nespatch/releases/latest/download/nespatch_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"header"}'>Download</a>
     </div>
   </header>
 
@@ -1291,7 +1291,7 @@
           Copy any file on your screen, and transform it instantly with any service. No app switching.
         </p>
         <div class="actions">
-          <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/Scryptian/releases/latest/download/Scryptian_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"hero"}'>Download for Windows</a>
+          <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/nespatch/releases/latest/download/nespatch_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"hero"}'>Download for Windows</a>
           <a class="btn btn-secondary btn-lg" href="https://www.virustotal.com/gui/file/1d929007958b311a34aa3b68705d831f21fa3af5a095f6026cdd33faaed81c0f?nocache=1" target="_blank" rel="noopener" data-ph-event="virustotal_clicked">Scanned by VirusTotal</a>
         </div>
         <div class="product-demo" id="product-demo" data-step="idle" aria-hidden="true">
@@ -1341,7 +1341,7 @@
     <!-- <section class="demo-gif">
       <div class="container">
         <div class="gif-slot" id="gif-slot">
-          <img src="upscale_image.gif" alt="Scryptian work demo" />
+          <img src="upscale_image.gif" alt="nespatch work demo" />
         </div>
       </div>
     </section> -->
@@ -1349,7 +1349,7 @@
     <!-- <section class="demo-photo">
       <div class="container">
         <div class="demo-photo-frame">
-          <img src="ui-demo.png" alt="Scryptian interface demo" />
+          <img src="ui-demo.png" alt="nespatch interface demo" />
         </div>
       </div>
     </section> -->
@@ -1360,7 +1360,7 @@
       <div class="container">
         <div class="section-head">
           <h2>Two steps. Zero friction.</h2>
-          <p>Scryptian lives where you already work.</p>
+          <p>nespatch lives where you already work.</p>
         </div>
         <div class="steps">
           <div class="step">
@@ -1477,7 +1477,7 @@
 
         var DIALOGUE_TEXT = "Speaker A: Speaker A.\nSpeaker B: Tell you basically what this is about is when I was watching Harvey Mackay at one of Harv Ecker's things, he said he just finished the Boston Marathon and the guy is 76. I went, Holy crap, that is amazing.\n\nSpeaker A: Speaker A.\nSpeaker B: What I would do is I basically introduce you. Then you can add anything that you think is important to that introduction.";
 
-        var TUTORIAL_TEXT = "Tutorial — how Scryptian works\n\n1. Select a file on the desktop\n2. Press Ctrl+C to copy it\n3. Press Ctrl+Alt to open Scryptian\n4. Pick an action\n5. The result appears next to the original file";
+        var TUTORIAL_TEXT = "Tutorial — how nespatch works\n\n1. Select a file on the desktop\n2. Press Ctrl+C to copy it\n3. Press Ctrl+Alt to open nespatch\n4. Pick an action\n5. The result appears next to the original file";
 
         var FILE_VIEWS = {
           'photo.jpg': '<img src="examples/example.jpeg">',
@@ -1547,7 +1547,7 @@
           bar.classList.remove('open');
           setTimeout(function () {
             resetBar();
-            if (step === 'copied') setHint('Press <kbd>Ctrl</kbd> + <kbd>Alt</kbd> to open Scryptian', false);
+            if (step === 'copied') setHint('Press <kbd>Ctrl</kbd> + <kbd>Alt</kbd> to open nespatch', false);
             else if (step === 'copy') setHint('Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to copy <b>' + selectedFile + '</b>', true);
             else setHint('Select a file', false);
           }, 350);
@@ -1778,15 +1778,15 @@
     <section class="cta">
       <div class="container">
         <h2>Stop switching apps. Start call them to place where you work.</h2>
-        <p class="sub">Download Scryptian and put every action one hotkey away.</p>
-        <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/Scryptian/releases/latest/download/Scryptian_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"cta"}'>Download for Windows</a>
+        <p class="sub">Download nespatch and put every action one hotkey away.</p>
+        <a class="btn btn-primary btn-lg" href="https://github.com/adrianium/nespatch/releases/latest/download/nespatch_Setup.exe" data-ph-event="download_clicked" data-ph-props='{"location":"cta"}'>Download for Windows</a>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <span>© 2026 Scryptian</span>
+      <span>© 2026 nespatch</span>
       <div class="links">
         <a href="https://actionstore.scryptian.com/">Actions</a>
         <a href="#how-it-works">How it works</a>

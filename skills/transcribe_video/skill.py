@@ -56,7 +56,7 @@ def _api_key():
 
 
 def _headers():
-    return {"Authorization": _api_key(), "User-Agent": "Scryptian"}
+    return {"Authorization": _api_key(), "User-Agent": "nespatch"}
 
 
 def _upload(file_path):
@@ -145,21 +145,21 @@ def run(text):
     """
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Couldn't find this video. Copy it again and try."
+        return "[nespatch Error] Couldn't find this video. Copy it again and try."
     if not _api_key():
         _report("assemblyai key not set")
-        return "[Scryptian Error] This action isn't set up yet. We're on it."
+        return "[nespatch Error] This action isn't set up yet. We're on it."
     try:
         upload_url = _upload(file_path)
         transcript_id = _submit(upload_url)
         data = _poll(transcript_id)
         if data.get("status") == "error":
             _report(data.get("error", "transcription failed"))
-            return "[Scryptian Error] Couldn't transcribe this file. We're on it."
+            return "[nespatch Error] Couldn't transcribe this file. We're on it."
         result = _format(data)
         if not result:
             _report("empty transcript")
-            return "[Scryptian Error] Couldn't transcribe this file. We're on it."
+            return "[nespatch Error] Couldn't transcribe this file. We're on it."
         base, _ = os.path.splitext(file_path)
         out_path = f"{base}_transcript.txt"
         counter = 2
@@ -168,10 +168,10 @@ def run(text):
             counter += 1
         with open(out_path, "w", encoding="utf-8") as f:
             f.write(result)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except urllib.error.HTTPError as e:
         _report(f"HTTP {e.code}")
-        return "[Scryptian Error] Couldn't transcribe this file. We're on it."
+        return "[nespatch Error] Couldn't transcribe this file. We're on it."
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Something went wrong. We're on it."
+        return "[nespatch Error] Something went wrong. We're on it."

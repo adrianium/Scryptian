@@ -32,10 +32,10 @@ def run(text):
     """text: path to an image to compress (JPEG, quality 80)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Couldn't find this image. Copy it again and try."
+        return "[nespatch Error] Couldn't find this image. Copy it again and try."
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in _INPUT_EXTS:
-        return "[Scryptian Error] This image type isn't supported."
+        return "[nespatch Error] This image type isn't supported."
 
     base, _ = os.path.splitext(file_path)
     out_path = f"{base}_compressed.jpg"
@@ -53,7 +53,7 @@ def run(text):
             scale = _MAX_DIM / float(max(w, h))
             img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
         img.save(out_path, "JPEG", quality=80, optimize=True)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Couldn't compress this image. We're on it."
+        return "[nespatch Error] Couldn't compress this image. We're on it."

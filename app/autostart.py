@@ -1,4 +1,4 @@
-# autostart.py — Add/remove Scryptian from Windows startup
+# autostart.py — Add/remove nespatch from Windows startup
 
 import sys
 import os
@@ -16,18 +16,18 @@ _KEY_PATH = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
 
 def enable():
-    """Add Scryptian to Windows startup via registry, cleaning old entries first."""
+    """Add nespatch to Windows startup via registry, cleaning old entries first."""
     try:
         _cleanup_old_entries()
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, _KEY_PATH, 0, winreg.KEY_SET_VALUE)
-        winreg.SetValueEx(key, "Scryptian", 0, winreg.REG_SZ, _get_exe_path())
+        winreg.SetValueEx(key, "nespatch", 0, winreg.REG_SZ, _get_exe_path())
         winreg.CloseKey(key)
     except Exception:
         pass
 
 
 def _cleanup_old_entries():
-    """Remove any stale Scryptian-related entries from Run registry."""
+    """Remove any stale nespatch-related entries from Run registry."""
     try:
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, _KEY_PATH, 0, winreg.KEY_READ | winreg.KEY_SET_VALUE)
         i = 0
@@ -36,7 +36,7 @@ def _cleanup_old_entries():
             try:
                 name, value, _ = winreg.EnumValue(key, i)
                 if "scryptian" in name.lower() or "scryptian" in value.lower():
-                    if name != "Scryptian":
+                    if name != "nespatch":
                         to_delete.append(name)
                 i += 1
             except OSError:
@@ -55,7 +55,7 @@ def is_enabled():
     """Check if registry entry exists with correct path."""
     try:
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, _KEY_PATH, 0, winreg.KEY_READ)
-        value, _ = winreg.QueryValueEx(key, "Scryptian")
+        value, _ = winreg.QueryValueEx(key, "nespatch")
         winreg.CloseKey(key)
         return value == _get_exe_path()
     except Exception:

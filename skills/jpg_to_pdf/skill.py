@@ -29,10 +29,10 @@ def run(text):
     """text: path to an image to convert into a PDF document."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Couldn't find this image. Copy it again and try."
+        return "[nespatch Error] Couldn't find this image. Copy it again and try."
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in _INPUT_EXTS:
-        return "[Scryptian Error] This image type isn't supported."
+        return "[nespatch Error] This image type isn't supported."
 
     base, _ = os.path.splitext(file_path)
     out_path = f"{base}.pdf"
@@ -46,7 +46,7 @@ def run(text):
         if img.mode in ("RGBA", "P", "LA"):
             img = img.convert("RGB")
         img.save(out_path, "PDF", resolution=150)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Couldn't convert this image. We're on it."
+        return "[nespatch Error] Couldn't convert this image. We're on it."

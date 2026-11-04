@@ -1,4 +1,4 @@
-# main.py — Scryptian Core
+# main.py — nespatch Core
 # Skill scanner | Hotkey | UI bar
 
 import os
@@ -33,6 +33,7 @@ import skill_editor
 import skill_settings
 import core
 import source_detect
+import download_watch
 import wallet
 from config import SLIPPER_SCALE
 
@@ -127,8 +128,11 @@ def _measure_file(skills, file_path):
 
 
 def _file_supported(skill, file_path):
-    """Return True if file_path's extension matches the skill's input_type."""
+    """Return True if the input (file or URL) matches the skill's input_type."""
     types = skill.get("input_type") or []
+    is_url = (file_path or "").lower().startswith(("http://", "https://"))
+    if is_url:
+        return "link" in types
     if "link" in types:
         return False
     if not types:
@@ -370,7 +374,7 @@ def _rounded_rect(canvas, x1, y1, x2, y2, r, **kw):
 
 
 # ── UI ──
-class ScryptianBar:
+class nespatchBar:
     def __init__(self, root, skills, toolbar=None):
         self.root = root
         self.skills = skills
@@ -392,6 +396,38 @@ class ScryptianBar:
         self.quality_panel = QualityPanel(self)
         self._source_hwnd = None
         self._clip_seq_at_hide = None
+        self._forced_file = ""
+
+    def offer_download(self):
+        """While a browser is in front, the hotkey uses the latest download.
+
+        A file already copied to the clipboard stays the input.
+        """
+        self._forced_file = ""
+        try:
+            inp = core.get_input()
+        except Exception:
+            inp = None
+        if inp and inp.get("type") == "file":
+            return
+        if not download_watch.browser_is_foreground():
+            return
+        path = download_watch.latest()
+        if path:
+            self._forced_file = path
+
+    def open_downloaded(self, path):
+        """Open the bar for a file named by the download line."""
+        if not path or not os.path.isfile(path):
+            return
+        self._forced_file = path
+        if self.visible and self.window:
+            self.root.after(0, self._render_list)
+            return
+        hwnd = source_detect.get_source_window()
+        if hwnd:
+            self._source_hwnd = hwnd
+        self.root.after(0, self._show)
 
     def toggle(self):
         """Show/hide the bar (called from any thread)."""
@@ -457,7 +493,7 @@ class ScryptianBar:
         self.filtered = list(self.skills)
 
         self.window = tk.Toplevel(self.root)
-        self.window.title("Scryptian")
+        self.window.title("nespatch")
         self.window.overrideredirect(True)
         self.window.attributes("-toolwindow", True)
         self.window.configure(bg="#3C3C3C")
@@ -816,6 +852,7 @@ class ScryptianBar:
             if getattr(self, "in_quality", False):
                 self.quality_panel.dismiss()
             self.visible = False
+            self._forced_file = ""
             self._clip_seq_at_hide = _clip_seq()
             win = self.window
             self.window = None
@@ -937,14 +974,22 @@ class ScryptianBar:
             _inp = core.get_input()
             _file = ""
             _url = ""
-            if _inp and _inp.get("type") == "file":
+            _forced = getattr(self, "_forced_file", "") or ""
+            if _forced and os.path.isfile(_forced):
+                _file = _forced
+            elif _inp and _inp.get("type") == "file":
                 _file = _inp["data"]
             elif _inp and _inp.get("type") == "text":
                 _data = (_inp.get("data") or "").strip()
                 if _data.lower().startswith(("http://", "https://")):
                     _url = _data
             # Reset a file that was already shown before the last hide.
-            if _file and self._clip_seq_at_hide is not None and _clip_seq() == self._clip_seq_at_hide:
+            if (
+                not _forced
+                and _file
+                and self._clip_seq_at_hide is not None
+                and _clip_seq() == self._clip_seq_at_hide
+            ):
                 _file = ""
             self._preview_file = _file
             self._preview_url = _url
@@ -1531,10 +1576,10 @@ class ScryptianBar:
             return
         if self.has_result:
             if self.last_result:
-                pyperclip.copy(self.last_result + "\n\n— Scryptian")
+                pyperclip.copy(self.last_result + "\n\n— nespatch")
                 self._auto_paste()
                 telemetry.send("result_copied", {"skill": getattr(self, "last_skill_title", "unknown")})
-                print("[Scryptian] Copied to clipboard.")
+                print("[nespatch] Copied to clipboard.")
             self._hide()
             return
 
@@ -1578,7 +1623,7 @@ class ScryptianBar:
             self._hide()
 
         self.processing = True
-        print(f"[Scryptian] Running: {skill['title']}...")
+        print(f"[nespatch] Running: {skill['title']}...")
         _t0 = time.time()
         _src = source_detect.get_source_info(getattr(self, '_source_hwnd', None))
 
@@ -1591,17 +1636,17 @@ class ScryptianBar:
                     return
                 result = core.run_skill(skill, input_text)
                 self.processing = False
-                if result and not result.startswith("[Scryptian Error]"):
+                if result and not result.startswith("[nespatch Error]"):
                     self.last_skill_title = skill["title"]
                     # self.root.after(0, lambda r=result: self._present_result(r))
                     telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src))
                     _remember_result(skill, input_text)
                     _track_skill(skill["filename"].replace(".py", ""))
                     _settle_skill(skill)
-                    print(f"[Scryptian] Done!")
+                    print(f"[nespatch] Done!")
                     out_path = None
-                    if isinstance(result, str) and result.startswith("[Scryptian File] "):
-                        out_path = result[len("[Scryptian File] "):].strip()
+                    if isinstance(result, str) and result.startswith("[nespatch File] "):
+                        out_path = result[len("[nespatch File] "):].strip()
                     if out_path:
                         bridge.notify(
                             skill["title"],
@@ -1614,7 +1659,7 @@ class ScryptianBar:
                         )
                     else:
                         bridge.notify(skill["title"], result if isinstance(result, str) and result.strip() else "Done.")
-                elif result and result.startswith("[Scryptian Error]"):
+                elif result and result.startswith("[nespatch Error]"):
                     telemetry.send("skill_failed", {"name": skill["title"], "reason": "error", "error": result[:200]})
                     # self.root.after(0, lambda r=result: self._present_result(r))
                     bridge.notify(skill["title"], "Something went wrong. Please try again.")
@@ -1644,14 +1689,14 @@ class ScryptianBar:
         if not _reserve_skill(skill, price):
             return
         self._bg_running = True
-        print(f"[Scryptian] Running (background): {skill['title']}...")
+        print(f"[nespatch] Running (background): {skill['title']}...")
         _bt0 = time.time()
         _bg_src = source_detect.get_source_info(getattr(self, '_source_hwnd', None))
         def bg_execute():
             try:
                 result = core.run_skill(skill, input_text)
-                if isinstance(result, str) and result.startswith("[Scryptian Error]"):
-                    print(f"[Scryptian] Failed (background): {skill['title']} — {result}")
+                if isinstance(result, str) and result.startswith("[nespatch Error]"):
+                    print(f"[nespatch] Failed (background): {skill['title']} — {result}")
                     bridge.notify(skill["title"], "Something went wrong. Please try again.")
                     telemetry.send("skill_failed", {"name": skill["title"], "reason": "bg_error", "error": result[:200]})
                     _refund_skill(skill, price)
@@ -1660,10 +1705,10 @@ class ScryptianBar:
                     _remember_result(skill, input_text)
                     _track_skill(skill["filename"].replace(".py", ""))
                     _settle_skill(skill, price)
-                    print(f"[Scryptian] Done (background): {skill['title']}")
+                    print(f"[nespatch] Done (background): {skill['title']}")
                     out_path = None
-                    if isinstance(result, str) and result.startswith("[Scryptian File] "):
-                        out_path = result[len("[Scryptian File] "):].strip()
+                    if isinstance(result, str) and result.startswith("[nespatch File] "):
+                        out_path = result[len("[nespatch File] "):].strip()
                     if out_path:
                         bridge.notify(
                             skill["title"],
@@ -1677,7 +1722,7 @@ class ScryptianBar:
                     else:
                         bridge.notify(skill["title"], result if isinstance(result, str) and result.strip() else "Done.")
             except Exception as e:
-                print(f"[Scryptian] Background skill error: {e}")
+                print(f"[nespatch] Background skill error: {e}")
                 telemetry.send("skill_failed", {"name": skill["title"], "reason": "bg_exception", "error": str(e)[:200]})
                 bridge.notify(skill["title"], "Something went wrong. Please try again.")
                 _refund_skill(skill, price)
@@ -1702,7 +1747,6 @@ class ScryptianBar:
     def run_externally(self, skill, input_text, source_hwnd=None):
         """Open the bar and run a skill with given text (called from SelectionToolbar)."""
         self._source_hwnd = source_hwnd
-        pyperclip.copy(input_text)
         self.root.after(0, lambda: self._run_external(skill, input_text))
 
     def _run_external(self, skill, input_text):
@@ -1736,19 +1780,19 @@ class ScryptianBar:
                     self.root.after(0, self._stop_anim)
                     self.root.after(0, lambda: self._show_result("Not enough slippers. Top up your balance to run this skill."))
                     return
-                print(f"[Scryptian] Running (external): {skill['title']}...")
+                print(f"[nespatch] Running (external): {skill['title']}...")
                 result = core.run_skill(skill, input_text)
-                print(f"[Scryptian] Done (external): {skill['title']}")
+                print(f"[nespatch] Done (external): {skill['title']}")
                 self.processing = False
-                if result and not result.startswith("[Scryptian Error]"):
+                if result and not result.startswith("[nespatch Error]"):
                     self.last_skill_title = skill["title"]
                     # self.root.after(0, lambda r=result: self._present_result(r))
                     telemetry.send("skill_run", _build_skill_event(skill, input_text, time.time() - _t0, **_src, via="selection"))
                     _remember_result(skill, input_text)
                     _settle_skill(skill, _price)
                     out_path = None
-                    if isinstance(result, str) and result.startswith("[Scryptian File] "):
-                        out_path = result[len("[Scryptian File] "):].strip()
+                    if isinstance(result, str) and result.startswith("[nespatch File] "):
+                        out_path = result[len("[nespatch File] "):].strip()
                     if out_path:
                         bridge.notify(
                             skill["title"],
@@ -1952,7 +1996,7 @@ class ScryptianBar:
             try:
                 stripped = core.run_skill(skill, text).strip()
                 elapsed = round(time.time() - _t0, 2)
-                if stripped.startswith("[Scryptian Error]"):
+                if stripped.startswith("[nespatch Error]"):
                     telemetry.send("chain_failed", {
                         "from_skill": from_skill,
                         "chain_skill": skill_title,
@@ -2005,7 +2049,7 @@ class ScryptianBar:
             self.root.after(16, lambda: self._fade_dialog(dlg, alpha))
 
     def _open_wish_box(self):
-        """Dialog where users request services they'd like to see on Scryptian."""
+        """Dialog where users request services they'd like to see on nespatch."""
         dlg = tk.Toplevel(self.root)
         dlg.overrideredirect(True)
         dlg.attributes("-topmost", True)
@@ -2021,7 +2065,7 @@ class ScryptianBar:
         tk.Label(inner, text="Wish Service Box", font=("Segoe UI Variable", 12, "bold"),
                  bg="#202020", fg="#FFFFFF", anchor="w").pack(fill="x", pady=(0, 4))
 
-        tk.Label(inner, text="Which service would you like to see on Scryptian? (plz be much more specific)",
+        tk.Label(inner, text="Which service would you like to see on nespatch? (plz be much more specific)",
                  font=("Segoe UI Variable", 12), bg="#202020", fg="#C5C5C5",
                  anchor="w", wraplength=360, justify="left").pack(fill="x", pady=(0, 10))
 
@@ -2320,6 +2364,10 @@ class SelectionToolbar:
         # Limit the mini bar to four skills max.
         visible = visible[:4]
 
+        # Don't show an empty mini-bar when no skill matches.
+        if not visible:
+            return
+
         # Metadata from the skill matching this file type.
         dur, unit = _measure_file(self.skills, file_path)
         dur_text = _format_measure(dur, unit) if dur is not None else ""
@@ -2356,6 +2404,8 @@ class SelectionToolbar:
                 _ext = os.path.splitext(file_path)[1].lower() if file_path else ""
                 _types = skill.get("input_type") or []
                 _unsupported = bool(file_path) and bool(_types) and _ext not in _types
+                if "link" in _types:
+                    _unsupported = False
 
                 row = tk.Frame(inner, bg="#202020", cursor="hand2")
                 row.pack(fill="x", padx=0, pady=0)
@@ -2685,7 +2735,7 @@ class SelectionToolbar:
 
 
 def _kill_other_instances():
-    """Kill other Scryptian.exe processes, keeping only current instance."""
+    """Kill other nespatch.exe processes, keeping only current instance."""
     import ctypes
     import ctypes.wintypes
 
@@ -2725,7 +2775,7 @@ def _kill_other_instances():
             if not ctypes.windll.kernel32.Process32Next(snap, ctypes.byref(pe)):
                 break
 
-    # Kill all other Scryptian.exe
+    # Kill all other nespatch.exe
     pe2 = PROCESSENTRY32()
     pe2.dwSize = ctypes.sizeof(PROCESSENTRY32)
     snap2 = ctypes.windll.kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
@@ -2759,20 +2809,20 @@ def main():
     # Register wallet in the background (grants 221 slippers on first run).
     threading.Thread(target=wallet.ensure_wallet, daemon=True).start()
 
-    print("[Scryptian] Scanning skills...")
+    print("[nespatch] Scanning skills...")
     skills = core.scan_skills()
 
     if not skills:
-        print("[Scryptian] No skills found in skills/ folder")
+        print("[nespatch] No skills found in skills/ folder")
         return
 
     for s in skills:
         print(f"  → {s['title']}: {s['description']}")
 
-    print(f"\n[Scryptian] Skills loaded: {len(skills)}")
+    print(f"\n[nespatch] Skills loaded: {len(skills)}")
 
-    print(f"[Scryptian] Hotkey: {HOTKEY}")
-    print("[Scryptian] Waiting...")
+    print(f"[nespatch] Hotkey: {HOTKEY}")
+    print("[nespatch] Waiting...")
 
     def _sys_info():
         info = {"skills": len(skills)}
@@ -2831,7 +2881,7 @@ def main():
     bridge.set_root(root)
 
     toolbar = SelectionToolbar(root, skills)
-    bar = ScryptianBar(root, skills, toolbar=toolbar)
+    bar = nespatchBar(root, skills, toolbar=toolbar)
     toolbar.bar = bar
 
     sel_queue = queue.Queue()
@@ -2846,12 +2896,38 @@ def main():
                 toolbar.show(text, x, y, hwnd)
         except queue.Empty:
             pass
+        while True:
+            event = download_watch.pop()
+            if event is None:
+                break
+            kind, path = event
+            if kind == "hide":
+                _download_hint.dismiss()
+            elif kind == "show" and download_watch.browser_is_foreground():
+                print(f"[nespatch] Download line: {os.path.basename(path)}")
+                _download_hint.show(path)
+            elif kind == "show":
+                front = download_watch.foreground_exe() or "another app"
+                print(f"[nespatch] Download kept for the hotkey. In front: {front}.")
         root.after(150, _poll_selection)
 
+    _download_hint = download_watch.DownloadHint(root, on_open=bar.open_downloaded)
+
+    def _has_download_actions(path):
+        ext = os.path.splitext(path)[1].lower()
+        if not ext:
+            return False
+        for skill in bar.skills:
+            if ext in (skill.get("input_type") or []):
+                return True
+        return False
+
+    download_watch.start(_has_download_actions)
     selection_watcher.start(_on_selection)
     root.after(150, _poll_selection)
 
     def _hotkey_handler():
+        bar.offer_download()
         bar.toggle()
 
     keyboard.add_hotkey(HOTKEY, _hotkey_handler)
@@ -2868,7 +2944,7 @@ def main():
     root.after(300000, _rehook)
 
     autostart.enable()
-    print("[Scryptian] Autostart updated.")
+    print("[nespatch] Autostart updated.")
 
     tray.start(on_quit=root.quit, on_open=bar.toggle)
 
@@ -2914,20 +2990,20 @@ def main():
             try:
                 url = updater.find_setup_url(assets)
                 if not url:
-                    print("[Scryptian] No installer asset found in release.")
+                    print("[nespatch] No installer asset found in release.")
                     root.after(0, lambda: _show_update_fallback(latest))
                     return
-                dest = os.path.join(updater.updates_dir(), f"Scryptian_Setup_{latest}.exe")
+                dest = os.path.join(updater.updates_dir(), f"nespatch_Setup_{latest}.exe")
                 if not os.path.exists(dest):
                     updater.download(url, dest)
                 _pending_update["path"] = dest
                 _pending_update["version"] = latest
                 _pending_update["since"] = time.time()
                 telemetry.send("update_downloaded", {"version": latest})
-                print(f"[Scryptian] Update {latest} downloaded — will apply when idle.")
+                print(f"[nespatch] Update {latest} downloaded — will apply when idle.")
             except Exception as e:
                 telemetry.send("update_download_failed", {"version": latest, "error": str(e)[:200]})
-                print(f"[Scryptian] Update download failed: {e}")
+                print(f"[nespatch] Update download failed: {e}")
                 # Download itself failed (often AV) → offer manual update.
                 _pending_update["version"] = latest
                 root.after(0, lambda: _show_update_fallback(latest))
@@ -2946,8 +3022,8 @@ def main():
                 ctx = _ssl.create_default_context(cafile=certifi.where())
             except Exception:
                 ctx = _ssl.create_default_context()
-            url = "https://api.github.com/repos/adrianium/Scryptian/releases/latest"
-            req = _req.Request(url, headers={"User-Agent": "Scryptian"})
+            url = "https://api.github.com/repos/adrianium/nespatch/releases/latest"
+            req = _req.Request(url, headers={"User-Agent": "nespatch"})
             data = _json.loads(_req.urlopen(req, timeout=5, context=ctx).read())
             latest = data.get("tag_name", "").lstrip("v")
             current = APP_VERSION.lstrip("v")
@@ -2988,7 +3064,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        print("\n[Scryptian] Stopped.")
+        print("\n[nespatch] Stopped.")
 
 
 if __name__ == "__main__":

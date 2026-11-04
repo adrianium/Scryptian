@@ -1,6 +1,6 @@
 # stub.spec — tiny Chrome-style installer (one-file exe).
 # Build: pyinstaller packaging/stub.spec --noconfirm
-# Output: dist/ScryptianSetup.exe
+# Output: dist/nespatchSetup.exe
 
 import os
 
@@ -36,7 +36,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='ScryptianSetup',
+    name='nespatchSetup',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

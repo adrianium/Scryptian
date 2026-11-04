@@ -2,7 +2,7 @@ $log = $env:TEMP + '\scryptian_uninstall.log'
 Add-Content $log "=== uninstall started ==="
 
 $id = 'unknown'
-$f = $env:LOCALAPPDATA + '\Scryptian\.id'
+$f = $env:LOCALAPPDATA + '\nespatch\.id'
 Add-Content $log ("id file exists: " + (Test-Path $f))
 if (Test-Path $f) { $id = (Get-Content $f -Raw).Trim() }
 Add-Content $log ("id: " + $id)

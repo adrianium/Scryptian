@@ -1,8 +1,8 @@
-#define MyAppName "Scryptian"
+#define MyAppName "nespatch"
 #define MyAppVersion "0.1.0"
 #define MyAppPublisher "adrianium"
-#define MyAppURL "https://github.com/adrianium/Scryptian"
-#define MyAppExeName "Scryptian.exe"
+#define MyAppURL "https://github.com/adrianium/nespatch"
+#define MyAppExeName "nespatch.exe"
 #define MyAppIcon "icon.ico"
 
 [Setup]
@@ -19,7 +19,7 @@ AllowNoIcons=yes
 LicenseFile=
 InfoBeforeFile=privacy_notice.txt
 OutputDir=..\dist
-OutputBaseFilename=Scryptian_Setup
+OutputBaseFilename=nespatch_Setup
 SetupIconFile={#MyAppIcon}
 Compression=lzma
 SolidCompression=yes
@@ -27,7 +27,7 @@ WizardStyle=modern
 UninstallDisplayIcon={app}\{#MyAppExeName}
 PrivilegesRequired=lowest
 CloseApplications=yes
-CloseApplicationsFilter=Scryptian.exe
+CloseApplicationsFilter=nespatch.exe
 RestartApplications=yes
 
 [Languages]
@@ -37,7 +37,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\dist\Scryptian\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\nespatch\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "uninstall_telemetry.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\tools\7zr.exe"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -51,8 +51,8 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Auto-update path: relaunch the app after a silent update. Guarded by the
 ; /AUTOUPDATE switch so normal silent installs (including the Chrome-style
-; ScryptianSetup.exe stub) do NOT auto-launch here — the stub waits and
-; starts Scryptian.exe itself after this installer exits.
+; nespatchSetup.exe stub) do NOT auto-launch here — the stub waits and
+; starts nespatch.exe itself after this installer exits.
 Filename: "{app}\{#MyAppExeName}"; Flags: nowait; Check: IsAutoUpdate
 
 [UninstallRun]
@@ -74,29 +74,29 @@ begin
   end;
 end;
 
-procedure KillScryptian();
+procedure Killnespatch();
 var
   ResultCode: Integer;
 begin
-  Exec('taskkill', '/f /im Scryptian.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec('taskkill', '/f /im nespatch.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure CleanOldInstall();
 begin
   // Remove old installations
-  if DirExists('C:\Program Files (x86)\Scryptian') then
-    DelTree('C:\Program Files (x86)\Scryptian', True, True, True);
-  if DirExists('C:\Program Files\Scryptian') then
-    DelTree('C:\Program Files\Scryptian', True, True, True);
+  if DirExists('C:\Program Files (x86)\nespatch') then
+    DelTree('C:\Program Files (x86)\nespatch', True, True, True);
+  if DirExists('C:\Program Files\nespatch') then
+    DelTree('C:\Program Files\nespatch', True, True, True);
   // Fix registry autostart to point to new location
-  RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Scryptian');
+  RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'nespatch');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssInstall then
   begin
-    KillScryptian();
+    Killnespatch();
     CleanOldInstall();
   end;
 end;
@@ -112,7 +112,7 @@ begin
   end;
   if CurUninstallStep = usPostUninstall then
   begin
-    AppDataDir := ExpandConstant('{localappdata}\Scryptian');
+    AppDataDir := ExpandConstant('{localappdata}\nespatch');
     if MsgBox('Remove all data including actions?' + #13#10 + AppDataDir, mbConfirmation, MB_YESNO) = IDYES then
       DelTree(AppDataDir, True, True, True);
   end;

@@ -1,4 +1,4 @@
-# core — Scryptian skill execution engine.
+# core — nespatch skill execution engine.
 #
 # Public API:
 #   from core import scan_skills, find_skill, run_skill, get_input

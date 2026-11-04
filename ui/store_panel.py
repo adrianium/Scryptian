@@ -12,7 +12,7 @@ from core.registry import SKILLS_DIR
 
 
 class StorePanel:
-    """Standalone store UI rendered inside the Scryptian bar."""
+    """Standalone store UI rendered inside the nespatch bar."""
 
     def __init__(self, bar):
         self.bar = bar
@@ -158,7 +158,7 @@ class StorePanel:
         header = tk.Frame(self.frame, bg="#202020")
         header.pack(fill="x", pady=(0, 8))
 
-        tk.Label(header, text="Scryptian Store", font=("Segoe UI Variable", 13, "bold"),
+        tk.Label(header, text="nespatch Store", font=("Segoe UI Variable", 13, "bold"),
                  bg="#202020", fg="#FFFFFF").pack(side="left")
 
         back_group = tk.Frame(header, bg="#202020")

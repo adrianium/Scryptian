@@ -1,4 +1,4 @@
-# build.spec — PyInstaller build configuration for Scryptian
+# build.spec — PyInstaller build configuration for nespatch
 
 import os
 
@@ -136,7 +136,7 @@ exe = EXE(
     pyz,
     a.scripts,
     [],
-    name='Scryptian',
+    name='nespatch',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -156,5 +156,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Scryptian',
+    name='nespatch',
 )

@@ -45,10 +45,10 @@ def run(text):
     """text: path to a video to extract audio from (WAV)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Couldn't find this video. Copy it again and try."
+        return "[nespatch Error] Couldn't find this video. Copy it again and try."
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in _VIDEO_EXTS:
-        return "[Scryptian Error] This video type isn't supported."
+        return "[nespatch Error] This video type isn't supported."
 
     base, _ = os.path.splitext(file_path)
     out_path = f"{base}_audio.wav"
@@ -67,12 +67,12 @@ def run(text):
         result = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", timeout=14400, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except FileNotFoundError:
         _report("ffmpeg not found")
-        return "[Scryptian Error] This action isn't set up yet. We're on it."
+        return "[nespatch Error] This action isn't set up yet. We're on it."
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Something went wrong. We're on it."
+        return "[nespatch Error] Something went wrong. We're on it."
     if result.returncode != 0:
         err = (result.stderr or "").strip()[-400:]
         _report(f"ffmpeg failed: {err}")
-        return "[Scryptian Error] Couldn't convert this video. We're on it."
-    return f"[Scryptian File] {out_path}"
+        return "[nespatch Error] Couldn't convert this video. We're on it."
+    return f"[nespatch File] {out_path}"

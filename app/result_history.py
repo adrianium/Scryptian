@@ -7,7 +7,7 @@ import os
 import threading
 import uuid
 
-_DATA_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Scryptian", "state")
+_DATA_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "nespatch", "state")
 _PATH = os.path.join(_DATA_DIR, "result_history.json")
 _LOCK = threading.Lock()
 _MAX = 40

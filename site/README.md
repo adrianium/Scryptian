@@ -1,4 +1,4 @@
-# Scryptian Web — Actions Marketplace
+# nespatch Web — Actions Marketplace
 
 Static Astro site that generates a landing page for every published action
 from the Supabase `actions` table.

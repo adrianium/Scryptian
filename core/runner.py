@@ -43,7 +43,7 @@ def _run_single(skill, input_text, settings=None):
             return "Skill returned an empty result."
         return result
     except Exception as e:
-        return f"[Scryptian Error] {e}"
+        return f"[nespatch Error] {e}"
 
 
 def run_skill(skill, input_text, settings=None):
@@ -62,11 +62,11 @@ def run_skill(skill, input_text, settings=None):
     while True:
         sid = current_skill.get("id") or current_skill.get("filename", "")
         if sid in visited:
-            return "[Scryptian Error] Pipeline loop detected."
+            return "[nespatch Error] Pipeline loop detected."
         visited.add(sid)
 
         result = _run_single(current_skill, current_text, current_settings)
-        if isinstance(result, str) and result.startswith("[Scryptian Error]"):
+        if isinstance(result, str) and result.startswith("[nespatch Error]"):
             return result
         if result == "Skill returned an empty result.":
             return result
@@ -80,15 +80,15 @@ def run_skill(skill, input_text, settings=None):
             step_id = step.get("skill_id", "")
             next_skill = find_skill(skills, step_id)
             if not next_skill:
-                return f"[Scryptian Error] Pipeline skill not found: {step_id}"
+                return f"[nespatch Error] Pipeline skill not found: {step_id}"
 
             step_sid = next_skill.get("id") or next_skill.get("filename", "")
             if step_sid in visited:
-                return "[Scryptian Error] Pipeline loop detected."
+                return "[nespatch Error] Pipeline loop detected."
             visited.add(step_sid)
 
             result = _run_single(next_skill, result, step.get("settings"))
-            if isinstance(result, str) and result.startswith("[Scryptian Error]"):
+            if isinstance(result, str) and result.startswith("[nespatch Error]"):
                 return result
             if result == "Skill returned an empty result.":
                 return result
@@ -99,13 +99,13 @@ def run_skill(skill, input_text, settings=None):
                     sub_id = sub_step.get("skill_id", "")
                     sub_skill = find_skill(skills, sub_id)
                     if not sub_skill:
-                        return f"[Scryptian Error] Pipeline skill not found: {sub_id}"
+                        return f"[nespatch Error] Pipeline skill not found: {sub_id}"
                     sub_sid = sub_skill.get("id") or sub_skill.get("filename", "")
                     if sub_sid in visited:
-                        return "[Scryptian Error] Pipeline loop detected."
+                        return "[nespatch Error] Pipeline loop detected."
                     visited.add(sub_sid)
                     result = _run_single(sub_skill, result, sub_step.get("settings"))
-                    if isinstance(result, str) and result.startswith("[Scryptian Error]"):
+                    if isinstance(result, str) and result.startswith("[nespatch Error]"):
                         return result
                     if result == "Skill returned an empty result.":
                         return result

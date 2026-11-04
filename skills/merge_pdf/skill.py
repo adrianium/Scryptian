@@ -27,9 +27,9 @@ def run(text):
     """text: path to any PDF in a folder; merges all PDFs in that folder (sorted by name)."""
     file_path = (text or "").strip().strip('"')
     if not file_path or not os.path.isfile(file_path):
-        return "[Scryptian Error] Couldn't find this file. Copy it again and try."
+        return "[nespatch Error] Couldn't find this file. Copy it again and try."
     if os.path.splitext(file_path)[1].lower() != ".pdf":
-        return "[Scryptian Error] Please copy a PDF file."
+        return "[nespatch Error] Please copy a PDF file."
 
     folder = os.path.dirname(os.path.abspath(file_path))
     out_path = os.path.join(folder, "merged.pdf")
@@ -40,7 +40,7 @@ def run(text):
 
     pdfs = sorted(f for f in os.listdir(folder) if f.lower().endswith(".pdf"))
     if len(pdfs) < 2:
-        return "[Scryptian Error] Add at least 2 PDFs to this folder."
+        return "[nespatch Error] Add at least 2 PDFs to this folder."
 
     try:
         writer = PdfWriter()
@@ -51,7 +51,7 @@ def run(text):
             writer.append(p)
         with open(out_path, "wb") as f:
             writer.write(f)
-        return f"[Scryptian File] {out_path}"
+        return f"[nespatch File] {out_path}"
     except Exception as e:
         _report(str(e))
-        return "[Scryptian Error] Couldn't merge these PDFs. We're on it."
+        return "[nespatch Error] Couldn't merge these PDFs. We're on it."

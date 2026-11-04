@@ -91,7 +91,7 @@ def show_setup_window(root):
     spinner = tk.Canvas(inner, width=56, height=56, bg=_BG, highlightthickness=0, bd=0)
     spinner.pack(pady=(36, 8))
 
-    tk.Label(inner, text="Scryptian", bg=_BG, fg=_TEXT,
+    tk.Label(inner, text="nespatch", bg=_BG, fg=_TEXT,
              font=("Segoe UI Variable", 16, "bold")).pack()
 
     status = tk.Label(inner, text="Downloading components…", bg=_BG, fg=_TEXT_DIM,
@@ -134,7 +134,7 @@ def show_setup_window(root):
         os.makedirs(dest_dir, exist_ok=True)
         dest = os.path.join(dest_dir, filename)
 
-        req = urllib.request.Request(url, headers={"User-Agent": "Scryptian"})
+        req = urllib.request.Request(url, headers={"User-Agent": "nespatch"})
         with urllib.request.urlopen(req, timeout=600) as resp:
             total = int(resp.headers.get("Content-Length") or 0)
             tmp = dest + ".part"

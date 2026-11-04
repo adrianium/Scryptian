@@ -1,5 +1,5 @@
-Scryptian - Privacy Notice
+nespatch - Privacy Notice
 --------------------------
 
-Scryptian collects anonymous usage stats (which actions are used, error
+nespatch collects anonymous usage stats (which actions are used, error
 reports) to fix bugs and improve the app.
