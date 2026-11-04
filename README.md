@@ -2,7 +2,7 @@
 
 ## What is nespatch
 
-<h4>nespatch is a tool for using file services (like convertors) without visiting their webpages or desktop apps.</h4>
+<p>nespatch is a tool for using file services (like convertors) without visiting their webpages or desktop apps.</p>
 
 <h4>Works with:<br>
 • Documents<br>
