@@ -1,4 +1,4 @@
-# nespatch [<scryptian.com>](https://github.com/adrianium/nespatch)
+# nespatch
 
 ## What is nespatch
 
