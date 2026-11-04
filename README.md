@@ -19,7 +19,7 @@
 
 <picture><img width="100%" alt="Screenshot" src="landing/pagey.png"></picture>
 
-<a href="https://github.com/adrianium/nespatch/releases/latest/download/nespatch_Setup.exe"><img src="docs/design/download-installer.svg" width="30%" alt="Download for Windows"></a><a href="https://www.virustotal.com/gui/file/1d929007958b311a34aa3b68705d831f21fa3af5a095f6026cdd33faaed81c0f?nocache=1"><img src="docs/design/virustotal.svg" width="30%" alt="Check on VirusTotal"></a>
+<a href="https://github.com/adrianium/nespatch/releases/latest/download/nespatch_Setup.exe"><img src="docs/design/download-installer.svg" width="40%" alt="Download for Windows"></a><a href="https://www.virustotal.com/gui/file/1d929007958b311a34aa3b68705d831f21fa3af5a095f6026cdd33faaed81c0f?nocache=1"><img src="docs/design/virustotal.svg" width="40%" alt="Check on VirusTotal"></a>
 
 
 ## Actions list
