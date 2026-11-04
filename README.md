@@ -2,20 +2,20 @@
 
 ## What is nespatch
 
-<h3>nespatch is a tool for using file services (like convertors) without visiting their webpages or desktop apps.</h3>
+<h4>nespatch is a tool for using file services (like convertors) without visiting their webpages or desktop apps.</h4>
 
-<h3>Works with:<br>
+<h4>Works with:<br>
 • Documents<br>
 • Video<br>
 • Audio<br>
 • Image<br>
-• Ebook</h3>
+• Ebook</h4>
 
 <picture><img width="100%" alt="Demo" src="landing/product-demo-1920x1080.gif"></picture>
 
-<h3 align="center">Select. Copy a file. Actions for this file type appear. Windows.</h3>
+<h4 align="center">Select. Copy a file. Actions for this file type appear. Windows.</h4>
 
-<h3>Screenshot:</h3>
+<h4>Screenshot:</h4>
 
 <picture><img width="100%" alt="Screenshot" src="landing/pagey.png"></picture>
 
@@ -24,18 +24,18 @@
 
 ## Actions list
 
-<h3>• Convertors (PDF to DOCX, MP4 to MP3 and etc.)<br>
+<h4>• Convertors (PDF to DOCX, MP4 to MP3 and etc.)<br>
 • Remove Background (Image/Video)<br>
 • Translate PDF with preserved layout (DeepL)<br>
 • Text to Speech (Male/Female)<br>
 • Audio to Text<br>
-• AI Upscale (Image/Video)</h3>
+• AI Upscale (Image/Video)</h4>
 
-<h3>list will be bigger and bigger in future.</h3>
+<h4>list will be bigger and bigger in future.</h4>
 
 ## Build
 
-<h3>Windows 10/11, Python 3.10+.</h3>
+<h4>Windows 10/11, Python 3.10+.</h4>
 
 ```
 python main.py
@@ -43,8 +43,8 @@ pyinstaller packaging/build.spec --noconfirm
 
 ```
 
-<h3>The full installer is <code>packaging/installer.iss</code>. Details are in <a href="BUILDING.md">BUILDING.md</a>.</h3>
+<h4>The full installer is <code>packaging/installer.iss</code>. Details are in <a href="BUILDING.md">BUILDING.md</a>.</h4>
 
 ## License
 
-<h3><a href="LICENSE">MIT</a></h3>
+<h4><a href="LICENSE">MIT</a></h4>
